@@ -8,7 +8,10 @@ site builder: fixed structure, predefined sections, theme-based styling.
 > **Status:** Workstreams 1–2 complete.
 > - **WS1 Platform Foundation:** app skeleton, authentication, database, Docker.
 > - **WS2 Theme & Template System:** shared wedding content model, theme registry
->   and renderer, five themes, theme picker with live device previews.
+>   and renderer, five templates, theme picker with live device previews.
+> - **WS2 change request:** theme family hierarchy (Family → Collection → Template):
+>   six families, 12 regional Traditional collections (coming soon, culturally reviewed
+>   before release), step-by-step picker.
 >
 > Content editing (CMS), photo uploads, publishing and RSVP processing come next.
 
@@ -51,11 +54,13 @@ site builder: fixed structure, predefined sections, theme-based styling.
 │   │   ├── features/
 │   │   │   ├── wedding/           # SHARED content model: types, validation, formatting, sample data
 │   │   │   └── themes/            # theme system (see features/themes/README.md)
+│   │   │       ├── catalog/       # families, collections, planned templates (configuration)
 │   │   │       ├── core/          # registry, ThemeRenderer, shared components & composables
+│   │   │       ├── picker/        # family/collection/template picker components
 │   │   │       ├── preview/       # DevicePreview (phone/tablet/desktop frames)
 │   │   │       └── international/ traditional/ ethnic/ conventional/ artistic/
 │   │   ├── layouts/               # AuthLayout (login/register), AppLayout (signed-in shell)
-│   │   ├── pages/                 # Login, Register, Dashboard, Themes, ThemePreview, Account, NotFound
+│   │   ├── pages/                 # Login, Register, Dashboard, ThemeFamilies/Family/Collection, ThemePreview, Account, NotFound
 │   │   ├── router/                # routes + auth guards
 │   │   ├── stores/                # Pinia: auth, themeSelection
 │   │   └── styles/main.css        # Tailwind + design tokens (@theme)
@@ -95,21 +100,27 @@ site builder: fixed structure, predefined sections, theme-based styling.
 - **Content model** — `frontend/src/features/wedding/types.ts` defines `WeddingContent`
   (opening, couple, story, events[], gallery, RSVP, closing). Every theme consumes exactly
   this; themes never define their own schema. `validateWeddingContent()` checks it at runtime.
-- **Registry** — `features/themes/core/registry.ts` lists themes (id, name, category,
-  description, thumbnail, fonts, lazy component). Each theme is its own bundle chunk.
+- **Catalog & registry** — themes are organised as **Family → Collection → Template**
+  (`features/themes/catalog/` + `core/registry.ts`). Families: Traditional, International,
+  Classic, Artistic (available) and Modern Minimalist, Rustic / Nature (coming soon).
+  Traditional holds a general *Nusantara Heritage* collection plus 12 regional collections
+  (Javanese … Papuan) that are coming soon and gated by cultural review. Every level has an
+  availability status; templates carry a description, preview, reference, optional regional
+  variation and `config`, plus a lazily loaded renderer (one bundle chunk each).
 - **Renderer** — `<ThemeRenderer :content :theme-id>` picks the theme, loads its web fonts
   on demand, and falls back to the default theme (emitting `fallback`) for unknown ids.
 - **Responsive** — themes use CSS **container queries**, so the dashboard's phone/tablet
   preview frames show the real mobile layout, identical to the published page.
-- **Themes** — International (editorial minimal), Traditional (formal, maroon & gold,
-  culturally neutral ornaments), Ethnic (woven-textile motifs as a swappable regional set),
-  Conventional (romantic florals), Artistic (asymmetric, oversized type). All decoration is
-  original inline SVG/CSS; sample images are original placeholder illustrations.
-- **Picker** — `/themes` shows all themes, a live preview with device toggles and full-screen
-  preview (`/themes/:id/preview`). The selection is stored in the browser only for now
+- **Templates** — Editorial Ivory (International), Royal Maroon and Woven Indigo (Traditional ›
+  Nusantara Heritage), Blush Garden (Classic), Gallery Bold (Artistic). Ids from Workstream 2
+  (`international`, `traditional`, `ethnic`, `conventional`, `artistic`) are unchanged. All
+  decoration is original inline SVG/CSS; sample images are original placeholder illustrations.
+- **Picker** — `/themes` (families) → `/themes/:family` (collections; skipped for single-collection
+  families) → `/themes/:family/:collection` (templates, live preview with device toggles) and
+  full-screen preview (`/themes/:id/preview`). The selection is stored in the browser only for now
   (`stores/themeSelection.ts`); the CMS workstream will persist it on the wedding.
 
-**How to add a theme:** see [`frontend/src/features/themes/README.md`](frontend/src/features/themes/README.md).
+**How to add a family, collection or template:** see [`frontend/src/features/themes/README.md`](frontend/src/features/themes/README.md).
 
 ## Prerequisites
 

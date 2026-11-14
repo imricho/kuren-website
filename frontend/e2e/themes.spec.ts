@@ -62,13 +62,6 @@ async function brokenImages(page: Page) {
   })
 }
 
-test('theme picker lists all five themes', async ({ page }) => {
-  await page.goto('/themes')
-  await expect(page.locator('[data-theme-card]')).toHaveCount(THEME_IDS.length)
-  const ids = await page.locator('[data-theme-card]').evaluateAll((els) => els.map((e) => e.getAttribute('data-theme-card')))
-  expect(ids.sort()).toEqual([...THEME_IDS].sort())
-})
-
 for (const themeId of THEME_IDS) {
   for (const [device, viewport] of Object.entries(VIEWPORTS)) {
     test(`${themeId} renders on ${device} without horizontal overflow`, async ({ page }) => {
@@ -112,7 +105,7 @@ for (const themeId of THEME_IDS) {
 
 test('phone frame in the dashboard shows the mobile layout (container queries)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/themes')
+  await page.goto('/themes/classic/romantic-floral')
   await page.getByRole('button', { name: 'Phone' }).click()
   const frame = page.locator('.device-frame')
   await expect(frame.locator('.wedding-site > article')).toBeVisible()
@@ -128,4 +121,82 @@ test('unknown theme id falls back to the default theme with a notice', async ({ 
   await page.goto('/themes/does-not-exist/preview')
   await expect(page.locator('.wedding-site[data-theme="international"] > article')).toBeVisible()
   await expect(page.getByText(/doesn't exist/)).toBeVisible()
+})
+
+test.describe('theme selection flow: family → collection → template', () => {
+  test('families page lists the six families with coming-soon badges', async ({ page }) => {
+    await page.goto('/themes')
+    const families = page.locator('[data-family-card]')
+    await expect(families).toHaveCount(6)
+    expect(await families.evaluateAll((els) => els.map((e) => e.getAttribute('data-family-card')))).toEqual([
+      'traditional', 'international', 'classic', 'artistic', 'modern-minimalist', 'rustic-nature',
+    ])
+    await expect(page.locator('[data-family-card="modern-minimalist"]')).toContainText('Coming soon')
+  })
+
+  test('Traditional shows 13 collections and drills into a template', async ({ page }) => {
+    await page.goto('/themes')
+    await page.locator('[data-family-card="traditional"] a').click()
+    await expect(page).toHaveURL(/\/themes\/traditional$/)
+    await expect(page.locator('[data-collection-card]')).toHaveCount(13)
+
+    await page.locator('[data-collection-card="nusantara-heritage"] a').click()
+    await expect(page).toHaveURL(/\/themes\/traditional\/nusantara-heritage$/)
+    await expect(page.locator('[data-theme-card]')).toHaveCount(2)
+
+    await page.locator('[data-theme-card="ethnic"]').getByRole('button', { name: 'Preview', exact: true }).click()
+    await expect(page.locator('.device-frame .wedding-site[data-theme="ethnic"] > article')).toBeVisible()
+    await page.locator('[data-theme-card="ethnic"]').getByRole('button', { name: 'Select template' }).click()
+    await expect(page.getByTestId('selection-summary')).toContainText('Traditional › Nusantara Heritage › Woven Indigo')
+
+    await page.goto('/dashboard')
+    await expect(page.getByText('Selected: Traditional › Woven Indigo')).toBeVisible()
+  })
+
+  test('a single-collection family skips straight to its templates', async ({ page }) => {
+    await page.goto('/themes/classic')
+    await expect(page).toHaveURL(/\/themes\/classic\/romantic-floral$/)
+    await expect(page.locator('[data-theme-card="conventional"]')).toBeVisible()
+    await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toHaveText(/Themes\s*\/\s*Classic$/)
+  })
+
+  test('coming-soon collections list planned templates that cannot be selected', async ({ page }) => {
+    await page.goto('/themes/traditional/javanese')
+    await expect(page.getByTestId('collection-reference')).toContainText('Central Java, Yogyakarta & East Java')
+    await expect(page.getByTestId('collection-reference')).toContainText('cultural advisers')
+    const planned = page.locator('[data-theme-card][data-status="coming_soon"]')
+    await expect(planned).toHaveCount(2)
+    await expect(planned.getByRole('button')).toHaveCount(0)
+    await expect(page.locator('.device-frame')).toHaveCount(0)
+  })
+
+  test('coming-soon families explain that designs are in progress', async ({ page }) => {
+    await page.goto('/themes/rustic-nature')
+    await expect(page.getByTestId('family-coming-soon')).toBeVisible()
+  })
+
+  test('unknown families and collections show a friendly not-found message', async ({ page }) => {
+    await page.goto('/themes/space-opera')
+    await expect(page.getByRole('heading', { name: 'Theme family not found' })).toBeVisible()
+    await page.goto('/themes/classic/javanese')
+    await expect(page.getByRole('heading', { name: 'Collection not found' })).toBeVisible()
+  })
+
+  test('Workstream 2 preview URLs still work for every original template id', async ({ page }) => {
+    for (const id of THEME_IDS) {
+      await page.goto(`/themes/${id}/preview`)
+      await expect(page.locator(`.wedding-site[data-theme="${id}"] > article`)).toBeVisible()
+    }
+  })
+
+  test('picker pages fit a phone screen', async ({ page }) => {
+    await page.setViewportSize(VIEWPORTS.phone)
+    for (const path of ['/dashboard', '/account', '/themes', '/themes/traditional', '/themes/traditional/nusantara-heritage', '/themes/traditional/javanese']) {
+      await page.goto(path)
+      await page.waitForLoadState('networkidle')
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+      expect(overflow, `${path} must not scroll horizontally`).toBeLessThanOrEqual(0)
+      await page.screenshot({ path: `test-results/screens/picker-${path.split('/').filter(Boolean).join('-')}-phone.png`, fullPage: true })
+    }
+  })
 })

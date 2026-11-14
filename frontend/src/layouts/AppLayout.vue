@@ -38,10 +38,13 @@ async function signOut() {
 <template>
   <div class="min-h-dvh">
     <header class="sticky top-0 z-10 border-b border-line bg-canvas/85 backdrop-blur">
-      <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
+      <!-- On phones the nav wraps onto its own row below the brand. -->
+      <div
+        class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-1 px-4 pt-3 pb-2 sm:h-16 sm:flex-nowrap sm:px-6 sm:py-0"
+      >
         <RouterLink :to="{ name: 'dashboard' }" aria-label="Go to dashboard"><BrandMark /></RouterLink>
 
-        <nav class="flex items-center gap-1" aria-label="Main">
+        <nav class="order-last -mx-3 flex w-full items-center gap-1 sm:order-none sm:mx-0 sm:w-auto" aria-label="Main">
           <RouterLink
             v-for="item in navItems"
             :key="item.name"

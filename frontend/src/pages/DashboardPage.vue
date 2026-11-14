@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { RouteLocationRaw } from 'vue-router'
 
+import { templatePath } from '@/features/themes/core/registry'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeSelectionStore } from '@/stores/themeSelection'
 
 const auth = useAuthStore()
 const selection = useThemeSelectionStore()
+const selectedPath = computed(() => templatePath(selection.selectedThemeId))
 
 interface Step {
   title: string
@@ -17,7 +20,7 @@ interface Step {
 const steps: Step[] = [
   {
     title: 'Choose a theme',
-    body: 'Pick from International, Traditional, Ethnic, Conventional or Artistic styles.',
+    body: 'Explore Traditional, International, Classic and Artistic designs — with more families on the way.',
     to: { name: 'themes' },
   },
   { title: 'Tell your story', body: 'Fill in your couple profile, story, and event details in simple forms.' },
@@ -56,10 +59,10 @@ const steps: Step[] = [
           </h3>
           <p class="mt-2 flex-1 text-sm text-ink-500">{{ step.body }}</p>
           <span
-            v-if="step.to && index === 0 && selection.selectedTheme"
+            v-if="step.to && index === 0 && selectedPath"
             class="mt-5 w-fit rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700"
           >
-            Selected: {{ selection.selectedTheme.name }}
+            Selected: {{ selectedPath.family.name }} › {{ selectedPath.template.name }}
           </span>
           <span v-else-if="step.to" class="mt-5 w-fit text-sm font-medium text-rose-600">Browse themes →</span>
           <span v-else class="mt-5 w-fit rounded-full bg-canvas px-2.5 py-1 text-xs font-medium text-ink-500">

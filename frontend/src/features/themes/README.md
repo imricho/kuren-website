@@ -2,6 +2,40 @@
 
 **One shared wedding content model, many independent theme presentations.**
 
+## Catalog hierarchy
+
+```
+ThemeFamily         broad visual or cultural category          catalog/families.ts
+└─ ThemeCollection  specific design identity or culture       catalog/collections.ts
+   └─ ThemeTemplate the selectable, renderable design         <template folder>/index.ts
+                    (planned templates without a renderer)    catalog/planned.ts
+```
+
+| Family | Collections | Templates (id → name) |
+|---|---|---|
+| Traditional | Nusantara Heritage (general, pan-Indonesian) + 12 regional: Javanese, Sundanese, Minangkabau, Batak, Bugis, Betawi, Malay, Madura, Balinese, Dayak, Ambon / Maluku, Papuan | `traditional` → Royal Maroon, `ethnic` → Woven Indigo; planned: Yogyakarta Paes Ageng, Solo Basahan, Batak Toba |
+| International | Editorial | `international` → Editorial Ivory |
+| Classic | Romantic Floral | `conventional` → Blush Garden |
+| Artistic | Contemporary | `artistic` → Gallery Bold |
+| Modern Minimalist | — (coming soon) | — |
+| Rustic / Nature | — (coming soon) | — |
+
+- **Status** (`available` / `coming_soon` / `hidden`) exists at every level. Hidden templates render by
+  direct link (QA) but aren't listed.
+- **Template ids are permanent** — they will be stored on weddings. Display names can change freely
+  (Workstream 2's ids `international`, `traditional`, `ethnic`, `conventional`, `artistic` are unchanged).
+- **References**: each collection has `reference: { kind, region, notes, review }`. Regional cultural
+  collections are `needs_review`; `validateCatalog()` refuses to let a cultural collection become
+  available until it is `reviewed`.
+- **Config**: a template may carry `config`, passed to its component as a prop. This lets one renderer
+  power several templates (e.g. the Nusantara layout with a Javanese palette and ornament set).
+- **Integrity**: `validateCatalog()` checks unique kebab-case ids, reserved ids (`preview`),
+  family/collection references, status consistency and renderers. It runs in tests and logs in dev.
+
+Picker routes: `/themes` (families) → `/themes/:familyId` (collections; skipped when a family has a
+single collection) → `/themes/:familyId/:collectionId` (templates + live preview) and
+`/themes/:templateId/preview` (full screen).
+
 ```
 WeddingContent (features/wedding/types.ts)
         │
@@ -37,25 +71,38 @@ Theme registry (core/registry.ts)  ──  id → ThemeDefinition
 8. **Links from content go through `mapsLink()`** (blocks `javascript:` URLs); text is
    rendered with Vue interpolation only — never `v-html` with customer content.
 
-## Adding a new theme
+## Adding a family or collection
 
-1. Create `features/themes/<id>/`:
+Data only — no code changes:
+- Family: add an entry to `catalog/families.ts` (start with `status: 'coming_soon'`).
+- Collection: add an entry to `catalog/collections.ts` with its `reference`. For a cultural collection,
+  write `notes` that name the sub-traditions to distinguish, and keep `review: 'needs_review'` until
+  reviewed with people from or knowledgeable about the tradition.
+- Planned template: add an entry to `catalog/planned.ts` (no renderer, `status: 'coming_soon'`).
+
+## Adding a new template
+
+New templates go in `features/themes/templates/<family>/<collection>/<template-id>/`. (The five
+Workstream 2 templates keep their original folders, e.g. `traditional/` holds the Royal Maroon renderer.)
+
+1. Create the template folder:
    ```
    <id>/
-   ├── index.ts            # ThemeDefinition (id, name, category, tagline, description, previewImage, fonts, component)
+   ├── index.ts            # RenderableTemplate (id, familyId, collectionId, name, status, tagline, description, previewImage, fonts, component, config?)
    ├── <Name>Theme.vue     # root component: defineProps<ThemeProps>() + useWeddingView(props)
    ├── components/         # theme-only pieces (ornaments, sections) — optional
    ├── assets/thumbnail.svg
    └── styles/theme.css    # all selectors under .t-<id>
    ```
-2. Add it to `THEMES` in `core/registry.ts`. If it's a new category, add it to
-   `THEME_CATEGORIES` in `core/types.ts`.
+   To reuse an existing renderer with different styling, point `component` at it and pass `config`.
+2. Add it to `RENDERABLE_TEMPLATES` in `core/registry.ts` (remove its entry from `catalog/planned.ts`
+   if it was planned). Make sure its collection and family are `available`.
 3. Add its id to `THEME_IDS` in `frontend/e2e/themes.spec.ts`.
 4. Run `npm test` (renders the theme with full, minimal and edge-case content) and
    `npm run test:e2e` (no horizontal overflow at 375/768/1280 px, all images load).
    Review the screenshots in `test-results/screens/`.
 
-Nothing else changes: the renderer, preview page and content model pick it up automatically.
+Nothing else changes: the renderer, picker pages and content model pick it up automatically.
 
 ## Regional variants
 

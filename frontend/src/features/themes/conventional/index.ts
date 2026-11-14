@@ -1,10 +1,12 @@
-import type { ThemeDefinition } from '../core/types'
+import type { RenderableTemplate } from '../core/types'
 import thumbnail from './assets/thumbnail.svg'
 
-export const conventionalTheme: ThemeDefinition = {
+export const conventionalTheme: RenderableTemplate = {
   id: 'conventional',
-  name: 'Conventional',
-  category: 'conventional',
+  familyId: 'classic',
+  collectionId: 'romantic-floral',
+  name: 'Blush Garden',
+  status: 'available',
   tagline: 'Romantic florals in soft pastels',
   description:
     'The classic invitation feel: blush and sage pastels, hand-drawn-style florals, arched photo frames and an elegant script for your names.',

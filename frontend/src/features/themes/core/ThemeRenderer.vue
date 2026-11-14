@@ -13,7 +13,7 @@ import type { WeddingContent } from '@/features/wedding/types'
 
 import { useThemeFonts } from './composables/useThemeFonts'
 import { DEFAULT_THEME_ID, getTheme } from './registry'
-import type { ThemeDefinition } from './types'
+import type { RenderableTemplate } from './types'
 import './theme-base.css'
 
 const props = withDefaults(
@@ -31,7 +31,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{ fallback: [requestedId: string | null | undefined] }>()
 
-const theme = computed<ThemeDefinition>(() => getTheme(props.themeId) ?? getTheme(DEFAULT_THEME_ID)!)
+const theme = computed<RenderableTemplate>(() => getTheme(props.themeId) ?? getTheme(DEFAULT_THEME_ID)!)
 
 watch(
   () => props.themeId,
@@ -72,6 +72,6 @@ useThemeFonts(() => theme.value.fonts?.href)
 
 <template>
   <div class="wedding-site" :data-theme="theme.id" :style="{ '--site-vh': viewportHeight }">
-    <component :is="themeComponent" :content="content" />
+    <component :is="themeComponent" :content="content" :config="theme.config" />
   </div>
 </template>

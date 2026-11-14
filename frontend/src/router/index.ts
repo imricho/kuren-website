@@ -41,10 +41,35 @@ const router = createRouter({
           component: () => import('@/pages/DashboardPage.vue'),
           meta: { title: 'Dashboard' },
         },
+        // Theme selection: family → collection → template.
         {
           path: 'themes',
           name: 'themes',
-          component: () => import('@/pages/ThemesPage.vue'),
+          component: () => import('@/pages/ThemeFamiliesPage.vue'),
+          meta: { title: 'Themes' },
+        },
+        {
+          path: 'themes/:familyId',
+          name: 'theme-family',
+          component: () => import('@/pages/ThemeFamilyPage.vue'),
+          props: true,
+          meta: { title: 'Themes' },
+          // A family with a single collection skips straight to its templates.
+          beforeEnter: async (to) => {
+            // Loaded lazily so the theme catalog stays out of the initial bundle.
+            const { collectionsOf } = await import('@/features/themes/core/registry')
+            const familyId = String(to.params.familyId)
+            const collections = collectionsOf(familyId)
+            if (collections.length === 1) {
+              return { name: 'theme-collection', params: { familyId, collectionId: collections[0]!.id }, replace: true }
+            }
+          },
+        },
+        {
+          path: 'themes/:familyId/:collectionId',
+          name: 'theme-collection',
+          component: () => import('@/pages/ThemeCollectionPage.vue'),
+          props: true,
           meta: { title: 'Themes' },
         },
         {

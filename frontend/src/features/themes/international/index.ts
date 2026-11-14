@@ -1,10 +1,12 @@
-import type { ThemeDefinition } from '../core/types'
+import type { RenderableTemplate } from '../core/types'
 import thumbnail from './assets/thumbnail.svg'
 
-export const internationalTheme: ThemeDefinition = {
+export const internationalTheme: RenderableTemplate = {
   id: 'international',
-  name: 'International',
-  category: 'international',
+  familyId: 'international',
+  collectionId: 'editorial',
+  name: 'Editorial Ivory',
+  status: 'available',
   tagline: 'Modern, editorial and quietly luxurious',
   description:
     'A minimalist, magazine-inspired design with refined serif typography, generous white space and full-bleed photography in a soft neutral palette.',

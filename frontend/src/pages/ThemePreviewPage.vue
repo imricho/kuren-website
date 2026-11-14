@@ -3,7 +3,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { DEFAULT_THEME_ID, THEMES, getTheme } from '@/features/themes/core/registry'
+import { DEFAULT_THEME_ID, FAMILIES, THEMES, getTheme, templatePath } from '@/features/themes/core/registry'
 import ThemeRenderer from '@/features/themes/core/ThemeRenderer.vue'
 import { sampleWedding } from '@/features/wedding/sampleWedding'
 import { useThemeSelectionStore } from '@/stores/themeSelection'
@@ -19,6 +19,11 @@ watch(
 )
 const activeId = computed(() => getTheme(props.themeId)?.id ?? DEFAULT_THEME_ID)
 const activeName = computed(() => getTheme(activeId.value)!.name)
+const activePath = computed(() => templatePath(activeId.value)!)
+// Selectable templates grouped by family for the switcher.
+const groups = computed(() =>
+  FAMILIES.map((f) => ({ family: f, templates: THEMES.filter((t) => t.familyId === f.id) })).filter((g) => g.templates.length),
+)
 
 function switchTo(id: string) {
   router.replace({ name: 'theme-preview', params: { themeId: id } })
@@ -37,8 +42,14 @@ function switchTo(id: string) {
       <div
         class="flex max-w-full flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface/95 p-2 text-sm shadow-[var(--shadow-soft)] backdrop-blur"
       >
-        <RouterLink :to="{ name: 'themes' }" class="rounded-lg px-3 py-2 font-medium text-ink-700 hover:bg-rose-50">
-          ← Themes
+        <RouterLink
+          :to="{
+            name: 'theme-collection',
+            params: { familyId: activePath.family.id, collectionId: activePath.collection.id },
+          }"
+          class="rounded-lg px-3 py-2 font-medium text-ink-700 hover:bg-rose-50"
+        >
+          ← {{ activePath.family.name }}
         </RouterLink>
         <label class="sr-only" for="fs-theme">Theme</label>
         <select
@@ -47,7 +58,9 @@ function switchTo(id: string) {
           class="rounded-lg border border-line bg-surface px-2.5 py-2"
           @change="switchTo(($event.target as HTMLSelectElement).value)"
         >
-          <option v-for="theme in THEMES" :key="theme.id" :value="theme.id">{{ theme.name }}</option>
+          <optgroup v-for="g in groups" :key="g.family.id" :label="g.family.name">
+            <option v-for="theme in g.templates" :key="theme.id" :value="theme.id">{{ theme.name }}</option>
+          </optgroup>
         </select>
         <button
           type="button"
@@ -55,7 +68,7 @@ function switchTo(id: string) {
           :disabled="selection.selectedThemeId === activeId"
           @click="selection.select(activeId)"
         >
-          {{ selection.selectedThemeId === activeId ? 'Selected' : 'Use this theme' }}
+          {{ selection.selectedThemeId === activeId ? 'Selected' : 'Use this template' }}
         </button>
         <p v-if="fellBack" class="w-full px-2 pb-1 text-xs text-danger-600" role="status">
           Theme "{{ themeId }}" doesn't exist — showing {{ activeName }} instead.

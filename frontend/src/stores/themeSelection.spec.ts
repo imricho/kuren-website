@@ -20,7 +20,8 @@ describe('theme selection store', () => {
     setActivePinia(createPinia())
     const reloaded = useThemeSelectionStore()
     expect(reloaded.selectedThemeId).toBe('ethnic')
-    expect(reloaded.selectedTheme?.name).toBe('Ethnic')
+    // The id is stable; only the display name changed with the theme-family update.
+    expect(reloaded.selectedTheme?.name).toBe('Woven Indigo')
   })
 
   it('ignores unknown theme ids, including stale stored ones', () => {

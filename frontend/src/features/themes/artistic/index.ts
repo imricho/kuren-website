@@ -1,10 +1,12 @@
-import type { ThemeDefinition } from '../core/types'
+import type { RenderableTemplate } from '../core/types'
 import thumbnail from './assets/thumbnail.svg'
 
-export const artisticTheme: ThemeDefinition = {
+export const artisticTheme: RenderableTemplate = {
   id: 'artistic',
-  name: 'Artistic',
-  category: 'artistic',
+  familyId: 'artistic',
+  collectionId: 'contemporary',
+  name: 'Gallery Bold',
+  status: 'available',
   tagline: 'Bold, editorial and expressive',
   description:
     'A contemporary, gallery-like design with oversized type, asymmetric compositions, collage-style photos and a single vivid accent — expressive, but always readable.',

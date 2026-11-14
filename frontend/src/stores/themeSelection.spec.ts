@@ -48,4 +48,15 @@ describe('theme selection store', () => {
     store.select('gallery-bold')
     expect(store.selectedThemeId).toBe('artistic')
   })
+
+  it('drafts can be previewed but never selected', () => {
+    const store = useThemeSelectionStore()
+    store.select('batak-toba')
+    expect(store.selectedThemeId).toBeNull()
+    store.preview('batak-toba')
+    expect(store.previewedThemeId).toBe('batak-toba')
+    localStorage.setItem('kuren.selectedThemeId', 'batak-toba')
+    setActivePinia(createPinia())
+    expect(useThemeSelectionStore().selectedThemeId).toBeNull()
+  })
 })

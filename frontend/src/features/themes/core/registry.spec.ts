@@ -101,7 +101,7 @@ describe('theme hierarchy: family → collection → template', () => {
       'Papuan',
     ])
     for (const c of regional) {
-      expect(c.status).toBe('coming_soon')
+      expect(c.status).toBe('draft')
       expect(c.reference.review).toBe('needs_review')
       expect(c.reference.region).toBeTruthy()
     }
@@ -121,10 +121,17 @@ describe('theme hierarchy: family → collection → template', () => {
   })
 
   it('lets a collection hold several templates, including planned ones', () => {
-    expect(templatesOf('javanese').map((t) => t.name)).toEqual(['Yogyakarta Paes Ageng', 'Solo Basahan'])
-    expect(templatesOf('javanese').every((t) => t.status === 'coming_soon' && !t.component)).toBe(true)
+    expect(templatesOf('javanese').map((t) => t.name)).toEqual(['Yogyakarta Draft', 'Yogyakarta Paes Ageng', 'Solo Basahan'])
+    expect(templatesOf('javanese').filter((t) => t.status === 'coming_soon').every((t) => !t.component)).toBe(true)
     expect(availableTemplatesOf('javanese')).toEqual([])
-    expect(templatesOf('batak').map((t) => t.regionalVariation)).toEqual(['Toba'])
+    expect(templatesOf('batak').map((t) => t.regionalVariation)).toEqual([
+      'Toba variant',
+      'Karo',
+      'Mandailing',
+      'Simalungun',
+      'Pakpak',
+      'Angkola',
+    ])
     expect(availableTemplatesOf('nusantara-heritage').map((t) => t.id)).toEqual(['traditional', 'ethnic'])
   })
 
@@ -229,16 +236,16 @@ describe('naming, aliases and counts', () => {
   })
 
   it('counts collections by availability per family', () => {
-    expect(collectionCounts('traditional')).toEqual({ total: 13, available: 1, comingSoon: 12, regional: 12 })
-    expect(collectionCounts('classic')).toEqual({ total: 1, available: 1, comingSoon: 0, regional: 0 })
-    expect(collectionCounts('rustic-nature')).toEqual({ total: 0, available: 0, comingSoon: 0, regional: 0 })
+    expect(collectionCounts('traditional')).toEqual({ total: 13, available: 1, draft: 12, comingSoon: 0, regional: 12 })
+    expect(collectionCounts('classic')).toEqual({ total: 1, available: 1, draft: 0, comingSoon: 0, regional: 0 })
+    expect(collectionCounts('rustic-nature')).toEqual({ total: 0, available: 0, draft: 0, comingSoon: 0, regional: 0 })
   })
 
   it('counts templates by availability per family and collection', () => {
-    expect(templateCounts({ familyId: 'traditional' })).toEqual({ available: 2, comingSoon: 3 })
-    expect(templateCounts({ collectionId: 'nusantara-heritage' })).toEqual({ available: 2, comingSoon: 0 })
-    expect(templateCounts({ collectionId: 'javanese' })).toEqual({ available: 0, comingSoon: 2 })
-    expect(templateCounts({ familyId: 'modern-minimalist' })).toEqual({ available: 0, comingSoon: 0 })
+    expect(templateCounts({ familyId: 'traditional' })).toEqual({ available: 2, draft: 12, comingSoon: 12 })
+    expect(templateCounts({ collectionId: 'nusantara-heritage' })).toEqual({ available: 2, draft: 0, comingSoon: 0 })
+    expect(templateCounts({ collectionId: 'javanese' })).toEqual({ available: 0, draft: 1, comingSoon: 2 })
+    expect(templateCounts({ familyId: 'modern-minimalist' })).toEqual({ available: 0, draft: 0, comingSoon: 0 })
   })
 
   it('rejects aliases that collide with another id', () => {

@@ -25,7 +25,9 @@ const path = computed(() => templatePath(props.template.id)!)
   <section aria-labelledby="preview-heading" class="flex h-full min-h-0 flex-col gap-4" data-testid="preview-pane">
     <header class="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
       <div class="min-w-0">
-        <p class="text-xs font-medium tracking-wide text-rose-600 uppercase">Previewing · sample wedding</p>
+        <p class="text-xs font-medium tracking-wide text-rose-600 uppercase">
+          Previewing<template v-if="template.status === 'draft'"> · draft</template> · sample wedding
+        </p>
         <h2 id="preview-heading" tabindex="-1" class="mt-1 text-3xl font-semibold outline-none">{{ template.name }}</h2>
         <nav aria-label="Previewed template location" class="mt-1 text-sm text-ink-500">
           <RouterLink :to="familyRoute(path.family.id)" class="rounded hover:text-ink-900">{{ path.family.name }}</RouterLink>

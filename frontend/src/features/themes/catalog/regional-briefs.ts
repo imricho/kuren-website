@@ -48,7 +48,9 @@ const DESK_REVIEW =
 const NOT_EXHAUSTIVE = 'Options are not exhaustive; confirm with the couple and reviewers.'
 const ART_NOT_CLAIM = 'Palette is art direction; it may take visual cues from reviewed references but makes no colour claim.'
 
-export const REGIONAL_BRIEFS: Record<string, CulturalBrief> = {
+type BaseBrief = Omit<CulturalBrief, 'designStatus' | 'draft' | 'suggestedReviewers' | 'openQuestions'>
+
+const BASE_BRIEFS: Record<string, BaseBrief> = {
   javanese: {
     localityRequired: true,
     localityLabel: 'locality or court tradition',
@@ -549,3 +551,233 @@ export const REGIONAL_BRIEFS: Record<string, CulturalBrief> = {
     },
   },
 }
+
+// --- Draft designs (design status) -------------------------------------------------------
+//
+// Each collection has a complete draft template (status `draft`: previewable, not
+// selectable). Cultural status is unchanged: review pending. Drafts use only safer
+// cues — composition, generic material texture, typography, provisional palette.
+
+const SAFE_CUES = [
+  'Composition, typography and a generic material texture (art direction; no cultural claim)',
+  'Provisional palette (art direction; no colour meaning claimed)',
+  'Shared sample wedding content and the shared content contract',
+]
+const scoped = (title: string) => `Scope only, not design content: "${title}" (unverified)`
+
+const DRAFT_META: Record<
+  string,
+  Pick<CulturalBrief, 'designStatus' | 'draft' | 'suggestedReviewers' | 'openQuestions'>
+> = {
+  javanese: {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['javanese-yogyakarta'],
+      referencesUsed: [...SAFE_CUES, scoped('Indonesian Batik (UNESCO)')],
+      leftOutPendingReview: ['Batik motifs of any kind', 'Court regalia and Paes Ageng / Basahan styling', 'Kebaya and beskap depictions'],
+    },
+    suggestedReviewers: [
+      'Dinas Kebudayaan (Kundha Kabudayan) DIY',
+      'A Yogyakarta-style bridal (paes) practitioner',
+      'Batik/textile curators, e.g. Museum Sonobudoyo',
+    ],
+    openQuestions: [
+      'Which court tradition does the draft represent (Kasultanan or Pakualaman), and is the template name appropriate?',
+      'Which batik, if any, is appropriate for wedding use and for a public website?',
+      'Are any motifs restricted to court use?',
+    ],
+  },
+  sundanese: {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['sundanese-priangan'],
+      referencesUsed: [...SAFE_CUES, 'Generic leaf divider (botanical art direction, not a cultural motif)'],
+      leftOutPendingReview: ['Siger or siger-inspired forms', 'Kebaya and samping depictions'],
+    },
+    suggestedReviewers: [
+      'Dinas Kebudayaan dan Pariwisata Jawa Barat',
+      'Sundanese bridal (rias pengantin) practitioners from Priangan',
+      'Textile researchers in West Java',
+    ],
+    openQuestions: [
+      'Is a siger-inspired silhouette appropriate for a Priangan wedding website?',
+      'Which samping textiles are documented for weddings in Priangan?',
+    ],
+  },
+  minangkabau: {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['minangkabau-pandai-sikek'],
+      referencesUsed: [...SAFE_CUES, scoped('Tenun Songket Pandai Sikek (Yandri, Humanus 2014)'), 'Layered band composition (structure only)'],
+      leftOutPendingReview: ['Songket motifs', 'Suntiang depictions', 'Rumah Gadang geometry', 'Marawa tricolour stripes'],
+    },
+    suggestedReviewers: [
+      'Kerapatan Adat Nagari (KAN) of Pandai Sikek',
+      'Pandai Sikek songket weavers',
+      'Dinas Kebudayaan Sumatera Barat',
+    ],
+    openQuestions: [
+      'Is the deep-red, cream and gold art direction acceptable, or does it read as a marawa reference?',
+      'Which songket and suntiang references are appropriate for Pandai Sikek weddings?',
+    ],
+  },
+  batak: {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['batak-toba'],
+      referencesUsed: [...SAFE_CUES, scoped('Ulos Batak Toba record (link failing)'), 'Generic woven texture (not an ulos pattern)'],
+      leftOutPendingReview: ['Ulos patterns, colours and placement', 'Gorga or other carved ornament', 'Any reference for Karo, Mandailing, Simalungun, Pakpak or Angkola'],
+    },
+    suggestedReviewers: [
+      'Toba Batak adat elders and cultural practitioners',
+      'Ulos weavers from the Toba area',
+      'Dinas Kebudayaan Sumatera Utara',
+    ],
+    openQuestions: [
+      'Which ulos (if any) may be depicted on a wedding invitation, and how?',
+      'What sources and reviewers exist for the Karo, Mandailing, Simalungun, Pakpak and Angkola variants?',
+      'How should couples who do not identify as Batak be offered their own community option?',
+    ],
+  },
+  bugis: {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['bugis-wajo'],
+      referencesUsed: [...SAFE_CUES, scoped('Bugis weaving communities in Wajo (Kesuma, Walasuji 2018)'), 'Generic silk-sheen texture (not a lipa sabbe pattern)'],
+      leftOutPendingReview: ['Baju bodo depictions and colours', 'Lipa sabbe patterns', 'Historic colour or status rules'],
+    },
+    suggestedReviewers: [
+      'Bugis cultural practitioners in Wajo',
+      'Lipa sabbe weavers (e.g. Tanasitolo, Wajo)',
+      'Balai Pelestarian Kebudayaan office for South Sulawesi',
+    ],
+    openQuestions: [
+      'Which lipa sabbe patterns are used at Wajo weddings today?',
+      'How should baju bodo be represented without implying historic status rules?',
+    ],
+  },
+  betawi: {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['betawi-tengah'],
+      referencesUsed: [...SAFE_CUES, scoped('Roti Buaya record (link failing)')],
+      leftOutPendingReview: ['Batik Betawi motifs', 'Roti Buaya illustration', 'Ondel-ondel or generic Jakarta imagery'],
+    },
+    suggestedReviewers: [
+      'Lembaga Kebudayaan Betawi (LKB)',
+      'Betawi wedding practitioners (Betawi Tengah and Pinggir)',
+      'Dinas Kebudayaan DKI Jakarta',
+    ],
+    openQuestions: [
+      'Is Betawi Tengah the right reference for this draft, or should communities be separate templates?',
+      'How, if at all, should Roti Buaya appear as a contextual detail?',
+    ],
+  },
+  malay: {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['malay-siak'],
+      referencesUsed: [...SAFE_CUES, scoped('Tenun Siak record (link failing)'), 'Generic fine grain texture (not gold-thread ornament)'],
+      leftOutPendingReview: ['Tenun Siak and songket motifs', 'Gold-thread ornament', 'Baju kurung depictions'],
+    },
+    suggestedReviewers: [
+      'Lembaga Adat Melayu Riau (LAM Riau), Siak',
+      'Tenun Siak weavers',
+      'Dinas Kebudayaan Provinsi Riau',
+    ],
+    openQuestions: [
+      'Which Tenun Siak references are appropriate for a wedding invitation?',
+      'Is the plum and gold art direction acceptable for Siak, or misleading?',
+    ],
+  },
+  madura: {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['madura-sumenep'],
+      referencesUsed: [...SAFE_CUES, 'Neutral tone by design (avoids stereotyped "bold" framing)'],
+      leftOutPendingReview: ['Sumenep batik', 'Wedding attire depictions', 'Any "Madura palette" claim'],
+    },
+    suggestedReviewers: [
+      'Sumenep regency culture office',
+      'Sumenep batik makers',
+      'Madurese wedding practitioners from Sumenep',
+    ],
+    openQuestions: [
+      'Which Sumenep batik and attire references are documented for weddings?',
+      'Should other localities (Bangkalan, Sampang, Pamekasan, Pandalungan) be separate templates?',
+    ],
+  },
+  balinese: {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['balinese-context-pending'],
+      referencesUsed: [...SAFE_CUES, 'Generic gold-sheen texture (not a ritual or temple cloth)'],
+      leftOutPendingReview: ['Payas Agung', 'Deities, temples, offerings, sacred objects', 'Poleng or other ritual cloths', 'Caste/wangsa framing'],
+    },
+    suggestedReviewers: [
+      'Majelis Desa Adat (MDA) Provinsi Bali',
+      'Balinese bridal (payas) practitioners, by regency',
+      'Dinas Kebudayaan Provinsi Bali',
+    ],
+    openQuestions: [
+      'Which locality and ceremonial context should the first Balinese template represent?',
+      'Which wedding attire and textile references are appropriate for a public website?',
+    ],
+  },
+  dayak: {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['dayak-ngaju'],
+      referencesUsed: [...SAFE_CUES, scoped('Benang Bintik, Central Kalimantan (link dead; Ngaju association unconfirmed)')],
+      leftOutPendingReview: ['Benang Bintik', 'Batang Garing and other sacred symbols', 'Mandau, headhunting, hornbill or rainforest imagery', 'Any Iban or other community reference'],
+    },
+    suggestedReviewers: [
+      'Dewan Adat Dayak (DAD) Kalimantan Tengah',
+      'Ngaju cultural practitioners and weavers',
+      'Balai Pelestarian Kebudayaan office covering Central Kalimantan',
+    ],
+    openQuestions: [
+      'Is Benang Bintik documented as a Ngaju wedding textile, and may it be depicted?',
+      'What sources and reviewers exist for an Iban variant?',
+    ],
+  },
+  'ambon-maluku': {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['maluku-ambon'],
+      referencesUsed: SAFE_CUES,
+      leftOutPendingReview: ['Tifa', 'Coastal scenery', 'Any single textile as representative of Maluku', 'Religious or pela gandong references'],
+    },
+    suggestedReviewers: [
+      'Ambon cultural practitioners (confirming community self-identification)',
+      'Dinas Kebudayaan Provinsi Maluku',
+      'Museum Siwalima, Ambon',
+    ],
+    openQuestions: [
+      'Which Ambon community and wedding references should this draft represent?',
+      'Which other islands or communities (incl. North Maluku) need their own templates?',
+    ],
+  },
+  papuan: {
+    designStatus: 'draft',
+    draft: {
+      templateIds: ['papuan-community-pending'],
+      referencesUsed: [...SAFE_CUES, 'Intentionally community-neutral until a community is chosen'],
+      leftOutPendingReview: ['Feathers (incl. bird-of-paradise), body paint, koteka, carvings, barkcloth', 'Motifs from any community', 'Political symbols'],
+    },
+    suggestedReviewers: [
+      'Practitioners from the chosen community, via community-led organisations',
+      'Dinas Kebudayaan of the relevant province',
+      'Museum Loka Budaya, Universitas Cenderawasih (Jayapura)',
+    ],
+    openQuestions: [
+      'Which community should the first Papuan template represent, and who can approve its references?',
+      'Is a community-neutral draft acceptable as an interim design?',
+    ],
+  },
+}
+
+export const REGIONAL_BRIEFS: Record<string, CulturalBrief> = Object.fromEntries(
+  Object.entries(BASE_BRIEFS).map(([id, brief]) => [id, { ...brief, ...DRAFT_META[id]! }]),
+)
+

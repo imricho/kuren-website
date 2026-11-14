@@ -7,7 +7,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { availableTemplatesOf, templatePath } from '@/features/themes/core/registry'
+import { previewableTemplatesOf, templatePath } from '@/features/themes/core/registry'
 import ThemeRenderer from '@/features/themes/core/ThemeRenderer.vue'
 import type { RenderableTemplate } from '@/features/themes/core/types'
 import { ACTION } from '@/features/themes/picker/format'
@@ -22,7 +22,7 @@ const router = useRouter()
 
 const path = computed(() => templatePath(props.templateSlug))
 const template = computed(() => path.value?.template as RenderableTemplate | undefined)
-const siblings = computed(() => (path.value ? availableTemplatesOf(path.value.collection.id) : []))
+const siblings = computed(() => (path.value ? previewableTemplatesOf(path.value.collection.id) : []))
 const notFound = computed(() => (typeof route.query.notFound === 'string' ? route.query.notFound : null))
 
 function switchTo(id: string) {

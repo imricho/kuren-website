@@ -28,6 +28,7 @@ const collections = computed(() => (props.family ? collectionsOf(props.family.id
 const general = computed(() => collections.value.filter((c) => c.reference.kind === 'design'))
 const regional = computed(() => collections.value.filter((c) => c.reference.kind === 'cultural'))
 const regionalAvailable = computed(() => regional.value.filter((c) => c.status === 'available').length)
+const regionalDrafts = computed(() => regional.value.filter((c) => c.status === 'draft').length)
 const templates = computed(() => (props.collection ? templatesOf(props.collection.id) : []))
 
 const itemClass =
@@ -141,7 +142,7 @@ const itemClass =
           Regional collections · {{ regional.length }}
         </h3>
         <p class="mb-2 text-xs text-ink-500" data-testid="regional-summary">
-          {{ regionalAvailable }} of {{ regional.length }} available. Each is in development and will be released only after its sources are verified and it has been reviewed with the community it draws on.
+          {{ regionalAvailable }} of {{ regional.length }} approved · {{ regionalDrafts }} with a draft to preview. Drafts are not culturally verified and can't be selected until reviewed with the community they draw on.
         </p>
         <ul class="space-y-2">
           <li
@@ -210,13 +211,13 @@ const itemClass =
               itemClass,
               'flex-row items-center gap-3 px-3',
               t.id === previewedId ? 'border-rose-500 bg-rose-50/60' : 'border-line',
-              t.status === 'available' && 'hover:border-rose-500',
+              (t.status === 'available' || t.status === 'draft') && 'hover:border-rose-500',
             ]"
             :data-theme-card="t.id"
             :data-status="t.status"
           >
             <img
-              v-if="t.status === 'available'"
+              v-if="t.status === 'available' || t.status === 'draft'"
               :src="t.previewImage"
               alt=""
               class="h-12 w-[4.8rem] shrink-0 rounded-md object-cover ring-1 ring-line"
@@ -230,7 +231,7 @@ const itemClass =
             <div class="min-w-0 flex-1">
               <h4 class="font-display text-lg leading-tight font-semibold">
                 <RouterLink
-                  v-if="t.status === 'available'"
+                  v-if="t.status === 'available' || t.status === 'draft'"
                   :to="templateRoute(t)"
                   class="outline-none after:absolute after:inset-0"
                   :aria-current="t.id === previewedId ? 'true' : undefined"

@@ -41,7 +41,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
       'Central Java, Yogyakarta & East Java',
       'Each court tradition (e.g. Yogyakarta, Pakualaman, Surakarta, Mangkunegaran) has its own named bridal styles; record the exact style name from a source and name the specific tradition per template.',
     ),
-    status: 'coming_soon',
+    status: 'draft',
   },
   {
     id: 'sundanese',
@@ -49,7 +49,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
     name: 'Sundanese',
     description: 'Designs inspired by Sundanese wedding traditions.',
     reference: cultural('West Java & Banten', 'Includes distinct regional styles (e.g. Priangan); confirm details per template.'),
-    status: 'coming_soon',
+    status: 'draft',
   },
   {
     id: 'minangkabau',
@@ -58,7 +58,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
     alsoKnownAs: 'Minang',
     description: 'Designs inspired by Minangkabau wedding traditions.',
     reference: cultural('West Sumatra', 'Attire and ornament vary between nagari (villages/regions); confirm the specific source.'),
-    status: 'coming_soon',
+    status: 'draft',
   },
   {
     id: 'batak',
@@ -69,7 +69,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
       'Mainly North Sumatra (Pakpak and Karo areas extend into Aceh)',
       'Several peoples — Toba, Karo, Simalungun, Pakpak, Angkola, Mandailing — each with its own textile traditions and names. Some do not identify as Batak. Templates must specify which.',
     ),
-    status: 'coming_soon',
+    status: 'draft',
   },
   {
     id: 'bugis',
@@ -77,7 +77,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
     name: 'Bugis',
     description: 'Designs inspired by Bugis wedding traditions.',
     reference: cultural('South Sulawesi and Bugis communities elsewhere', 'Distinguish Bugis from neighbouring Makassar traditions; do not assign colour meanings unless sourced.'),
-    status: 'coming_soon',
+    status: 'draft',
   },
   {
     id: 'betawi',
@@ -85,7 +85,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
     name: 'Betawi',
     description: 'Designs inspired by Betawi wedding traditions.',
     reference: cultural('Jakarta, Bekasi, Depok, Tangerang, Bogor', 'A distinct culture with its own documented history; represent it on its own terms.'),
-    status: 'coming_soon',
+    status: 'draft',
   },
   {
     id: 'malay',
@@ -97,7 +97,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
       'Riau, Riau Islands, coastal Sumatra & West Kalimantan',
       'Malay communities span many regions with differing customs; templates should state their regional source.',
     ),
-    status: 'coming_soon',
+    status: 'draft',
   },
   {
     id: 'madura',
@@ -105,7 +105,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
     name: 'Madura',
     description: 'Designs inspired by Madurese wedding traditions.',
     reference: cultural('Madura Island, East Java', 'Confirm attire, colours and ornament with cultural sources.'),
-    status: 'coming_soon',
+    status: 'draft',
   },
   {
     id: 'balinese',
@@ -117,7 +117,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
       'Bali',
       'Many Balinese motifs carry religious meaning; avoid sacred symbols used out of context and confirm with cultural reviewers.',
     ),
-    status: 'coming_soon',
+    status: 'draft',
   },
   {
     id: 'dayak',
@@ -128,7 +128,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
       'Kalimantan',
       'Dayak is an umbrella term for many distinct peoples (e.g. Ngaju, Kenyah, Iban). Templates must specify the community and avoid generic "tribal" styling.',
     ),
-    status: 'coming_soon',
+    status: 'draft',
   },
   {
     id: 'ambon-maluku',
@@ -136,7 +136,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
     name: 'Ambon / Maluku',
     description: 'Designs inspired by Ambonese and Moluccan wedding traditions.',
     reference: cultural('Maluku and North Maluku provinces', 'Maluku spans many islands and communities; name the specific tradition per template.'),
-    status: 'coming_soon',
+    status: 'draft',
   },
   {
     id: 'papuan',
@@ -148,7 +148,7 @@ const BASE_COLLECTIONS: ThemeCollection[] = [
       'Papua region (six provinces since 2022)',
       'Papua is home to hundreds of distinct peoples and languages. Templates must specify the community, be developed with community input, and avoid stereotyped imagery.',
     ),
-    status: 'coming_soon',
+    status: 'draft',
   },
 
   // --- International ------------------------------------------------------------

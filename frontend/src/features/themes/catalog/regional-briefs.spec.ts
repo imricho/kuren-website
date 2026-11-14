@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { COLLECTIONS, collectionsOf, validateBrief } from '../core/registry'
+import { COLLECTIONS, collectionsOf, getTemplate, validateBrief } from '../core/registry'
+import { isRenderable, isSelectable } from '../core/types'
 import type { ThemeCollection } from '../core/types'
 import { REGIONAL_BRIEFS } from './regional-briefs'
 
@@ -22,11 +23,31 @@ describe('regional Traditional collections — cultural briefs', () => {
   it('nothing is presented as verified, confirmed or reviewed yet', () => {
     for (const c of regional) {
       const b = c.brief!
-      expect(c.status, c.id).toBe('coming_soon')
+      expect(c.status, c.id).toBe('draft')
       expect(b.review.status, c.id).toBe('in_development')
       expect(b.review.reviewers, c.id).toEqual([])
       expect(b.sources.every((s) => !s.verified), c.id).toBe(true)
       expect(Object.values(b.confirmed).flat(), c.id).toEqual([])
+    }
+  })
+
+  it('every regional collection has a draft design, separate from its pending cultural review', () => {
+    for (const c of regional) {
+      const b = c.brief!
+      expect(b.designStatus, c.id).toBe('draft')
+      expect(b.review.status, c.id).toBe('in_development')
+      expect(b.draft!.templateIds.length, c.id).toBeGreaterThan(0)
+      expect(b.draft!.referencesUsed.length, c.id).toBeGreaterThan(0)
+      expect(b.draft!.leftOutPendingReview.length, c.id).toBeGreaterThan(0)
+      expect(b.suggestedReviewers.length, c.id).toBeGreaterThan(0)
+      expect(b.openQuestions.length, c.id).toBeGreaterThan(0)
+      for (const id of b.draft!.templateIds) {
+        const t = getTemplate(id)
+        expect(t?.status, id).toBe('draft')
+        expect(t?.collectionId, id).toBe(c.id)
+        expect(isSelectable(t), id).toBe(false)
+        expect(isRenderable(t!), id).toBe(true)
+      }
     }
   })
 

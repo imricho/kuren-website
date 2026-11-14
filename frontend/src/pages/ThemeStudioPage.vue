@@ -16,6 +16,7 @@ import {
   THEMES,
   availableTemplatesOf,
   getCollection,
+  previewableTemplatesOf,
   getFamily,
   getTheme,
   templatePath,
@@ -46,12 +47,12 @@ const NEUTRAL_COLLECTION_ID = 'nusantara-heritage'
 // A regional collection with nothing reviewed yet previews a culturally neutral template instead.
 const usesNeutralPreview = computed(
   () =>
-    collection.value?.reference.kind === 'cultural' && availableTemplatesOf(collection.value.id).length === 0,
+    collection.value?.reference.kind === 'cultural' && previewableTemplatesOf(collection.value.id).length === 0,
 )
 
 const scopeTemplates = computed<RenderableTemplate[]>(() => {
   if (usesNeutralPreview.value) return availableTemplatesOf(NEUTRAL_COLLECTION_ID)
-  if (collection.value) return availableTemplatesOf(collection.value.id)
+  if (collection.value) return previewableTemplatesOf(collection.value.id)
   if (family.value) return THEMES.filter((t) => t.familyId === family.value!.id)
   return [...THEMES]
 })
@@ -72,6 +73,10 @@ watch(previewed, (t) => selection.preview(t.id), { immediate: true })
 const notice = computed(() => {
   const missing = route.query.notFound
   if (typeof missing === 'string') return `Template "${missing}" doesn't exist — showing ${previewed.value.name} instead.`
+  if (previewed.value.status === 'draft') {
+    const p = templatePath(previewed.value.id)!
+    return `Draft — cultural review pending. ${previewed.value.name} is a draft design for the ${p.collection.name} collection: it is not culturally verified or approved, and it can't be selected yet.`
+  }
   if (usesNeutralPreview.value) {
     return `${collection.value!.name} designs are in development and awaiting cultural review. Showing ${previewed.value.name} from Nusantara Heritage — a culturally neutral design, not a ${collection.value!.name} design.`
   }

@@ -15,13 +15,14 @@ import type { WeddingContent } from '@/features/wedding/types'
 
 /**
  * - `available`: listed and selectable.
+ * - `draft`: listed and previewable, NOT selectable — a design awaiting (cultural) review.
  * - `coming_soon`: listed as planned; not selectable (templates have no renderer yet).
  * - `hidden`: renderable by direct id/link (QA, staged rollout) but not listed.
  */
-export type ThemeStatus = 'available' | 'coming_soon' | 'hidden'
+export type ThemeStatus = 'available' | 'draft' | 'coming_soon' | 'hidden'
 
 /** Free-form, template-specific settings passed to the renderer (palette, motif set…). */
-export type ThemeConfig = Readonly<Record<string, unknown>>
+export type ThemeConfig = Readonly<object>
 
 /** Props every theme component receives. Themes consume ONLY the shared content model. */
 export interface ThemeProps {
@@ -121,6 +122,21 @@ export interface CulturalBrief {
   toResearch: CulturalItems
   /** Things the collection must not do or depict. */
   avoid: string[]
+  /**
+   * Design status, separate from cultural approval (`review`). A collection can have a
+   * complete draft design while its cultural review is still pending.
+   */
+  designStatus: 'not_started' | 'draft' | 'final'
+  /** What the current draft is based on, and what it deliberately leaves out until review. */
+  draft?: {
+    templateIds: string[]
+    referencesUsed: string[]
+    leftOutPendingReview: string[]
+  }
+  /** Kinds of reviewers to approach (not contacted yet unless listed in `review.reviewers`). */
+  suggestedReviewers: string[]
+  /** Questions the review must answer before release. */
+  openQuestions: string[]
   /** Creative choices for the eventual design. Not cultural claims. */
   artDirection: ArtDirection
 }
@@ -156,11 +172,13 @@ interface TemplateBase {
   description: string
   /** e.g. "Yogyakarta" vs "Surakarta (Solo)" within the Javanese collection. */
   regionalVariation?: string
+  /** For cultural collections: the brief's locality/community option this template draws on. */
+  localityId?: string
 }
 
-/** A template with a renderer (available, or hidden for QA). */
+/** A template with a renderer: available, a previewable draft, or hidden for QA. */
 export interface RenderableTemplate extends TemplateBase {
-  status: 'available' | 'hidden'
+  status: 'available' | 'draft' | 'hidden'
   /** Static thumbnail URL for selection cards. */
   previewImage: string
   /** Web fonts the theme needs; loaded only when the theme is shown. */
@@ -186,4 +204,9 @@ export type ThemeDefinition = RenderableTemplate
 
 export function isRenderable(template: ThemeTemplate): template is RenderableTemplate {
   return template.status !== 'coming_soon' && typeof template.component === 'function'
+}
+
+/** Only available templates can be chosen for a wedding. Drafts are preview-only. */
+export function isSelectable(template: ThemeTemplate | undefined): boolean {
+  return template?.status === 'available'
 }

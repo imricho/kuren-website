@@ -20,6 +20,7 @@ import { conventionalTheme } from '../conventional'
 import { ethnicTheme } from '../ethnic'
 import { internationalTheme } from '../international'
 import { traditionalTheme } from '../traditional'
+import { REGIONAL_DRAFT_TEMPLATES } from '../templates/traditional/regional/drafts'
 import {
   isRenderable,
   type RenderableTemplate,
@@ -34,6 +35,8 @@ const RENDERABLE_TEMPLATES: readonly RenderableTemplate[] = [
   ethnicTheme,
   conventionalTheme,
   artisticTheme,
+  // Regional Traditional drafts: previewable, not selectable until culturally reviewed.
+  ...REGIONAL_DRAFT_TEMPLATES,
 ]
 
 /** Every template (renderable and planned), in display order. */
@@ -77,9 +80,9 @@ export function getTheme(id: string | null | undefined): RenderableTemplate | un
   return template && isRenderable(template) ? template : undefined
 }
 
-/** True for ids that can be rendered (what a wedding may store as its theme). */
+/** True for ids a wedding may store as its theme: selectable (available) templates only. */
 export function isThemeId(id: unknown): id is string {
-  return typeof id === 'string' && getTheme(id) !== undefined
+  return typeof id === 'string' && getTheme(id)?.status === 'available'
 }
 
 export function getTemplate(id: string | null | undefined): ThemeTemplate | undefined {
@@ -108,6 +111,13 @@ export function availableTemplatesOf(collectionId: string): RenderableTemplate[]
   return templatesOf(collectionId).filter((t): t is RenderableTemplate => t.status === 'available')
 }
 
+/** Templates that can be previewed: available ones and drafts. */
+export function previewableTemplatesOf(collectionId: string): RenderableTemplate[] {
+  return templatesOf(collectionId).filter(
+    (t): t is RenderableTemplate => t.status === 'available' || t.status === 'draft',
+  )
+}
+
 /** Number of selectable templates in a family. */
 export function availableCountInFamily(familyId: string): number {
   return THEMES.filter((t) => t.familyId === familyId).length
@@ -119,6 +129,7 @@ export function collectionCounts(familyId: string) {
   return {
     total: listed.length,
     available: listed.filter((c) => c.status === 'available').length,
+    draft: listed.filter((c) => c.status === 'draft').length,
     comingSoon: listed.filter((c) => c.status === 'coming_soon').length,
     regional: listed.filter((c) => c.reference.kind === 'cultural').length,
   }
@@ -134,6 +145,7 @@ export function templateCounts(scope: { familyId?: string; collectionId?: string
   )
   return {
     available: listed.filter((t) => t.status === 'available').length,
+    draft: listed.filter((t) => t.status === 'draft').length,
     comingSoon: listed.filter((t) => t.status === 'coming_soon').length,
   }
 }
@@ -165,6 +177,12 @@ export function validateBrief(c: ThemeCollection): string[] {
     problems.push(`collection "${c.id}" review status is inconsistent between reference and brief`)
   if (b.review.status === 'reviewed' && b.review.reviewers.length === 0)
     problems.push(`collection "${c.id}" is marked reviewed but names no reviewers`)
+  if (c.status === 'draft' && b.designStatus !== 'draft')
+    problems.push(`collection "${c.id}" is shown as a draft but its brief's designStatus is ${b.designStatus}`)
+  if (b.designStatus === 'draft' && !b.draft?.templateIds.length)
+    problems.push(`collection "${c.id}" has a draft design but no draft templates recorded`)
+  if (b.designStatus === 'draft' && b.suggestedReviewers.length === 0)
+    problems.push(`collection "${c.id}" has a draft design but no suggested reviewers`)
   if (b.selectedLocality && !b.localities.some((l) => l.id === b.selectedLocality))
     problems.push(`collection "${c.id}" selects an unknown locality "${b.selectedLocality}"`)
   for (const s of b.sources) if (!/^https:\/\//.test(s.url)) problems.push(`collection "${c.id}" has a non-https source URL`)
@@ -206,7 +224,7 @@ export function validateCatalog(
   for (const c of collections) {
     const family = fams.get(c.familyId)
     if (!family) problems.push(`collection "${c.id}" references unknown family "${c.familyId}"`)
-    else if (c.status === 'available' && family.status !== 'available')
+    else if ((c.status === 'available' || c.status === 'draft') && family.status !== 'available')
       problems.push(`collection "${c.id}" is available but its family "${family.id}" is not`)
     if (c.reference.kind === 'cultural' && c.status === 'available' && c.reference.review !== 'reviewed')
       problems.push(`cultural collection "${c.id}" must be reviewed before it is available`)
@@ -224,6 +242,10 @@ export function validateCatalog(
       problems.push(`template "${t.id}" is in family "${t.familyId}" but its collection belongs to "${collection.familyId}"`)
     if (t.status === 'available' && collection.status !== 'available')
       problems.push(`template "${t.id}" is available but its collection "${collection.id}" is not`)
+    if (t.status === 'draft' && !['draft', 'available'].includes(collection.status))
+      problems.push(`template "${t.id}" is a draft but its collection "${collection.id}" is ${collection.status}`)
+    if (t.localityId && !collection.brief?.localities.some((l) => l.id === t.localityId))
+      problems.push(`template "${t.id}" references unknown locality "${t.localityId}"`)
     // Runtime check for data that bypasses the types (e.g. future JSON/API catalogs).
     const component = (t as { component?: unknown }).component
     if (t.status !== 'coming_soon' && typeof component !== 'function')

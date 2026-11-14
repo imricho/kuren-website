@@ -8,6 +8,7 @@
  */
 import { computed } from 'vue'
 
+import { templatesOf } from '../core/registry'
 import type { ThemeCollection } from '../core/types'
 import { REVIEW_LABEL } from './format'
 
@@ -26,6 +27,20 @@ const researchGroups = computed(() =>
   ITEM_GROUPS.map(([key, label]) => ({ label, items: brief.value.toResearch[key] })).filter((g) => g.items.length),
 )
 const selectedLocality = computed(() => brief.value.localities.find((l) => l.id === brief.value.selectedLocality))
+
+// Localities the current drafts follow (provisional; not the confirmed choice needed for release).
+const draftDirections = computed(() =>
+  templatesOf(props.collection.id)
+    .filter((t) => t.status === 'draft')
+    .map((t) => brief.value.localities.find((l) => l.id === t.localityId)?.name ?? t.regionalVariation)
+    .filter(Boolean),
+)
+
+const DESIGN_LABEL = {
+  not_started: 'Not started',
+  draft: 'Draft — preview available',
+  final: 'Final design',
+} as const
 </script>
 
 <template>
@@ -36,18 +51,26 @@ const selectedLocality = computed(() => brief.value.localities.find((l) => l.id 
     <dl class="grid gap-y-0.5 rounded-xl border border-line bg-surface px-4 py-3 [&>dd]:mb-2 [&>dd:last-child]:mb-0 [&>dt]:text-xs [&>dt]:font-medium [&>dt]:tracking-wide [&>dt]:uppercase">
       <dt class="text-ink-500">Regional scope</dt>
       <dd class="text-ink-900">{{ collection.reference.region }}</dd>
-      <dt class="text-ink-500">Status</dt>
+      <dt class="text-ink-500">Design status</dt>
+      <dd>
+        <span class="font-medium text-ink-900" data-testid="design-status">{{ DESIGN_LABEL[brief.designStatus] }}</span>
+      </dd>
+      <dt class="text-ink-500">Cultural review</dt>
       <dd>
         <span class="font-medium text-ink-900" data-testid="review-status">{{ REVIEW_LABEL[brief.review.status] }}</span>
         <span v-if="brief.review.status !== 'reviewed'" class="block text-xs text-ink-500">
-          Not yet reviewed by a cultural practitioner or organisation. Not presented as authentic or endorsed.
+          Not yet reviewed by a cultural practitioner or organisation. Not presented as authentic, approved or
+          production-ready.
         </span>
       </dd>
       <dt class="text-ink-500 capitalize">{{ brief.localityLabel }}</dt>
       <dd data-testid="locality-requirement">
         <template v-if="selectedLocality">{{ selectedLocality.name }}</template>
         <template v-else>
-          <span class="text-ink-900">{{ brief.localityRequired ? 'Required — not chosen yet' : 'Not chosen yet' }}</span>
+          <span class="text-ink-900">{{ brief.localityRequired ? 'Required for release — not confirmed yet' : 'Not confirmed yet' }}</span>
+          <span v-if="draftDirections.length" class="block text-xs text-ink-700" data-testid="draft-direction">
+            Draft direction (provisional): {{ draftDirections.join(', ') }}
+          </span>
           <span v-if="brief.localityRequired" class="block text-xs text-ink-500">
             No culturally specific motifs are shown until a {{ brief.localityLabel }} is chosen and reviewed.
           </span>
@@ -61,6 +84,36 @@ const selectedLocality = computed(() => brief.value.localities.find((l) => l.id 
         <span v-if="brief.localitiesNote" class="mt-1 block text-xs text-ink-500" data-testid="localities-note">{{ brief.localitiesNote }}</span>
       </dd>
     </dl>
+
+    <!-- Draft design: what it uses and what it deliberately leaves out -->
+    <details v-if="brief.draft" class="rounded-xl border border-[#ecd98f] bg-[#fffbeb] px-4 py-3" data-testid="brief-draft">
+      <summary class="cursor-pointer font-medium text-ink-700">
+        Draft design <span class="font-normal text-ink-500">· what it's based on</span>
+      </summary>
+      <p class="mt-2 text-xs font-medium text-ink-700">Uses</p>
+      <ul class="list-disc pl-4 text-xs text-ink-500">
+        <li v-for="r in brief.draft.referencesUsed" :key="r">{{ r }}</li>
+      </ul>
+      <p class="mt-2 text-xs font-medium text-ink-700">Left out until reviewed</p>
+      <ul class="list-disc pl-4 text-xs text-ink-500">
+        <li v-for="r in brief.draft.leftOutPendingReview" :key="r">{{ r }}</li>
+      </ul>
+    </details>
+
+    <!-- Review plan -->
+    <details class="rounded-xl border border-line bg-surface px-4 py-3" data-testid="brief-review-plan">
+      <summary class="cursor-pointer font-medium text-ink-700">
+        Review plan <span class="font-normal text-ink-500">· not yet contacted</span>
+      </summary>
+      <p class="mt-2 text-xs font-medium text-ink-700">Who should review</p>
+      <ul class="list-disc pl-4 text-xs text-ink-500">
+        <li v-for="r in brief.suggestedReviewers" :key="r">{{ r }}</li>
+      </ul>
+      <p class="mt-2 text-xs font-medium text-ink-700">Open questions</p>
+      <ul class="list-disc pl-4 text-xs text-ink-500">
+        <li v-for="q in brief.openQuestions" :key="q">{{ q }}</li>
+      </ul>
+    </details>
 
     <!-- Sourced information -->
     <details class="rounded-xl border border-line bg-surface px-4 py-3" data-testid="brief-sources">

@@ -8,6 +8,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import { getTheme, isThemeId } from '@/features/themes/core/registry'
+import { isSelectable } from '@/features/themes/core/types'
 
 const STORAGE_KEY = 'kuren.selectedThemeId'
 
@@ -25,9 +26,10 @@ export const useThemeSelectionStore = defineStore('themeSelection', () => {
   const selectedTheme = computed(() => getTheme(selectedThemeId.value))
 
   function select(idOrAlias: string) {
-    // Always store the canonical id, even if an alias was passed.
-    const id = getTheme(idOrAlias)?.id
-    if (!id) return
+    // Always store the canonical id, even if an alias was passed. Drafts are preview-only.
+    const theme = getTheme(idOrAlias)
+    if (!theme || !isSelectable(theme)) return
+    const id = theme.id
     selectedThemeId.value = id
     try {
       localStorage.setItem(STORAGE_KEY, id)

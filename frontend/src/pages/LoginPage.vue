@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAppLocale } from '@/composables/useAppLocale'
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -8,6 +9,8 @@ import TextField from '@/components/ui/TextField.vue'
 import { useForm } from '@/composables/useForm'
 import { safeRedirect } from '@/router'
 import { useAuthStore } from '@/stores/auth'
+
+const { t } = useAppLocale()
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -27,27 +30,27 @@ function onSubmit() {
 
 <template>
   <div>
-    <h1 class="text-4xl font-semibold">Welcome back</h1>
-    <p class="mt-2 text-sm text-ink-500">Sign in to continue planning your wedding website.</p>
+    <h1 class="text-4xl font-semibold">{{ t('welcomeBack') }}</h1>
+    <p class="mt-2 text-sm text-ink-500">{{ t('signInBody') }}</p>
 
     <form class="mt-8 space-y-5" novalidate @submit.prevent="onSubmit">
       <FormAlert v-if="formError">{{ formError }}</FormAlert>
-      <TextField v-model="email" label="Email" type="email" autocomplete="email" required :error="fieldErrors.email" />
+      <TextField v-model="email" :label="t('email')" type="email" autocomplete="email" required :error="fieldErrors.email" />
       <TextField
         v-model="password"
-        label="Password"
+        :label="t('password')"
         type="password"
         autocomplete="current-password"
         required
         :error="fieldErrors.password"
       />
-      <BaseButton type="submit" block :loading="submitting">Sign in</BaseButton>
+      <BaseButton type="submit" block :loading="submitting">{{ submitting ? t('saving') : t('signIn') }}</BaseButton>
     </form>
 
     <p class="mt-8 text-center text-sm text-ink-500">
-      New here?
+      {{ t('newHere') }}
       <RouterLink :to="{ name: 'register' }" class="font-medium text-rose-600 hover:text-rose-700">
-        Create an account
+        {{ t('createAnAccount') }}
       </RouterLink>
     </p>
   </div>

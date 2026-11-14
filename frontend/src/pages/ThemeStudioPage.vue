@@ -24,10 +24,12 @@ import type { RenderableTemplate } from '@/features/themes/core/types'
 import PreviewPane from '@/features/themes/picker/PreviewPane.vue'
 import ThemeSidebar from '@/features/themes/picker/ThemeSidebar.vue'
 import { useThemeSelectionStore } from '@/stores/themeSelection'
+import { localizedCatalogText, useAppLocale } from '@/composables/useAppLocale'
 
 const props = defineProps<{ familyId?: string; collectionId?: string; templateSlug?: string }>()
 const route = useRoute()
 const selection = useThemeSelectionStore()
+const { t } = useAppLocale()
 
 // --- Where the user is (route params are canonical; see picker/guards.ts) ----------
 const family = computed(() => getFamily(props.familyId))
@@ -63,12 +65,16 @@ watch(previewed, (t) => selection.preview(t.id), { immediate: true })
 
 const notice = computed(() => {
   const missing = route.query.notFound
-  if (typeof missing === 'string') return `Template "${missing}" doesn't exist — showing ${previewed.value.name} instead.`
-  if (previewed.value.status === 'draft') return 'This draft is preview-only and cannot be selected yet.'
+  if (typeof missing === 'string') return t('templateMissing', { name: missing, fallback: previewed.value.name })
+  if (previewed.value.status === 'draft') return t('draftNotice')
   const scope = collection.value ?? family.value
   if (scope && scopeTemplates.value.length === 0) {
     const p = templatePath(previewed.value.id)!
-    return `${scope.name} has no templates to preview yet. Still showing ${p.template.name} from ${p.family.name} › ${p.collection.name}.`
+    return t('noTemplatesNotice', {
+      scope: localizedCatalogText(scope.id, 'name', scope.name),
+      template: p.template.name,
+      path: `${localizedCatalogText(p.family.id, 'name', p.family.name)} › ${localizedCatalogText(p.collection.id, 'name', p.collection.name)}`,
+    })
   }
   return null
 })
@@ -86,7 +92,10 @@ onBeforeUnmount(() => mq?.removeEventListener('change', syncMq))
 
 const selectorOpen = ref(!props.templateSlug)
 const previewEl = ref<HTMLElement | null>(null)
-const location = computed(() => [family.value?.name, collection.value?.name].filter(Boolean).join(' › ') || 'All families')
+const location = computed(() => [
+  family.value && localizedCatalogText(family.value.id, 'name', family.value.name),
+  collection.value && localizedCatalogText(collection.value.id, 'name', collection.value.name),
+].filter(Boolean).join(' › ') || t('allFamilies'))
 
 // After choosing a template on a narrow screen, collapse the selector and bring the preview into view.
 watch(
@@ -103,15 +112,15 @@ watch(
 
 <template>
   <div v-if="notFound" class="mx-auto max-w-6xl space-y-4 px-4 py-16 text-center">
-    <h1 class="text-3xl font-semibold">{{ props.collectionId && family ? 'Collection not found' : 'Theme family not found' }}</h1>
-    <RouterLink :to="{ name: 'themes' }" class="text-sm font-medium text-rose-600 hover:text-rose-700">← All families</RouterLink>
+    <h1 class="text-3xl font-semibold">{{ props.collectionId && family ? t('collectionNotFound') : t('familyNotFound') }}</h1>
+    <RouterLink :to="{ name: 'themes' }" class="text-sm font-medium text-rose-600 hover:text-rose-700">← {{ t('allFamilies') }}</RouterLink>
   </div>
 
   <div v-else class="lg:grid lg:h-full lg:grid-cols-[22rem_minmax(0,1fr)]" data-testid="theme-studio">
-    <h1 class="sr-only">Choose your wedding theme</h1>
+    <h1 class="sr-only">{{ t('chooseWeddingTheme') }}</h1>
 
     <!-- Sidebar (left on desktop; collapsible selector on narrow screens) -->
-    <aside class="border-line bg-canvas lg:h-full lg:overflow-y-auto lg:border-r" aria-label="Theme browser">
+    <aside class="border-line bg-canvas lg:h-full lg:overflow-y-auto lg:border-r" :aria-label="t('themeBrowser')">
       <div class="px-4 pt-4 lg:hidden">
         <button
           type="button"
@@ -122,10 +131,10 @@ watch(
           @click="selectorOpen = !selectorOpen"
         >
           <span class="min-w-0">
-            <span class="block text-xs font-medium tracking-wide text-rose-600 uppercase">Browse themes</span>
+            <span class="block text-xs font-medium tracking-wide text-rose-600 uppercase">{{ t('browseThemeLabel') }}</span>
             <span class="block truncate text-sm font-medium text-ink-900">{{ location }}</span>
           </span>
-          <span class="shrink-0 text-sm text-ink-500" aria-hidden="true">{{ selectorOpen ? 'Hide ▲' : 'Show ▼' }}</span>
+          <span class="shrink-0 text-sm text-ink-500" aria-hidden="true">{{ selectorOpen ? t('hide') : t('show') }} {{ selectorOpen ? '▲' : '▼' }}</span>
         </button>
       </div>
       <div v-show="selectorOpen || isDesktop" id="theme-sidebar" class="px-4 py-5 lg:px-5 lg:py-6">

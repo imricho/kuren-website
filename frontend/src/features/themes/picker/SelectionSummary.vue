@@ -10,9 +10,11 @@ import { useThemeSelectionStore } from '@/stores/themeSelection'
 import { templatePath } from '../core/registry'
 import { formatTemplatePath } from './format'
 import { collectionRoute } from './routes'
+import { useAppLocale } from '@/composables/useAppLocale'
 
 defineProps<{ compact?: boolean }>()
 const selection = useThemeSelectionStore()
+const { t } = useAppLocale()
 const path = computed(() => templatePath(selection.selectedThemeId))
 const label = computed(() => formatTemplatePath(selection.selectedThemeId))
 </script>
@@ -26,17 +28,17 @@ const label = computed(() => formatTemplatePath(selection.selectedThemeId))
   >
     <p role="status" aria-live="polite" class="flex flex-wrap items-center gap-x-3 gap-y-1">
       <template v-if="path">
-        <span class="font-medium text-rose-700">Selected</span>
+        <span class="font-medium text-rose-700">{{ t('selectedLabel') }}</span>
         <span class="text-ink-700">{{ label }}</span>
       </template>
-      <span v-else class="text-ink-500">No template selected yet — preview freely, then select the one you love.</span>
+      <span v-else class="text-ink-500">{{ t('noSelection') }}</span>
     </p>
     <RouterLink
       v-if="path && !compact"
       :to="collectionRoute(path.family.id, path.collection.id)"
       class="ml-auto rounded font-medium text-rose-600 hover:text-rose-700"
     >
-      View collection <span aria-hidden="true">→</span>
+      {{ t('viewCollection') }} <span aria-hidden="true">→</span>
     </RouterLink>
   </div>
 </template>

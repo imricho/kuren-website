@@ -3,17 +3,20 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import BrandMark from '@/components/BrandMark.vue'
+import AppLanguageSwitch from '@/components/AppLanguageSwitch.vue'
+import { useAppLocale } from '@/composables/useAppLocale'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
+const { t } = useAppLocale()
 const router = useRouter()
 const route = useRoute()
 const signingOut = ref(false)
 
 const navItems = [
-  { name: 'dashboard', label: 'Dashboard' },
-  { name: 'themes', label: 'Themes' },
-  { name: 'account', label: 'Account' },
+  { name: 'dashboard', label: 'dashboard' },
+  { name: 'themes', label: 'themes' },
+  { name: 'account', label: 'account' },
 ] as const
 
 // "Themes" stays highlighted on every theme studio level (/themes/...).
@@ -49,7 +52,7 @@ async function signOut() {
       >
         <RouterLink :to="{ name: 'dashboard' }" aria-label="Go to dashboard"><BrandMark /></RouterLink>
 
-        <nav class="order-last -mx-3 flex w-full items-center gap-1 sm:order-none sm:mx-0 sm:w-auto" aria-label="Main">
+        <nav class="order-last -mx-3 flex w-full items-center gap-1 sm:order-none sm:mx-0 sm:w-auto" :aria-label="t('mainNav')">
           <RouterLink
             v-for="item in navItems"
             :key="item.name"
@@ -58,11 +61,12 @@ async function signOut() {
             :class="isActive(item.name) ? 'bg-rose-50 text-ink-900' : 'text-ink-500'"
             :aria-current="isActive(item.name) ? 'page' : undefined"
           >
-            {{ item.label }}
+            {{ t(item.label) }}
           </RouterLink>
         </nav>
 
         <div class="ml-auto flex items-center gap-3">
+          <AppLanguageSwitch />
           <span
             class="hidden size-8 items-center justify-center rounded-full bg-rose-100 text-xs font-semibold text-rose-700 sm:flex"
             :title="auth.user?.email"
@@ -76,7 +80,7 @@ async function signOut() {
             :disabled="signingOut"
             @click="signOut"
           >
-            Sign out
+            {{ t('signOut') }}
           </button>
         </div>
       </div>

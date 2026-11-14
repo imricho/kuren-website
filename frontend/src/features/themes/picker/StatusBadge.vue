@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ThemeStatus } from '../core/types'
-import { ACTION, STATUS_LABEL } from './format'
+import { localizedStatus } from './format'
 
 defineProps<{ status: ThemeStatus | 'selected' }>()
 
@@ -18,6 +18,6 @@ const STYLE = {
     <svg v-if="status === 'selected'" class="size-3" viewBox="0 0 12 12" aria-hidden="true">
       <path d="M2.5 6.5 5 9l4.5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
-    {{ status === 'selected' ? ACTION.selected : STATUS_LABEL[status] }}
+    {{ localizedStatus(status) }}
   </span>
 </template>

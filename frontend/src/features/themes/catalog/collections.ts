@@ -42,4 +42,20 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     reference: { kind: 'design', notes: 'Contemporary graphic design and art-book layouts.', review: 'not_required' },
     status: 'available',
   },
+  {
+    id: 'quiet-form',
+    familyId: 'modern-minimalist',
+    name: 'Quiet Form',
+    description: 'A warm, sans-led composition with precise spacing, quiet contrast and confident typography.',
+    reference: { kind: 'design', notes: 'An original modern design direction focused on grid, alignment, contrast and generous breathing room.', review: 'not_required' },
+    status: 'available',
+  },
+  {
+    id: 'field-notes',
+    familyId: 'rustic-nature',
+    name: 'Field Notes',
+    description: 'A garden-led invitation with forest greens, botanical linework and tactile paper tones.',
+    reference: { kind: 'design', notes: 'Original nature-inspired artwork and layout; no named place, community or cultural motif is represented.', review: 'not_required' },
+    status: 'available',
+  },
 ]

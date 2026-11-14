@@ -46,18 +46,18 @@ export const FAMILIES: readonly ThemeFamily[] = [
   {
     id: 'modern-minimalist',
     name: 'Modern Minimalist',
-    tagline: 'Clean lines, quiet confidence',
+    tagline: 'Warm restraint, precise composition',
     description:
-      'Stark, geometric layouts with sans-serif typography and a restrained palette. (Distinct from International, which is serif-led and editorial.)',
+      'Quietly expressive wedding designs built from a disciplined grid, tactile neutrals and confident typography.',
     coverImage: minimalistCover,
-    status: 'coming_soon',
+    status: 'available',
   },
   {
     id: 'rustic-nature',
     name: 'Rustic / Nature',
-    tagline: 'Organic textures and natural tones',
-    description: 'Earthy palettes, botanical details and natural textures for garden, forest and beach weddings.',
+    tagline: 'Garden romance, gathered naturally',
+    description: 'A garden-inspired invitation with layered greens, botanical linework and warm, paper-like surfaces.',
     coverImage: rusticCover,
-    status: 'coming_soon',
+    status: 'available',
   },
 ]

@@ -20,12 +20,14 @@ import {
 import type { ThemeCollection, ThemeFamily, ThemeTemplate } from './types'
 
 describe('theme registry — Workstream 2 compatibility', () => {
-  it('still exposes exactly the five original templates as selectable THEMES', () => {
-    expect(THEMES.map((t) => t.id)).toEqual(['international', 'traditional', 'ethnic', 'conventional', 'artistic'])
+  it('exposes all seven available templates as selectable THEMES', () => {
+    expect(THEMES.map((t) => t.id)).toEqual([
+      'international', 'traditional', 'ethnic', 'conventional', 'artistic', 'still-form', 'wildwood-gathering',
+    ])
   })
 
   it('resolves every original id with getTheme/isThemeId', () => {
-    for (const id of ['international', 'traditional', 'ethnic', 'conventional', 'artistic']) {
+    for (const id of ['international', 'traditional', 'ethnic', 'conventional', 'artistic', 'still-form', 'wildwood-gathering']) {
       expect(getTheme(id)?.id).toBe(id)
       expect(isThemeId(id)).toBe(true)
     }
@@ -77,8 +79,8 @@ describe('theme hierarchy: family → collection → template', () => {
       'modern-minimalist',
       'rustic-nature',
     ])
-    expect(getFamily('modern-minimalist')?.status).toBe('coming_soon')
-    expect(getFamily('rustic-nature')?.status).toBe('coming_soon')
+    expect(getFamily('modern-minimalist')?.status).toBe('available')
+    expect(getFamily('rustic-nature')?.status).toBe('available')
   })
 
   it('places the original templates in their new families and collections', () => {
@@ -91,6 +93,8 @@ describe('theme hierarchy: family → collection → template', () => {
     expect(where('ethnic')).toBe('traditional/artisan-pattern/Woven Indigo')
     expect(where('conventional')).toBe('classic/romantic-floral/Blush Garden')
     expect(where('artistic')).toBe('artistic/contemporary/Gallery Bold')
+    expect(where('still-form')).toBe('modern-minimalist/quiet-form/Still Form')
+    expect(where('wildwood-gathering')).toBe('rustic-nature/field-notes/Field Notes')
   })
 
   it('every template references a real family and a collection of that family', () => {
@@ -189,14 +193,16 @@ describe('naming, aliases and counts', () => {
   it('counts collections by availability per family', () => {
     expect(collectionCounts('traditional')).toEqual({ total: 2, available: 2, draft: 0, comingSoon: 0 })
     expect(collectionCounts('classic')).toEqual({ total: 1, available: 1, draft: 0, comingSoon: 0 })
-    expect(collectionCounts('rustic-nature')).toEqual({ total: 0, available: 0, draft: 0, comingSoon: 0 })
+    expect(collectionCounts('modern-minimalist')).toEqual({ total: 1, available: 1, draft: 0, comingSoon: 0 })
+    expect(collectionCounts('rustic-nature')).toEqual({ total: 1, available: 1, draft: 0, comingSoon: 0 })
   })
 
   it('counts templates by availability per family and collection', () => {
     expect(templateCounts({ familyId: 'traditional' })).toEqual({ available: 2, draft: 0, comingSoon: 0 })
     expect(templateCounts({ collectionId: 'ceremonial-classic' })).toEqual({ available: 1, draft: 0, comingSoon: 0 })
     expect(templateCounts({ collectionId: 'artisan-pattern' })).toEqual({ available: 1, draft: 0, comingSoon: 0 })
-    expect(templateCounts({ familyId: 'modern-minimalist' })).toEqual({ available: 0, draft: 0, comingSoon: 0 })
+    expect(templateCounts({ familyId: 'modern-minimalist' })).toEqual({ available: 1, draft: 0, comingSoon: 0 })
+    expect(templateCounts({ familyId: 'rustic-nature' })).toEqual({ available: 1, draft: 0, comingSoon: 0 })
   })
 
   it('rejects aliases that collide with another id', () => {

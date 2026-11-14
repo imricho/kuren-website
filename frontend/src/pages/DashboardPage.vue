@@ -20,7 +20,7 @@ interface Step {
 const steps: Step[] = [
   {
     title: 'Choose a theme',
-    body: 'Choose from Traditional, International, Conventional / Classic and Artistic designs. Modern Minimalist and Rustic / Nature are coming soon.',
+    body: 'Choose from Traditional, International, Conventional / Classic, Artistic, Modern Minimalist and Rustic / Nature designs.',
     to: { name: 'themes' },
   },
   { title: 'Tell your story', body: 'Fill in your couple profile, story, and event details in simple forms.' },

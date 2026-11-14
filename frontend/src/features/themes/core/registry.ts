@@ -19,6 +19,8 @@ import { PLANNED_TEMPLATES } from '../catalog/planned'
 import { conventionalTheme } from '../conventional'
 import { ethnicTheme } from '../ethnic'
 import { internationalTheme } from '../international'
+import { minimalistTheme } from '../minimalist'
+import { rusticTheme } from '../rustic'
 import { traditionalTheme } from '../traditional'
 import {
   isRenderable,
@@ -34,6 +36,8 @@ const RENDERABLE_TEMPLATES: readonly RenderableTemplate[] = [
   ethnicTheme,
   conventionalTheme,
   artisticTheme,
+  minimalistTheme,
+  rusticTheme,
 ]
 
 /** Every template (renderable and planned), in display order. */

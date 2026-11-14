@@ -6,7 +6,8 @@ describe('picker wording', () => {
   it('formats counts the same way everywhere', () => {
     expect(countLabel({ collectionId: 'ceremonial-classic' })).toBe('1 template available')
     expect(countLabel({ collectionId: 'romantic-floral' })).toBe('1 template available')
-    expect(countLabel({ familyId: 'modern-minimalist' })).toBe('No templates yet')
+    expect(countLabel({ familyId: 'modern-minimalist' })).toBe('1 template available')
+    expect(countLabel({ familyId: 'rustic-nature' })).toBe('1 template available')
     expect(countLabel({ familyId: 'traditional' })).toBe('2 templates available')
   })
 
@@ -14,8 +15,8 @@ describe('picker wording', () => {
     expect(familySummary('traditional')).toBe('2 templates available')
     expect(familySummary('classic')).toBe('1 template available')
     expect(familySummary('international')).toBe('1 template available')
-    expect(familySummary('modern-minimalist')).toBe('In development — no collections yet')
-    expect(familySummary('rustic-nature')).toBe('In development — no collections yet')
+    expect(familySummary('modern-minimalist')).toBe('1 template available')
+    expect(familySummary('rustic-nature')).toBe('1 template available')
   })
 
   it('formats the selected path as Family › Collection › Template', () => {

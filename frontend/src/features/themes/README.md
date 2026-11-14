@@ -17,8 +17,8 @@ ThemeFamily         broad visual category                      catalog/families.
 | International | Editorial | `international` → Editorial Ivory |
 | Conventional / Classic (`classic`, alias `conventional`) | Romantic Floral | `conventional` → Blush Garden |
 | Artistic | Contemporary | `artistic` → Gallery Bold |
-| Modern Minimalist | — (coming soon) | — |
-| Rustic / Nature | — (coming soon) | — |
+| Modern Minimalist | Quiet Form | `still-form` → Still Form |
+| Rustic / Nature | Field Notes | `wildwood-gathering` → Field Notes |
 
 - **Status** (`available` / `coming_soon` / `hidden`) exists at every level. Hidden templates render by
   direct link (QA) but aren't listed.

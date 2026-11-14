@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const THEME_IDS = ['international', 'traditional', 'ethnic', 'conventional', 'artistic']
+const THEME_IDS = ['international', 'traditional', 'ethnic', 'conventional', 'artistic', 'still-form', 'wildwood-gathering']
 
 const VIEWPORTS = {
   phone: { width: 375, height: 812 },
@@ -154,16 +154,15 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
       ['international', 'available'],
       ['classic', 'available'],
       ['artistic', 'available'],
-      ['modern-minimalist', 'coming_soon'],
-      ['rustic-nature', 'coming_soon'],
+      ['modern-minimalist', 'available'],
+      ['rustic-nature', 'available'],
     ])
     await expect(page.locator('[data-family-card="classic"]')).toContainText('Conventional / Classic')
     await expect(page.locator('[data-family-card="traditional"] [data-testid="family-summary"]')).toHaveText(
       '2 templates available',
     )
-    await expect(page.locator('[data-family-card="modern-minimalist"] [data-testid="family-summary"]')).toHaveText(
-      'In development — no collections yet',
-    )
+    await expect(page.locator('[data-family-card="modern-minimalist"] [data-testid="family-summary"]')).toHaveText('1 template available')
+    await expect(page.locator('[data-family-card="rustic-nature"] [data-testid="family-summary"]')).toHaveText('1 template available')
     await expect(page.locator('[aria-current="step"]')).toContainText('Family')
   })
 
@@ -217,12 +216,17 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
     await expect(page.getByText('Selected: Traditional › Artisan Pattern › Woven Indigo')).toBeVisible()
   })
 
-  test('families in development have no selectable collections', async ({ page }) => {
-    for (const id of ['modern-minimalist', 'rustic-nature']) {
-      await page.goto(`/themes/${id}`)
-      await expect(page.getByTestId('family-coming-soon')).toContainText('Collections in development')
-      await expect(sidebar(page).locator('[data-collection-card], [data-theme-card]')).toHaveCount(0)
-      await expect(page.getByTestId('preview-notice')).toContainText('has no templates to preview yet')
+  test('Modern Minimalist and Rustic / Nature render and select their own designs', async ({ page }) => {
+    for (const [family, collection, template, name] of [
+      ['modern-minimalist', 'quiet-form', 'still-form', 'Still Form'],
+      ['rustic-nature', 'field-notes', 'wildwood-gathering', 'Field Notes'],
+    ]) {
+      await page.goto(`/themes/${family}/${collection}`)
+      await expect(page.locator('[data-theme-card]')).toHaveCount(1)
+      await page.getByRole('link', { name: `Preview ${name}` }).click()
+      await expect(page).toHaveURL(new RegExp(`/themes/${family}/${collection}/${template}$`))
+      await expect(pane(page).getByRole('heading', { name })).toBeVisible()
+      await expect(pane(page).locator('.wedding-site > article')).toBeVisible()
     }
   })
 
@@ -258,7 +262,7 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
 })
 
 test.describe('responsive and accessible studio', () => {
-  const PAGES = ['/dashboard', '/themes', '/themes/traditional', '/themes/classic', '/themes/traditional/ceremonial-classic', '/themes/traditional/artisan-pattern', '/themes/modern-minimalist']
+  const PAGES = ['/dashboard', '/themes', '/themes/traditional', '/themes/classic', '/themes/traditional/ceremonial-classic', '/themes/traditional/artisan-pattern', '/themes/modern-minimalist', '/themes/rustic-nature', '/themes/modern-minimalist/quiet-form', '/themes/rustic-nature/field-notes']
 
   for (const [device, viewport] of Object.entries(VIEWPORTS)) {
     test(`studio pages fit a ${device} browser window`, async ({ page }) => {

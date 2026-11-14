@@ -1,0 +1,34 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Node / frontend
+node_modules/
+dist/
+*.local
+coverage/
+
+# AI agent definitions (kept local, not versioned)
+.claude/
+.codex/
+.github/agents/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp

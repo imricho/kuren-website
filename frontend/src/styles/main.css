@@ -1,0 +1,49 @@
+@import 'tailwindcss';
+
+/*
+ * Design foundation for the platform (customer dashboard), not for the
+ * wedding themes themselves. Calm, warm neutrals with one muted rose accent.
+ */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', ui-serif, Georgia, serif;
+
+  --color-canvas: #fbf8f4;
+  --color-surface: #ffffff;
+  --color-line: #ebe4dc;
+
+  --color-ink-900: #2a2522;
+  --color-ink-700: #4a423d;
+  --color-ink-500: #7a706a;
+  --color-ink-300: #b5aca6;
+
+  --color-rose-50: #faf1ef;
+  --color-rose-100: #f3e0dc;
+  --color-rose-500: #b06f66;
+  --color-rose-600: #9a5b52;
+  --color-rose-700: #7f4a43;
+
+  --color-danger-50: #fdf2f2;
+  --color-danger-600: #b42318;
+  --color-success-50: #f0f7f2;
+  --color-success-600: #2f7a4a;
+
+  --radius-card: 1rem;
+  --shadow-soft: 0 1px 2px rgb(42 37 34 / 0.04), 0 8px 24px rgb(42 37 34 / 0.06);
+}
+
+@layer base {
+  html {
+    @apply bg-canvas text-ink-900 antialiased;
+    font-family: var(--font-sans);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    @apply tracking-tight text-ink-900;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-rose-500;
+  }
+}

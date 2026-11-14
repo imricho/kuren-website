@@ -7,26 +7,28 @@
 import { useId } from 'vue'
 
 import type { Device } from '../preview/DevicePreview.vue'
+import { useAppLocale } from '@/composables/useAppLocale'
 
 const device = defineModel<Device>({ required: true })
 const name = `device-${useId()}`
+const { t } = useAppLocale()
 
-const options: { id: Device; label: string }[] = [
-  { id: 'phone', label: 'Phone' },
-  { id: 'tablet', label: 'Tablet' },
-  { id: 'desktop', label: 'Desktop' },
+const options: { id: Device; key: 'phone' | 'tablet' | 'desktop' }[] = [
+  { id: 'phone', key: 'phone' },
+  { id: 'tablet', key: 'tablet' },
+  { id: 'desktop', key: 'desktop' },
 ]
 </script>
 
 <template>
   <fieldset class="inline-flex rounded-lg border border-line bg-surface p-1">
-    <legend class="sr-only">Preview size</legend>
+    <legend class="sr-only">{{ t('previewSize') }}</legend>
     <label v-for="o in options" :key="o.id" class="relative">
       <input v-model="device" class="peer sr-only" type="radio" :name="name" :value="o.id" />
       <span
         class="block cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium text-ink-500 transition-colors peer-checked:bg-rose-50 peer-checked:text-ink-900 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-1 peer-focus-visible:outline-rose-500 hover:text-ink-900"
       >
-        {{ o.label }}
+        {{ t(o.key) }}
       </span>
     </label>
   </fieldset>

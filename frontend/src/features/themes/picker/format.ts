@@ -4,6 +4,9 @@
  */
 import { collectionCounts, templateCounts, templatePath } from '../core/registry'
 import type { CulturalReviewStatus, ThemeStatus } from '../core/types'
+import { localizedCatalogText, useAppLocale } from '@/composables/useAppLocale'
+
+const { t } = useAppLocale()
 
 export const ACTION = {
   preview: 'Preview',
@@ -26,17 +29,37 @@ export const REVIEW_LABEL: Record<CulturalReviewStatus, string> = {
   reviewed: 'Culturally reviewed',
 }
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+export const localizedActions = () => ({
+  preview: t('preview'),
+  select: t('selectTemplate'),
+  selected: t('selectedLabel'),
+  draftNotSelectable: t('previewOnlyDraft'),
+  fullScreen: t('fullScreenPreview'),
+})
+
+export const localizedStatus = (status: ThemeStatus | 'selected') =>
+  status === 'selected' ? t('selectedLabel') : ({
+    available: t('available'),
+    draft: t('draftPreview'),
+    coming_soon: t('inDevelopment'),
+    hidden: t('previewOnly'),
+  })[status]
+
+export const localizedReview = (status: CulturalReviewStatus) => ({
+  in_development: t('reviewPending'),
+  awaiting_review: t('awaitingReview'),
+  reviewed: t('culturallyReviewed'),
+})[status]
 
 /** e.g. "2 templates available", "1 draft · 5 planned", "No templates yet". */
 export function countLabel(scope: { familyId?: string; collectionId?: string }): string {
   const { available, draft, comingSoon } = templateCounts(scope)
   const parts: string[] = []
-  if (available) parts.push(`${plural(available, 'template')} available`)
-  if (draft) parts.push(`${plural(draft, 'draft')} to preview`)
-  if (comingSoon) parts.push(`${comingSoon} planned`)
-  if (!available && !draft && comingSoon) return `${plural(comingSoon, 'template')} planned`
-  return parts.length ? parts.join(' · ') : 'No templates yet'
+  if (available) parts.push(t(available === 1 ? 'templateAvailable' : 'templatesAvailable', { count: available }))
+  if (draft) parts.push(t(draft === 1 ? 'draftsToPreview' : 'draftsToPreviewPlural', { count: draft }))
+  if (comingSoon) parts.push(t('planned', { count: comingSoon }))
+  if (!available && !draft && comingSoon) return t('templatesPlanned', { count: comingSoon })
+  return parts.length ? parts.join(' · ') : t('noTemplatesYet')
 }
 
 /**
@@ -45,15 +68,17 @@ export function countLabel(scope: { familyId?: string; collectionId?: string }):
 export function familySummary(familyId: string): string {
   const { available } = templateCounts({ familyId })
   const cols = collectionCounts(familyId)
-  if (cols.total === 0) return 'In development — no collections yet'
-  const parts = [available + ' template' + (available === 1 ? '' : 's') + ' available']
-  if (cols.draft) parts.push(cols.draft + ' draft' + (cols.draft === 1 ? '' : 's') + ' to preview')
-  if (cols.comingSoon) parts.push(cols.comingSoon + ' collection' + (cols.comingSoon === 1 ? '' : 's') + ' in development')
+  if (cols.total === 0) return t('familyInDevelopmentSummary')
+  const parts = [t(available === 1 ? 'templateAvailable' : 'templatesAvailable', { count: available })]
+  if (cols.draft) parts.push(t(cols.draft === 1 ? 'draftsToPreview' : 'draftsToPreviewPlural', { count: cols.draft }))
+  if (cols.comingSoon) parts.push(t(cols.comingSoon === 1 ? 'collectionInDevelopment' : 'collectionsInDevelopmentCount', { count: cols.comingSoon }))
   return parts.join(' · ')
 }
 
 /** "Family › Collection › Template" for a template id (or undefined). */
 export function formatTemplatePath(templateId: string | null | undefined): string | undefined {
   const path = templatePath(templateId)
-  return path ? `${path.family.name} › ${path.collection.name} › ${path.template.name}` : undefined
+  return path
+    ? `${localizedCatalogText(path.family.id, 'name', path.family.name)} › ${localizedCatalogText(path.collection.id, 'name', path.collection.name)} › ${path.template.name}`
+    : undefined
 }

@@ -25,10 +25,6 @@ const selection = useThemeSelectionStore()
 
 const level = computed<1 | 2 | 3>(() => (props.collection ? 3 : props.family ? 2 : 1))
 const collections = computed(() => (props.family ? collectionsOf(props.family.id) : []))
-const general = computed(() => collections.value.filter((c) => c.reference.kind === 'design'))
-const regional = computed(() => collections.value.filter((c) => c.reference.kind === 'cultural'))
-const regionalAvailable = computed(() => regional.value.filter((c) => c.status === 'available').length)
-const regionalDrafts = computed(() => regional.value.filter((c) => c.status === 'draft').length)
 const templates = computed(() => (props.collection ? templatesOf(props.collection.id) : []))
 
 const itemClass =
@@ -111,14 +107,11 @@ const itemClass =
         </p>
       </section>
 
-      <section v-if="general.length" aria-labelledby="sb-general">
-        <h3 id="sb-general" class="mb-1 text-sm font-semibold tracking-wide text-ink-700 uppercase">
-          {{ regional.length ? 'General collection' : 'Choose a collection' }}
-        </h3>
-        <p v-if="regional.length" class="mb-2 text-xs text-ink-500">Culturally neutral; not tied to any single regional tradition.</p>
+      <section v-if="collections.length" aria-labelledby="sb-collections">
+        <h3 id="sb-collections" class="mb-1 text-sm font-semibold tracking-wide text-ink-700 uppercase">Choose a collection</h3>
         <ul class="space-y-2">
           <li
-            v-for="c in general"
+            v-for="c in collections"
             :key="c.id"
             :class="[itemClass, 'border-line hover:border-rose-500']"
             :data-collection-card="c.id"
@@ -132,40 +125,7 @@ const itemClass =
               </h4>
               <StatusBadge :status="c.status" />
             </div>
-            <p class="text-xs font-medium text-rose-600">{{ countLabel({ collectionId: c.id }) }}</p>
-          </li>
-        </ul>
-      </section>
-
-      <section v-if="regional.length" aria-labelledby="sb-regional">
-        <h3 id="sb-regional" class="mb-1 text-sm font-semibold tracking-wide text-ink-700 uppercase">
-          Regional collections · {{ regional.length }}
-        </h3>
-        <p class="mb-2 text-xs text-ink-500" data-testid="regional-summary">
-          {{ regionalAvailable }} of {{ regional.length }} approved · {{ regionalDrafts }} with a draft to preview. Drafts are not culturally verified and can't be selected until reviewed with the community they draw on.
-        </p>
-        <ul class="space-y-2">
-          <li
-            v-for="c in regional"
-            :key="c.id"
-            :class="[itemClass, 'border-line hover:border-rose-500']"
-            :data-collection-card="c.id"
-            :data-status="c.status"
-          >
-            <div class="flex items-start justify-between gap-2">
-              <h4 class="font-display text-lg font-semibold">
-                <RouterLink :to="collectionRoute(family.id, c.id)" class="outline-none after:absolute after:inset-0" @click="emit('navigate')">
-                  {{ c.name }}
-                </RouterLink>
-              </h4>
-              <StatusBadge :status="c.status" />
-            </div>
-            <p v-if="c.alsoKnownAs || c.reference.region" class="text-xs text-ink-500">
-              <template v-if="c.alsoKnownAs">Also known as {{ c.alsoKnownAs }} · </template>{{ c.reference.region }}
-            </p>
-            <p v-if="c.brief?.localityRequired" class="text-xs text-ink-500" data-testid="locality-hint">
-              Needs a {{ c.brief.localityLabel }}<template v-if="c.brief.localities.length">: {{ c.brief.localities.map((l) => l.name).join(', ') }}</template>
-            </p>
+            <p class="text-xs text-ink-500">{{ c.description }}</p>
             <p class="text-xs font-medium text-rose-600">{{ countLabel({ collectionId: c.id }) }}</p>
           </li>
         </ul>
@@ -187,14 +147,10 @@ const itemClass =
       <CollectionBrief v-if="collection.brief" :collection="collection" />
       <details v-else class="rounded-xl border border-line bg-surface px-4 py-3 text-sm" data-testid="collection-reference">
         <summary class="cursor-pointer font-medium text-ink-700">
-          {{ collection.reference.kind === 'cultural' ? 'Cultural reference' : 'Design reference' }}
+          Design direction
         </summary>
         <div class="mt-2 space-y-1 text-ink-500">
-          <p v-if="collection.reference.region" class="text-ink-700">{{ collection.reference.region }}</p>
           <p>{{ collection.reference.notes }}</p>
-          <p v-if="collection.reference.review === 'needs_review'" class="text-xs text-rose-700">
-            Templates in this collection are released only after review with cultural advisers.
-          </p>
         </div>
       </details>
 

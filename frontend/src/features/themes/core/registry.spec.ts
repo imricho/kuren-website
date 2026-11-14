@@ -6,9 +6,7 @@ import {
   FAMILIES,
   TEMPLATES,
   THEMES,
-  availableTemplatesOf,
   collectionCounts,
-  collectionsOf,
   getCollection,
   getFamily,
   getTemplate,
@@ -17,7 +15,6 @@ import {
   templateCounts,
   templatePath,
   templateSlug,
-  templatesOf,
   validateCatalog,
 } from './registry'
 import type { ThemeCollection, ThemeFamily, ThemeTemplate } from './types'
@@ -55,9 +52,9 @@ describe('theme registry — Workstream 2 compatibility', () => {
     expect(getTheme('nope')).toBeUndefined()
     expect(getTheme(null)).toBeUndefined()
     expect(isThemeId('__proto__')).toBe(false)
-    expect(getTheme('solo-basahan')).toBeUndefined()
-    expect(isThemeId('solo-basahan')).toBe(false)
-    expect(getTemplate('solo-basahan')?.status).toBe('coming_soon')
+    expect(getTheme('removed-template')).toBeUndefined()
+    expect(isThemeId('removed-template')).toBe(false)
+    expect(getTemplate('removed-template')).toBeUndefined()
   })
 
   it('is frozen so the catalog cannot be mutated at runtime', () => {
@@ -84,55 +81,16 @@ describe('theme hierarchy: family → collection → template', () => {
     expect(getFamily('rustic-nature')?.status).toBe('coming_soon')
   })
 
-  it('has the 12 regional Traditional collections plus the general Nusantara collection', () => {
-    const regional = collectionsOf('traditional').filter((c) => c.reference.kind === 'cultural')
-    expect(regional.map((c) => c.name)).toEqual([
-      'Javanese',
-      'Sundanese',
-      'Minangkabau',
-      'Batak',
-      'Bugis',
-      'Betawi',
-      'Malay',
-      'Madura',
-      'Balinese',
-      'Dayak',
-      'Ambon / Maluku',
-      'Papuan',
-    ])
-    for (const c of regional) {
-      expect(c.status).toBe('draft')
-      expect(c.reference.review).toBe('needs_review')
-      expect(c.reference.region).toBeTruthy()
-    }
-    expect(getCollection('nusantara-heritage')?.reference.kind).toBe('design')
-  })
-
   it('places the original templates in their new families and collections', () => {
     const where = (id: string) => {
       const p = templatePath(id)!
       return `${p.family.id}/${p.collection.id}/${p.template.name}`
     }
     expect(where('international')).toBe('international/editorial/Editorial Ivory')
-    expect(where('traditional')).toBe('traditional/nusantara-heritage/Royal Maroon')
-    expect(where('ethnic')).toBe('traditional/nusantara-heritage/Woven Indigo')
+    expect(where('traditional')).toBe('traditional/ceremonial-classic/Royal Maroon')
+    expect(where('ethnic')).toBe('traditional/artisan-pattern/Woven Indigo')
     expect(where('conventional')).toBe('classic/romantic-floral/Blush Garden')
     expect(where('artistic')).toBe('artistic/contemporary/Gallery Bold')
-  })
-
-  it('lets a collection hold several templates, including planned ones', () => {
-    expect(templatesOf('javanese').map((t) => t.name)).toEqual(['Yogyakarta Draft', 'Yogyakarta Paes Ageng', 'Solo Basahan'])
-    expect(templatesOf('javanese').filter((t) => t.status === 'coming_soon').every((t) => !t.component)).toBe(true)
-    expect(availableTemplatesOf('javanese')).toEqual([])
-    expect(templatesOf('batak').map((t) => t.regionalVariation)).toEqual([
-      'Toba variant',
-      'Karo',
-      'Mandailing',
-      'Simalungun',
-      'Pakpak',
-      'Angkola',
-    ])
-    expect(availableTemplatesOf('nusantara-heritage').map((t) => t.id)).toEqual(['traditional', 'ethnic'])
   })
 
   it('every template references a real family and a collection of that family', () => {
@@ -218,7 +176,7 @@ describe('naming, aliases and counts', () => {
 
   it('gives every template a URL slug that resolves to it (ids stay the stored key)', () => {
     expect(templateSlug(getTheme('conventional')!)).toBe('blush-garden')
-    expect(templateSlug(getTemplate('solo-basahan')!)).toBe('solo-basahan')
+    expect(templateSlug(getTheme('traditional')!)).toBe('royal-maroon')
     for (const t of TEMPLATES) expect(getTemplate(templateSlug(t))?.id).toBe(t.id)
   })
 
@@ -228,23 +186,16 @@ describe('naming, aliases and counts', () => {
     expect(isThemeId('woven-indigo')).toBe(true)
   })
 
-  it('shows alternative names for regional collections', () => {
-    expect(getCollection('minangkabau')?.alsoKnownAs).toBe('Minang')
-    expect(getCollection('malay')?.alsoKnownAs).toBe('Melayu')
-    expect(getCollection('balinese')?.alsoKnownAs).toBe('Bali')
-    expect(getCollection('papuan')?.alsoKnownAs).toBe('Papua')
-  })
-
   it('counts collections by availability per family', () => {
-    expect(collectionCounts('traditional')).toEqual({ total: 13, available: 1, draft: 12, comingSoon: 0, regional: 12 })
-    expect(collectionCounts('classic')).toEqual({ total: 1, available: 1, draft: 0, comingSoon: 0, regional: 0 })
-    expect(collectionCounts('rustic-nature')).toEqual({ total: 0, available: 0, draft: 0, comingSoon: 0, regional: 0 })
+    expect(collectionCounts('traditional')).toEqual({ total: 2, available: 2, draft: 0, comingSoon: 0 })
+    expect(collectionCounts('classic')).toEqual({ total: 1, available: 1, draft: 0, comingSoon: 0 })
+    expect(collectionCounts('rustic-nature')).toEqual({ total: 0, available: 0, draft: 0, comingSoon: 0 })
   })
 
   it('counts templates by availability per family and collection', () => {
-    expect(templateCounts({ familyId: 'traditional' })).toEqual({ available: 2, draft: 12, comingSoon: 12 })
-    expect(templateCounts({ collectionId: 'nusantara-heritage' })).toEqual({ available: 2, draft: 0, comingSoon: 0 })
-    expect(templateCounts({ collectionId: 'javanese' })).toEqual({ available: 0, draft: 1, comingSoon: 2 })
+    expect(templateCounts({ familyId: 'traditional' })).toEqual({ available: 2, draft: 0, comingSoon: 0 })
+    expect(templateCounts({ collectionId: 'ceremonial-classic' })).toEqual({ available: 1, draft: 0, comingSoon: 0 })
+    expect(templateCounts({ collectionId: 'artisan-pattern' })).toEqual({ available: 1, draft: 0, comingSoon: 0 })
     expect(templateCounts({ familyId: 'modern-minimalist' })).toEqual({ available: 0, draft: 0, comingSoon: 0 })
   })
 

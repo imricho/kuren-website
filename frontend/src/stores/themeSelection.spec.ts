@@ -49,13 +49,13 @@ describe('theme selection store', () => {
     expect(store.selectedThemeId).toBe('artistic')
   })
 
-  it('drafts can be previewed but never selected', () => {
+  it('ignores removed theme ids in selection, preview and stored state', () => {
     const store = useThemeSelectionStore()
-    store.select('batak-toba')
+    store.select('removed-theme')
     expect(store.selectedThemeId).toBeNull()
-    store.preview('batak-toba')
-    expect(store.previewedThemeId).toBe('batak-toba')
-    localStorage.setItem('kuren.selectedThemeId', 'batak-toba')
+    store.preview('removed-theme')
+    expect(store.previewedThemeId).toBeNull()
+    localStorage.setItem('kuren.selectedThemeId', 'removed-theme')
     setActivePinia(createPinia())
     expect(useThemeSelectionStore().selectedThemeId).toBeNull()
   })

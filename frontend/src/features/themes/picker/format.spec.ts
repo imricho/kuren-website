@@ -4,17 +4,14 @@ import { ACTION, STATUS_LABEL, countLabel, familySummary, formatTemplatePath } f
 
 describe('picker wording', () => {
   it('formats counts the same way everywhere', () => {
-    expect(countLabel({ collectionId: 'nusantara-heritage' })).toBe('2 templates available')
+    expect(countLabel({ collectionId: 'ceremonial-classic' })).toBe('1 template available')
     expect(countLabel({ collectionId: 'romantic-floral' })).toBe('1 template available')
-    expect(countLabel({ collectionId: 'javanese' })).toBe('1 draft to preview · 2 planned')
-    expect(countLabel({ collectionId: 'batak' })).toBe('1 draft to preview · 5 planned')
-    expect(countLabel({ collectionId: 'sundanese' })).toBe('1 draft to preview')
     expect(countLabel({ familyId: 'modern-minimalist' })).toBe('No templates yet')
-    expect(countLabel({ familyId: 'traditional' })).toBe('2 templates available · 12 drafts to preview · 12 planned')
+    expect(countLabel({ familyId: 'traditional' })).toBe('2 templates available')
   })
 
   it('summarises families in terms that agree with collection statuses', () => {
-    expect(familySummary('traditional')).toBe('2 templates available · 12 regional draft collections (cultural review pending)')
+    expect(familySummary('traditional')).toBe('2 templates available')
     expect(familySummary('classic')).toBe('1 template available')
     expect(familySummary('international')).toBe('1 template available')
     expect(familySummary('modern-minimalist')).toBe('In development — no collections yet')

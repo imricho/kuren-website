@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * Ethnic — modern interpretation of textile patterns.
- * Patterns and palette come from the active motif set (motifs/), so regional
- * variants can be added without touching this layout.
+ * Woven Indigo — an original abstract geometric design direction.
+ * Patterns and palette come from the active motif set (motifs/), so alternate
+ * original pattern systems can be added without touching this layout.
  */
 import CountdownTimer from '../core/components/CountdownTimer.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'

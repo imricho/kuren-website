@@ -28,7 +28,7 @@ afterEach(() => {
 
 const clone = (c: WeddingContent): WeddingContent => structuredClone(c)
 
-// Every renderable template — the 5 available ones and the 12 regional drafts — must honour
+// Every renderable template must honour
 // the shared content contract.
 describe.each(TEMPLATES.filter(isRenderable).map((t) => [t.id]))('%s theme', (themeId) => {
   it('renders every section of the shared sample data', async () => {

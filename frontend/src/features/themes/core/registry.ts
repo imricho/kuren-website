@@ -20,7 +20,6 @@ import { conventionalTheme } from '../conventional'
 import { ethnicTheme } from '../ethnic'
 import { internationalTheme } from '../international'
 import { traditionalTheme } from '../traditional'
-import { REGIONAL_DRAFT_TEMPLATES } from '../templates/traditional/regional/drafts'
 import {
   isRenderable,
   type RenderableTemplate,
@@ -35,8 +34,6 @@ const RENDERABLE_TEMPLATES: readonly RenderableTemplate[] = [
   ethnicTheme,
   conventionalTheme,
   artisticTheme,
-  // Regional Traditional drafts: previewable, not selectable until culturally reviewed.
-  ...REGIONAL_DRAFT_TEMPLATES,
 ]
 
 /** Every template (renderable and planned), in display order. */
@@ -131,7 +128,6 @@ export function collectionCounts(familyId: string) {
     available: listed.filter((c) => c.status === 'available').length,
     draft: listed.filter((c) => c.status === 'draft').length,
     comingSoon: listed.filter((c) => c.status === 'coming_soon').length,
-    regional: listed.filter((c) => c.reference.kind === 'cultural').length,
   }
 }
 

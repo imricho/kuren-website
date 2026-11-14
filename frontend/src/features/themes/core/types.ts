@@ -5,9 +5,9 @@ import type { WeddingContent } from '@/features/wedding/types'
 /**
  * Theme catalog hierarchy:
  *
- *   ThemeFamily      broad visual or cultural category      (e.g. Traditional)
- *   └ ThemeCollection specific design identity / culture    (e.g. Javanese)
- *     └ ThemeTemplate  the selectable wedding website design (e.g. Solo Basahan)
+ *   ThemeFamily      broad visual category                (e.g. Traditional)
+ *   └ ThemeCollection specific design direction           (e.g. Ceremonial Classic)
+ *     └ ThemeTemplate  the selectable wedding website design (e.g. Royal Maroon)
  *
  * Only templates are rendered. Every template — whatever its family — consumes
  * the one shared `WeddingContent` model.
@@ -15,7 +15,7 @@ import type { WeddingContent } from '@/features/wedding/types'
 
 /**
  * - `available`: listed and selectable.
- * - `draft`: listed and previewable, NOT selectable — a design awaiting (cultural) review.
+ * - `draft`: listed and previewable, NOT selectable — a design awaiting review.
  * - `coming_soon`: listed as planned; not selectable (templates have no renderer yet).
  * - `hidden`: renderable by direct id/link (QA, staged rollout) but not listed.
  */
@@ -170,7 +170,7 @@ interface TemplateBase {
   aliases?: string[]
   tagline: string
   description: string
-  /** e.g. "Yogyakarta" vs "Surakarta (Solo)" within the Javanese collection. */
+  /** Optional name for a distinct variation within a collection. */
   regionalVariation?: string
   /** For cultural collections: the brief's locality/community option this template draws on. */
   localityId?: string

@@ -11,9 +11,9 @@ export const FAMILIES: readonly ThemeFamily[] = [
   {
     id: 'traditional',
     name: 'Traditional',
-    tagline: 'Ceremonial designs rooted in Indonesian heritage',
+    tagline: 'Formal, ornate and timeless wedding styles',
     description:
-      'Formal, culturally inspired designs. Regional collections are developed with cultural review; a general Nusantara collection is available today.',
+      'Origin-neutral design styles, from formal ceremony framing to original abstract ornament.',
     coverImage: traditionalCover,
     status: 'available',
   },

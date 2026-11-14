@@ -668,3 +668,26 @@
   .t-trad[data-variant='loomed-lines'] .trad-frame { border-width: 5px; border-style: double; }
   .t-trad[data-variant='loomed-lines'] .trad-band { height: 2rem; }
 }
+
+/* The three light ceremonial papers use dark small text; use the gold tokens
+   for borders and ornaments only in these treatments. */
+.t-trad[data-variant='terracotta-geometry'] .trad-hero,
+.t-trad[data-variant='pressed-filigree'] .trad-hero,
+.t-trad[data-variant='loomed-lines'] .trad-hero { color: var(--ink); }
+.t-trad[data-variant='terracotta-geometry'] .trad-hero .trad-gold,
+.t-trad[data-variant='pressed-filigree'] .trad-hero .trad-gold,
+.t-trad[data-variant='loomed-lines'] .trad-hero .trad-gold { color: var(--maroon-deep); }
+.t-trad[data-variant='terracotta-geometry'] .trad-hero__names,
+.t-trad[data-variant='pressed-filigree'] .trad-hero__names,
+.t-trad[data-variant='loomed-lines'] .trad-hero__names,
+.t-trad[data-variant='terracotta-geometry'] .trad-hero__date,
+.t-trad[data-variant='pressed-filigree'] .trad-hero__date,
+.t-trad[data-variant='loomed-lines'] .trad-hero__date { color: var(--ink); }
+.t-trad[data-variant='ivory-processional'] .trad-hero .trad-gold { color: #f7ebd2; }
+.t-trad[data-variant='royal-maroon'] .trad-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2rem; aspect-ratio: 1; border: 1px solid var(--gold); border-radius: 50%; box-shadow: inset 0 0 0 .35rem var(--maroon), inset 0 0 0 .42rem var(--gold); }
+.t-trad[data-variant='ivory-processional'] .trad-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: .65rem; height: 4rem; border-block: 1px solid var(--gold); background: repeating-linear-gradient(var(--gold) 0 1px, transparent 1px 8px); }
+.t-trad[data-variant='terracotta-geometry'] .trad-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2rem; height: 2rem; border-top: 3px solid var(--maroon); border-right: 3px solid var(--maroon); }
+.t-trad[data-variant='gilded-vow'] .trad-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: .8rem; aspect-ratio: 1; background: var(--gold-light); transform: rotate(45deg); box-shadow: 0 0 0 .35rem #201d1a, 0 0 0 .4rem var(--gold); }
+.t-trad[data-variant='candlelit-hall'] .trad-hero__content::after { content: ''; position: absolute; top: -1rem; right: 0; width: 1.5rem; height: 2.7rem; border-radius: 50% 50% 35% 35%; background: radial-gradient(ellipse at 50% 18%, #f8d7a5 0 20%, transparent 52%); box-shadow: 0 0 1rem rgb(248 215 165 / .35); }
+.t-trad[data-variant='pressed-filigree'] .trad-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2rem; aspect-ratio: 1; border: 1px solid var(--gold); border-radius: 50% 0; transform: rotate(45deg); }
+.t-trad[data-variant='loomed-lines'] .trad-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2.1rem; height: 2.1rem; background: repeating-linear-gradient(45deg, transparent 0 4px, var(--gold) 4px 5px), repeating-linear-gradient(-45deg, transparent 0 4px, var(--gold) 4px 5px); opacity: .8; }

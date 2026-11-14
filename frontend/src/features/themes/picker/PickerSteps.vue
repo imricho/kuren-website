@@ -8,11 +8,11 @@ const steps = ['family', 'collection', 'template'] as const
 </script>
 
 <template>
-  <ol class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium tracking-wide uppercase" :aria-label="t('chooseWeddingTheme')">
+  <ol class="flex w-full flex-nowrap items-center gap-x-1.5 overflow-x-auto text-[0.6875rem] font-medium tracking-[0.06em] uppercase" :aria-label="t('chooseWeddingTheme')">
     <li
       v-for="(step, i) in steps"
       :key="step"
-      class="flex items-center gap-2"
+      class="flex shrink-0 items-center gap-1.5 whitespace-nowrap"
       :class="i + 1 === current ? 'text-rose-600' : i + 1 < current ? 'text-ink-700' : 'text-ink-300'"
       :aria-current="i + 1 === current ? 'step' : undefined"
     >

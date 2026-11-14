@@ -440,6 +440,11 @@
   line-height: 1;
 }
 
+/* Small accent copy uses the text token; the brighter accent stays reserved
+   for rules and ornamental marks. */
+.intl-chapter__date,
+.intl-closing__thanks { color: var(--ink); }
+
 /* --- Tablet & up -------------------------------------------------------------------- */
 @container site (min-width: 48rem) {
   .intl-section {
@@ -593,3 +598,18 @@
   .t-intl[data-variant='afterglow'] .intl-hero__text { justify-items: start; }
   .t-intl[data-variant='afterglow'] .intl-gallery__grid { gap: 1.25rem; }
 }
+
+/* Small printmaking devices distinguish each editorial edition without sitting
+   behind names, body copy or controls. */
+.t-intl[data-variant='editorial-ivory'] .intl-hero__text::after { content: ''; position: absolute; top: -1rem; right: 0; width: 3rem; height: 1.4rem; border-block: 1px solid var(--accent); opacity: .7; }
+.t-intl[data-variant='the-monograph'] .intl-hero__text::after { content: ''; position: absolute; top: 0; left: -1.25rem; height: 100%; border-left: 2px solid var(--accent); box-shadow: 4px 0 0 -3px var(--line); }
+.t-intl[data-variant='coastal-issue'] .intl-hero__text::after { content: ''; position: absolute; top: -1rem; left: 50%; width: 2.2rem; aspect-ratio: 1; border: 1px solid var(--accent); border-radius: 50%; transform: translateX(-50%); box-shadow: 0 0 0 .35rem rgb(113 143 145 / .12); }
+.t-intl[data-variant='the-sunday-edit'] .intl-hero__text::after { content: ''; position: absolute; right: 0; bottom: -.8rem; width: 5rem; height: 1px; background: linear-gradient(90deg, var(--accent), transparent); }
+.t-intl[data-variant='city-journal'] .intl-hero__text::after { content: ''; position: absolute; top: -1rem; right: 0; width: 2.6rem; aspect-ratio: 1; background: linear-gradient(90deg, transparent 48%, var(--line) 49% 51%, transparent 52%), linear-gradient(transparent 48%, var(--line) 49% 51%, transparent 52%); border: 1px solid var(--accent); opacity: .7; }
+.t-intl[data-variant='gallery-no-08'] .intl-hero__text::after { content: ''; position: absolute; top: -1rem; right: 0; width: 1.5rem; height: 1.5rem; background: linear-gradient(90deg, transparent 47%, var(--accent) 48% 52%, transparent 53%), linear-gradient(transparent 47%, var(--accent) 48% 52%, transparent 53%); }
+.t-intl[data-variant='modern-heirloom'] .intl-hero__text::after { content: ''; position: absolute; top: -.7rem; left: -.7rem; width: 2rem; height: 2rem; border-top: 1px solid var(--accent); border-left: 1px solid var(--accent); }
+.t-intl[data-variant='afterglow'] .intl-hero__text::after { content: ''; position: absolute; top: -1rem; right: 0; width: 2.5rem; aspect-ratio: 1; border: 1px solid var(--accent); border-radius: 50%; box-shadow: inset 0 0 0 .35rem transparent, inset 0 0 0 .4rem rgb(213 182 138 / .45); }
+.t-intl[data-variant='the-monograph'] .intl-hero__text { color: var(--ink); }
+.t-intl[data-variant='the-monograph'] .intl-eyebrow { color: var(--muted); }
+.t-intl[data-variant='the-monograph'] .intl-hero__names,
+.t-intl[data-variant='the-monograph'] .intl-hero__date { color: var(--ink); }

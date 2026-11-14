@@ -572,6 +572,7 @@
   .t-conv[data-variant='garden-at-dusk'] .conv-hero { background: linear-gradient(145deg, #332b35, #594657); color: #fff8f3; }
   .t-conv[data-variant='garden-at-dusk'] .conv-hero::after { border-color: rgb(255 248 243 / .45); border-radius: 0; inset: 2rem; }
   .t-conv[data-variant='garden-at-dusk'] .conv-hero__content { color: #fff8f3; }
+  .t-conv[data-variant='garden-at-dusk'] .conv-hero .conv-script { color: #fff8f3; }
   .t-conv[data-variant='garden-at-dusk'] .conv-hero__date,
   .t-conv[data-variant='garden-at-dusk'] .conv-caps { color: #f2d9d6; }
   .t-conv[data-variant='garden-at-dusk'] .conv-arch--hero { width: min(14rem, 45cqi); }
@@ -590,4 +591,16 @@
   .t-conv[data-variant='bluebell-manor'] .conv-hero::after { border-radius: 48% 48% 0 0; }
   .t-conv[data-variant='garden-at-dusk'] .conv-hero { background: linear-gradient(145deg, #332b35, #594657); color: #fff8f3; }
   .t-conv[data-variant='garden-at-dusk'] .conv-hero__content :where(p,h1) { color: inherit; }
+  .t-conv[data-variant='garden-at-dusk'] .conv-hero .conv-script { color: #fff8f3; }
 }
+
+/* Botanical stationery signatures: quiet seals and linework complement the
+   shared script, arched portraits and floral vocabulary. */
+.t-conv[data-variant='blush-garden'] .conv-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2rem; aspect-ratio: 1; border: 1px solid var(--conv-sage); border-radius: 50%; box-shadow: 0 0 0 .25rem var(--conv-cream); }
+.t-conv[data-variant='rosewater'] .conv-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2.2rem; aspect-ratio: 1; border: 1px dotted var(--conv-rose-deep); border-radius: 42% 58% 45% 55%; background: radial-gradient(circle, var(--conv-rose) 0 1px, transparent 1.5px) center / 7px 7px; }
+.t-conv[data-variant='lily-and-lace'] .conv-hero__content::after { content: ''; position: absolute; right: .2rem; top: 15%; width: 1.7rem; height: 4rem; border-left: 1px solid var(--conv-sage); border-radius: 50%; background: radial-gradient(ellipse at 0 28%, var(--conv-sage) 0 2px, transparent 3px), radial-gradient(ellipse at 100% 56%, var(--conv-sage) 0 2px, transparent 3px); opacity: .8; }
+.t-conv[data-variant='the-conservatory'] .conv-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2.4rem; height: 3rem; border: 1px solid var(--conv-sage-deep); border-bottom: 0; border-radius: 50% 50% 0 0; }
+.t-conv[data-variant='pearl-keepsake'] .conv-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: .6rem; aspect-ratio: 1; border-radius: 50%; background: var(--conv-gold); box-shadow: .8rem 0 0 -.1rem var(--conv-gold), 1.6rem 0 0 -.2rem var(--conv-gold); }
+.t-conv[data-variant='peony-season'] .conv-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2.7rem; aspect-ratio: 1; border-radius: 70% 0 70% 0; border: 1px solid var(--conv-rose); transform: rotate(22deg); }
+.t-conv[data-variant='bluebell-manor'] .conv-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2rem; aspect-ratio: 1; border: 1px solid var(--conv-rose-deep); border-radius: 50%; box-shadow: inset 0 0 0 .35rem var(--conv-cream), inset 0 0 0 .42rem var(--conv-rose); }
+.t-conv[data-variant='garden-at-dusk'] .conv-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2.4rem; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 68% 32%, transparent 0 42%, var(--conv-gold) 45% 48%, transparent 51%); }

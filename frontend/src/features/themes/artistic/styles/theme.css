@@ -681,3 +681,17 @@
   .t-art[data-variant='negative-space'] .art-hero__photo { transform: none; }
 }
 
+/* Gallery marks and print-registration details are the signature ornament for
+   this family; each remains outside the text silhouette. */
+.t-art[data-variant='gallery-bold'] .art-hero__meta::after { content: ''; display: block; width: 4rem; height: .45rem; margin-top: .5rem; background: repeating-linear-gradient(90deg, var(--accent) 0 4px, transparent 4px 8px); }
+.t-art[data-variant='cut-paper'] .art-hero__meta::after { content: ''; display: block; width: 3.5rem; height: 1.5rem; margin-top: .35rem; background: linear-gradient(135deg, var(--accent) 0 33%, transparent 33% 40%, var(--paper-deep) 40% 72%, transparent 72%); }
+.t-art[data-variant='color-study'] .art-hero__meta::after { content: ''; display: block; width: 3.5rem; height: .8rem; margin-top: .5rem; background: linear-gradient(90deg, var(--accent) 0 28%, transparent 28% 36%, var(--ink) 36% 62%, transparent 62% 70%, var(--muted) 70%); }
+.t-art[data-variant='chromatic-vows'] .art-hero__meta::after { content: ''; display: block; width: 2rem; aspect-ratio: 1; margin-top: .5rem; background: var(--accent); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); box-shadow: 0 0 0 .3rem var(--paper-deep); }
+.t-art[data-variant='afterimage'] .art-hero__meta::after { content: ''; display: block; width: 2rem; aspect-ratio: 1; margin-top: .5rem; border: 1px solid var(--accent); border-radius: 50%; box-shadow: .35rem .2rem 0 -1px var(--paper), .7rem .4rem 0 -1px var(--accent); }
+.t-art[data-variant='sunday-collage'] .art-hero__meta::after { content: ''; display: block; width: 3.5rem; height: .8rem; margin-top: .5rem; background: var(--paper-deep); border: 1px dashed var(--accent); transform: rotate(-3deg); }
+.t-art[data-variant='the-exhibition'] .art-hero__meta::after { content: ''; display: block; width: 100%; height: 1px; margin-top: .5rem; background: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 8px); }
+.t-art[data-variant='negative-space'] .art-hero__meta::after { content: ''; display: block; width: .6rem; aspect-ratio: 1; margin-top: .5rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 .3rem var(--paper), 0 0 0 .35rem var(--accent); }
+.t-art .art-accent { color: var(--ink); }
+.t-art .art-events .art-accent,
+.t-art .art-events .art-event__day { color: var(--paper); }
+

@@ -14,6 +14,7 @@ import { FAMILIES, collectionsOf, templatesOf } from '../core/registry'
 import type { ThemeCollection, ThemeFamily } from '../core/types'
 import { countLabel, familySummary } from './format'
 import PickerBreadcrumbs from './PickerBreadcrumbs.vue'
+import TemplateThumbnail from './TemplateThumbnail.vue'
 import CollectionBrief from './CollectionBrief.vue'
 import PickerSteps from './PickerSteps.vue'
 import { collectionRoute, familyRoute, templateRoute } from './routes'
@@ -174,16 +175,13 @@ const itemClass =
             :data-theme-card="t.id"
             :data-status="t.status"
           >
-            <img
+            <TemplateThumbnail
               v-if="t.status === 'available' || t.status === 'draft'"
-              :src="t.previewImage"
-              alt=""
-              class="h-12 w-[4.8rem] shrink-0 rounded-md object-cover ring-1 ring-line"
-              loading="lazy"
+              :template="t"
             />
             <span
               v-else
-              class="h-12 w-[4.8rem] shrink-0 rounded-md bg-[repeating-linear-gradient(135deg,var(--color-canvas),var(--color-canvas)_6px,var(--color-rose-50)_6px,var(--color-rose-50)_12px)] ring-1 ring-line"
+              class="h-[4.5rem] w-28 shrink-0 rounded-md bg-[repeating-linear-gradient(135deg,var(--color-canvas),var(--color-canvas)_6px,var(--color-rose-50)_6px,var(--color-rose-50)_12px)] ring-1 ring-line"
               aria-hidden="true"
             />
             <div class="min-w-0 flex-1">

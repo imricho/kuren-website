@@ -24,6 +24,11 @@ ThemeFamily         broad visual or cultural category          catalog/families.
   direct link (QA) but aren't listed.
 - **Template ids are permanent** — they will be stored on weddings. Display names can change freely
   (Workstream 2's ids `international`, `traditional`, `ethnic`, `conventional`, `artistic` are unchanged).
+- **Cultural briefs**: each regional collection has a `brief` (`catalog/regional-briefs.ts`) separating
+  sources (verified or not), confirmed references, open research questions, guardrails and draft art
+  direction; `validateBrief()` blocks release until sources are verified, named reviewers have reviewed it
+  and (if required) a locality/subtradition is chosen. Unreviewed regional collections preview a
+  culturally neutral Nusantara Heritage template, labelled as such. Process: `docs/cultural-review/`.
 - **References**: each collection has `reference: { kind, region, notes, review }`. Regional cultural
   collections are `needs_review`; `validateCatalog()` refuses to let a cultural collection become
   available until it is `reviewed`.

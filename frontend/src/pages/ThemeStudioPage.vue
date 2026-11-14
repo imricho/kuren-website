@@ -42,7 +42,15 @@ const notFound = computed(
 // --- What is previewed --------------------------------------------------------------
 const routeTemplate = computed(() => (props.templateSlug ? getTheme(props.templateSlug) : undefined))
 // Templates the preview should come from at the current level: the collection's, else the family's.
+const NEUTRAL_COLLECTION_ID = 'nusantara-heritage'
+// A regional collection with nothing reviewed yet previews a culturally neutral template instead.
+const usesNeutralPreview = computed(
+  () =>
+    collection.value?.reference.kind === 'cultural' && availableTemplatesOf(collection.value.id).length === 0,
+)
+
 const scopeTemplates = computed<RenderableTemplate[]>(() => {
+  if (usesNeutralPreview.value) return availableTemplatesOf(NEUTRAL_COLLECTION_ID)
   if (collection.value) return availableTemplatesOf(collection.value.id)
   if (family.value) return THEMES.filter((t) => t.familyId === family.value!.id)
   return [...THEMES]
@@ -64,6 +72,9 @@ watch(previewed, (t) => selection.preview(t.id), { immediate: true })
 const notice = computed(() => {
   const missing = route.query.notFound
   if (typeof missing === 'string') return `Template "${missing}" doesn't exist — showing ${previewed.value.name} instead.`
+  if (usesNeutralPreview.value) {
+    return `${collection.value!.name} designs are in development and awaiting cultural review. Showing ${previewed.value.name} from Nusantara Heritage — a culturally neutral design, not a ${collection.value!.name} design.`
+  }
   const scope = collection.value ?? family.value
   if (scope && scopeTemplates.value.length === 0) {
     const p = templatePath(previewed.value.id)!

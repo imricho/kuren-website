@@ -156,7 +156,7 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
     ])
     await expect(page.locator('[data-family-card="classic"]')).toContainText('Conventional / Classic')
     await expect(page.locator('[data-family-card="traditional"] [data-testid="family-summary"]')).toHaveText(
-      '2 templates available · 12 regional collections coming soon',
+      '2 templates available · 12 regional collections in development',
     )
     await expect(page.locator('[data-family-card="modern-minimalist"] [data-testid="family-summary"]')).toHaveText(
       'In development — no collections yet',
@@ -235,21 +235,54 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
     await expect(general.first()).toHaveAttribute('data-collection-card', 'nusantara-heritage')
     await expect(regional).toHaveCount(12)
     expect(await regional.evaluateAll((els) => els.every((e) => e.getAttribute('data-status') === 'coming_soon'))).toBe(true)
-    await expect(page.getByTestId('regional-summary')).toContainText('0 of 12 available — planned')
+    await expect(page.getByTestId('regional-summary')).toContainText('0 of 12 available')
+    await expect(page.getByTestId('regional-summary')).toContainText('reviewed with the community')
+    await expect(page.locator('[data-collection-card="batak"] [data-testid="locality-hint"]')).toHaveText(
+      'Needs a subtradition: Toba, Karo, Mandailing, Simalungun, Pakpak, Angkola',
+    )
+    await expect(page.locator('[data-collection-card="batak"]')).toContainText('In development')
     await expect(page.locator('[data-collection-card="malay"]')).toContainText('Also known as Melayu')
   })
 
-  test('planned collections show their templates as unavailable and keep a clear preview notice', async ({ page }) => {
+  test('regional collections show their brief, stay in development and preview a neutral design', async ({ page }) => {
     await page.goto('/themes/traditional/javanese')
-    await expect(page.getByTestId('collection-count')).toHaveText('2 templates coming soon')
+    await expect(page.getByTestId('collection-count')).toHaveText('2 templates planned')
     const planned = page.locator('[data-theme-card][data-status="coming_soon"]')
     await expect(planned).toHaveCount(2)
     await expect(planned.getByRole('link')).toHaveCount(0)
-    await expect(page.getByTestId('preview-notice')).toContainText('Javanese has no templates to preview yet')
-    await page.getByTestId('collection-reference').locator('summary').click()
-    await expect(page.getByTestId('collection-reference')).toContainText('cultural advisers')
+    await expect(planned.first()).toContainText('In development')
+
+    // Brief: scope, status, locality requirement, and sourced vs research vs art direction kept apart.
+    const brief = page.getByTestId('collection-brief')
+    await expect(brief).toContainText('Central Java, Yogyakarta & East Java')
+    await expect(page.getByTestId('review-status')).toHaveText('In development')
+    await expect(brief).toContainText('Not yet reviewed by a cultural practitioner or organisation')
+    await expect(page.getByTestId('locality-requirement')).toContainText('Required — not chosen yet')
+    await page.getByTestId('brief-sources').locator('summary').click()
+    await expect(page.getByTestId('brief-sources')).toContainText('0 of 2 verified')
+    await expect(page.getByTestId('brief-sources')).toContainText('Confirmed cultural references: none yet')
+    await expect(page.getByTestId('brief-sources').getByRole('link').first()).toHaveAttribute('rel', /noopener/)
+    await page.getByTestId('brief-research').locator('summary').click()
+    await expect(page.getByTestId('brief-research')).toContainText('not confirmed')
+    await page.getByTestId('brief-art-direction').locator('summary').click()
+    await expect(page.getByTestId('brief-art-direction')).toContainText('creative choices, not cultural claims')
+
+    // Neutral preview, clearly labelled — never presented as a Javanese design.
+    await expect(pane(page).locator('.wedding-site[data-theme="traditional"], .wedding-site[data-theme="ethnic"]')).toBeVisible()
+    await expect(page.getByTestId('preview-notice')).toContainText('awaiting cultural review')
+    await expect(page.getByTestId('preview-notice')).toContainText('culturally neutral design, not a Javanese design')
+
     await page.goto('/themes/solo-basahan/preview')
     await expect(page).toHaveURL(/\/themes\/traditional\/javanese$/)
+  })
+
+  test('every regional collection previews a neutral design until reviewed', async ({ page }) => {
+    for (const id of ['javanese', 'sundanese', 'minangkabau', 'batak', 'bugis', 'betawi', 'malay', 'madura', 'balinese', 'dayak', 'ambon-maluku', 'papuan']) {
+      await page.goto(`/themes/traditional/${id}`)
+      await expect(page.getByTestId('collection-brief')).toBeVisible()
+      await expect(pane(page).locator('.wedding-site')).toHaveAttribute('data-theme', /^(traditional|ethnic)$/)
+      await expect(page.getByTestId('preview-notice')).toContainText('culturally neutral design')
+    }
   })
 
   test('families in development have no selectable collections', async ({ page }) => {

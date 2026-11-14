@@ -1,4 +1,5 @@
 import type { ThemeCollection, ThemeReference } from '../core/types'
+import { REGIONAL_BRIEFS } from './regional-briefs'
 
 const cultural = (region: string, notes: string): ThemeReference => ({
   kind: 'cultural',
@@ -15,7 +16,7 @@ const cultural = (region: string, notes: string): ThemeReference => ({
  * templates must name the specific tradition they draw on (see `notes`) rather
  * than presenting one style as representative of a whole culture.
  */
-export const COLLECTIONS: readonly ThemeCollection[] = [
+const BASE_COLLECTIONS: ThemeCollection[] = [
   // --- Traditional ------------------------------------------------------------
   {
     id: 'nusantara-heritage',
@@ -38,7 +39,7 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     description: 'Designs inspired by Javanese wedding traditions.',
     reference: cultural(
       'Central Java, Yogyakarta & East Java',
-      'Yogyakarta and Surakarta (Solo) court traditions differ in attire (e.g. Paes Ageng, Basahan) and ornament; templates should name the specific tradition.',
+      'Each court tradition (e.g. Yogyakarta, Pakualaman, Surakarta, Mangkunegaran) has its own named bridal styles; record the exact style name from a source and name the specific tradition per template.',
     ),
     status: 'coming_soon',
   },
@@ -65,8 +66,8 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     name: 'Batak',
     description: 'Designs inspired by Batak wedding traditions.',
     reference: cultural(
-      'North Sumatra',
-      'Batak comprises several peoples — Toba, Karo, Simalungun, Pakpak, Angkola, Mandailing — each with its own textiles (ulos) and customs. Templates must specify which.',
+      'Mainly North Sumatra (Pakpak and Karo areas extend into Aceh)',
+      'Several peoples — Toba, Karo, Simalungun, Pakpak, Angkola, Mandailing — each with its own textile traditions and names. Some do not identify as Batak. Templates must specify which.',
     ),
     status: 'coming_soon',
   },
@@ -75,7 +76,7 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     familyId: 'traditional',
     name: 'Bugis',
     description: 'Designs inspired by Bugis wedding traditions.',
-    reference: cultural('South Sulawesi', 'Distinguish Bugis from neighbouring Makassar traditions; confirm attire and colour meanings.'),
+    reference: cultural('South Sulawesi and Bugis communities elsewhere', 'Distinguish Bugis from neighbouring Makassar traditions; do not assign colour meanings unless sourced.'),
     status: 'coming_soon',
   },
   {
@@ -83,7 +84,7 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     familyId: 'traditional',
     name: 'Betawi',
     description: 'Designs inspired by Betawi wedding traditions.',
-    reference: cultural('Jakarta & surroundings', 'Betawi culture blends several influences; represent it on its own terms.'),
+    reference: cultural('Jakarta, Bekasi, Depok, Tangerang, Bogor', 'A distinct culture with its own documented history; represent it on its own terms.'),
     status: 'coming_soon',
   },
   {
@@ -133,8 +134,8 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     id: 'ambon-maluku',
     familyId: 'traditional',
     name: 'Ambon / Maluku',
-    description: 'Designs inspired by Ambonese and Malukan wedding traditions.',
-    reference: cultural('Maluku', 'Maluku spans many islands and communities; name the specific tradition per template.'),
+    description: 'Designs inspired by Ambonese and Moluccan wedding traditions.',
+    reference: cultural('Maluku and North Maluku provinces', 'Maluku spans many islands and communities; name the specific tradition per template.'),
     status: 'coming_soon',
   },
   {
@@ -144,7 +145,7 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     alsoKnownAs: 'Papua',
     description: 'Designs inspired by Papuan wedding traditions.',
     reference: cultural(
-      'Papua',
+      'Papua region (six provinces since 2022)',
       'Papua is home to hundreds of distinct peoples and languages. Templates must specify the community, be developed with community input, and avoid stereotyped imagery.',
     ),
     status: 'coming_soon',
@@ -180,3 +181,8 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     status: 'available',
   },
 ]
+
+/** Collections with their cultural briefs attached (see catalog/regional-briefs.ts). */
+export const COLLECTIONS: readonly ThemeCollection[] = BASE_COLLECTIONS.map((c) =>
+  REGIONAL_BRIEFS[c.id] ? { ...c, brief: REGIONAL_BRIEFS[c.id] } : c,
+)

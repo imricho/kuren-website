@@ -13,6 +13,7 @@ import { FAMILIES, collectionsOf, templatesOf } from '../core/registry'
 import type { ThemeCollection, ThemeFamily } from '../core/types'
 import { countLabel, familySummary } from './format'
 import PickerBreadcrumbs from './PickerBreadcrumbs.vue'
+import CollectionBrief from './CollectionBrief.vue'
 import PickerSteps from './PickerSteps.vue'
 import { collectionRoute, familyRoute, templateRoute } from './routes'
 import SelectionSummary from './SelectionSummary.vue'
@@ -140,7 +141,7 @@ const itemClass =
           Regional collections · {{ regional.length }}
         </h3>
         <p class="mb-2 text-xs text-ink-500" data-testid="regional-summary">
-          {{ regionalAvailable }} of {{ regional.length }} available — planned, and released only after cultural review.
+          {{ regionalAvailable }} of {{ regional.length }} available. Each is in development and will be released only after its sources are verified and it has been reviewed with the community it draws on.
         </p>
         <ul class="space-y-2">
           <li
@@ -161,6 +162,9 @@ const itemClass =
             <p v-if="c.alsoKnownAs || c.reference.region" class="text-xs text-ink-500">
               <template v-if="c.alsoKnownAs">Also known as {{ c.alsoKnownAs }} · </template>{{ c.reference.region }}
             </p>
+            <p v-if="c.brief?.localityRequired" class="text-xs text-ink-500" data-testid="locality-hint">
+              Needs a {{ c.brief.localityLabel }}<template v-if="c.brief.localities.length">: {{ c.brief.localities.map((l) => l.name).join(', ') }}</template>
+            </p>
             <p class="text-xs font-medium text-rose-600">{{ countLabel({ collectionId: c.id }) }}</p>
           </li>
         </ul>
@@ -179,7 +183,8 @@ const itemClass =
         <p class="text-xs font-medium text-ink-700" data-testid="collection-count">{{ countLabel({ collectionId: collection.id }) }}</p>
       </header>
 
-      <details class="rounded-xl border border-line bg-surface px-4 py-3 text-sm" data-testid="collection-reference">
+      <CollectionBrief v-if="collection.brief" :collection="collection" />
+      <details v-else class="rounded-xl border border-line bg-surface px-4 py-3 text-sm" data-testid="collection-reference">
         <summary class="cursor-pointer font-medium text-ink-700">
           {{ collection.reference.kind === 'cultural' ? 'Cultural reference' : 'Design reference' }}
         </summary>

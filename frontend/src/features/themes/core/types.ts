@@ -56,6 +56,75 @@ export interface ThemeReference {
   review: 'not_required' | 'needs_review' | 'reviewed'
 }
 
+// --- Cultural briefs (regional collections) ----------------------------------------
+//
+// A brief keeps three things visibly apart:
+//   1. SOURCED cultural information  → `sources`, `confirmed` (only with a verified source)
+//   2. OPEN research questions       → `toResearch` (candidate references, NOT verified)
+//   3. CREATIVE art direction        → `artDirection` (design choices, never cultural claims)
+// plus the review state. Nothing in `toResearch` or `artDirection` may be presented as fact.
+
+export type CulturalReviewStatus = 'in_development' | 'awaiting_review' | 'reviewed'
+
+export interface SourceReference {
+  title: string
+  url: string
+  publisher: string
+  /** What the source actually documents (and its geographic/community scope). */
+  covers: string
+  /** True only once the Kuren team has read it and confirmed it supports the cited items. */
+  verified: boolean
+  /** Link problems found when checking (e.g. expired certificate, moved host), with the date checked. */
+  accessNote?: string
+}
+
+export interface LocalityOption {
+  id: string
+  name: string
+  status: ThemeStatus
+}
+
+export interface CulturalItems {
+  garments: string[]
+  textiles: string[]
+  motifs: string[]
+  objects: string[]
+}
+
+export interface ArtDirection {
+  palette: { name: string; hex: string }[]
+  typography: string
+  composition: string
+  imagery: string
+  layout: string
+}
+
+export interface CulturalBrief {
+  /** Whether a specific locality/subtradition must be chosen before any cultural motif is shown. */
+  localityRequired: boolean
+  /** How to call the choice in the UI, e.g. "subtradition", "locality", "island or community". */
+  localityLabel: string
+  localities: LocalityOption[]
+  /** Caveat about the options, e.g. that the list is not exhaustive. */
+  localitiesNote?: string
+  selectedLocality: string | null
+  review: {
+    status: CulturalReviewStatus
+    /** Named practitioners/organisations who reviewed it. Empty until a real review happens. */
+    reviewers: string[]
+    notes: string[]
+  }
+  sources: SourceReference[]
+  /** References confirmed by a verified source (and later by review). Empty until then. */
+  confirmed: CulturalItems
+  /** Candidate references from the design brief — research questions, not facts. */
+  toResearch: CulturalItems
+  /** Things the collection must not do or depict. */
+  avoid: string[]
+  /** Creative choices for the eventual design. Not cultural claims. */
+  artDirection: ArtDirection
+}
+
 export interface ThemeCollection {
   id: string
   familyId: string
@@ -65,6 +134,8 @@ export interface ThemeCollection {
   description: string
   coverImage?: string
   reference: ThemeReference
+  /** Required for cultural collections; see CulturalBrief. */
+  brief?: CulturalBrief
   status: ThemeStatus
 }
 

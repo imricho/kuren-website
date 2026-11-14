@@ -147,6 +147,38 @@ export function templatePath(id: string | null | undefined) {
 
 // --- Integrity ------------------------------------------------------------------
 
+/**
+ * Rules for cultural briefs. A culturally specific collection can only become available
+ * when its sources are verified, it has been reviewed by named reviewers, and (if needed)
+ * a specific locality/subtradition is chosen. Items can only be "confirmed" with a verified source.
+ */
+export function validateBrief(c: ThemeCollection): string[] {
+  const problems: string[] = []
+  const b = c.brief
+  if (!b) return [`cultural collection "${c.id}" needs a cultural brief`]
+  const verifiedSources = b.sources.filter((s) => s.verified).length
+  const confirmedCount = Object.values(b.confirmed).flat().length
+
+  if (confirmedCount > 0 && verifiedSources === 0)
+    problems.push(`collection "${c.id}" lists confirmed references without a verified source`)
+  if ((b.review.status === 'reviewed') !== (c.reference.review === 'reviewed'))
+    problems.push(`collection "${c.id}" review status is inconsistent between reference and brief`)
+  if (b.review.status === 'reviewed' && b.review.reviewers.length === 0)
+    problems.push(`collection "${c.id}" is marked reviewed but names no reviewers`)
+  if (b.selectedLocality && !b.localities.some((l) => l.id === b.selectedLocality))
+    problems.push(`collection "${c.id}" selects an unknown locality "${b.selectedLocality}"`)
+  for (const s of b.sources) if (!/^https:\/\//.test(s.url)) problems.push(`collection "${c.id}" has a non-https source URL`)
+
+  if (c.status === 'available') {
+    if (b.review.status !== 'reviewed') problems.push(`collection "${c.id}" must be reviewed before it is available`)
+    if (verifiedSources === 0) problems.push(`collection "${c.id}" needs at least one verified source before it is available`)
+    if (b.localityRequired && !b.selectedLocality)
+      problems.push(`collection "${c.id}" needs a ${b.localityLabel} before it is available`)
+  }
+  return problems
+}
+
+
 /** Validate the catalog's references and rules. Returns problems; empty means valid. */
 export function validateCatalog(
   families: readonly ThemeFamily[] = FAMILIES,
@@ -178,6 +210,7 @@ export function validateCatalog(
       problems.push(`collection "${c.id}" is available but its family "${family.id}" is not`)
     if (c.reference.kind === 'cultural' && c.status === 'available' && c.reference.review !== 'reviewed')
       problems.push(`cultural collection "${c.id}" must be reviewed before it is available`)
+    if (c.reference.kind === 'cultural') problems.push(...validateBrief(c))
   }
 
   for (const t of templates) {

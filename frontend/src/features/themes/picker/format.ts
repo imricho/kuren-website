@@ -3,7 +3,7 @@
  * same on every page (cards, inline preview, full-screen preview, dashboard).
  */
 import { collectionCounts, collectionsOf, templateCounts, templatePath } from '../core/registry'
-import type { ThemeStatus } from '../core/types'
+import type { CulturalReviewStatus, ThemeStatus } from '../core/types'
 
 export const ACTION = {
   preview: 'Preview',
@@ -14,24 +14,30 @@ export const ACTION = {
 
 export const STATUS_LABEL: Record<ThemeStatus, string> = {
   available: 'Available',
-  coming_soon: 'Coming soon',
+  coming_soon: 'In development',
   hidden: 'Preview only',
+}
+
+export const REVIEW_LABEL: Record<CulturalReviewStatus, string> = {
+  in_development: 'In development',
+  awaiting_review: 'Awaiting cultural review',
+  reviewed: 'Culturally reviewed',
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
-/** e.g. "2 templates available", "2 templates coming soon", "In development". */
+/** e.g. "2 templates available", "2 templates planned", "No templates yet". */
 export function countLabel(scope: { familyId?: string; collectionId?: string }): string {
   const { available, comingSoon } = templateCounts(scope)
-  if (available && comingSoon) return `${plural(available, 'template')} available · ${comingSoon} coming soon`
+  if (available && comingSoon) return `${plural(available, 'template')} available · ${comingSoon} planned`
   if (available) return `${plural(available, 'template')} available`
-  if (comingSoon) return `${plural(comingSoon, 'template')} coming soon`
-  return 'In development'
+  if (comingSoon) return `${plural(comingSoon, 'template')} planned`
+  return 'No templates yet'
 }
 
 /**
  * Family summary that agrees with the collection-level statuses, e.g.
- *   "2 templates available · 12 regional collections coming soon"
+ *   "2 templates available · 12 regional collections in development"
  *   "1 template available"
  *   "In development — no collections yet"
  */
@@ -45,7 +51,7 @@ export function familySummary(familyId: string): string {
       (c) => c.status === 'coming_soon' && c.reference.kind === 'cultural',
     ).length
     const kind = comingSoonRegional === cols.comingSoon ? 'regional collection' : 'collection'
-    parts.push(`${plural(cols.comingSoon, kind)} coming soon`)
+    parts.push(`${plural(cols.comingSoon, kind)} in development`)
   }
   return parts.join(' · ')
 }

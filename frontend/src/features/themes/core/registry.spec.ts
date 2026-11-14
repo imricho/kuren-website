@@ -20,9 +20,16 @@ import {
 import type { ThemeCollection, ThemeFamily, ThemeTemplate } from './types'
 
 describe('theme registry — Workstream 2 compatibility', () => {
-  it('exposes all seven available templates as selectable THEMES', () => {
+  it('exposes all 48 available templates as selectable THEMES', () => {
+    expect(THEMES).toHaveLength(48)
     expect(THEMES.map((t) => t.id)).toEqual([
       'international', 'traditional', 'ethnic', 'conventional', 'artistic', 'still-form', 'wildwood-gathering',
+      'ivory-processional', 'terracotta-geometry', 'gilded-vow', 'candlelit-hall', 'pressed-filigree', 'loomed-lines',
+      'the-monograph', 'coastal-issue', 'the-sunday-edit', 'city-journal', 'gallery-no-08', 'modern-heirloom', 'afterglow',
+      'rosewater', 'lily-and-lace', 'the-conservatory', 'pearl-keepsake', 'peony-season', 'bluebell-manor', 'garden-at-dusk',
+      'cut-paper', 'color-study', 'chromatic-vows', 'afterimage', 'sunday-collage', 'the-exhibition', 'negative-space',
+      'monogram', 'soft-grid', 'paper-light', 'black-tie', 'quiet-contrast', 'outline', 'atelier',
+      'meadowlight', 'olive-grove', 'orchard-table', 'coastal-pine', 'golden-hour-garden', 'gathered-branch', 'wildflower-press',
     ])
   })
 
@@ -191,18 +198,18 @@ describe('naming, aliases and counts', () => {
   })
 
   it('counts collections by availability per family', () => {
-    expect(collectionCounts('traditional')).toEqual({ total: 2, available: 2, draft: 0, comingSoon: 0 })
-    expect(collectionCounts('classic')).toEqual({ total: 1, available: 1, draft: 0, comingSoon: 0 })
-    expect(collectionCounts('modern-minimalist')).toEqual({ total: 1, available: 1, draft: 0, comingSoon: 0 })
-    expect(collectionCounts('rustic-nature')).toEqual({ total: 1, available: 1, draft: 0, comingSoon: 0 })
+    for (const family of FAMILIES) {
+      expect(collectionCounts(family.id)).toEqual({ total: 4, available: 4, draft: 0, comingSoon: 0 })
+    }
   })
 
   it('counts templates by availability per family and collection', () => {
-    expect(templateCounts({ familyId: 'traditional' })).toEqual({ available: 2, draft: 0, comingSoon: 0 })
-    expect(templateCounts({ collectionId: 'ceremonial-classic' })).toEqual({ available: 1, draft: 0, comingSoon: 0 })
-    expect(templateCounts({ collectionId: 'artisan-pattern' })).toEqual({ available: 1, draft: 0, comingSoon: 0 })
-    expect(templateCounts({ familyId: 'modern-minimalist' })).toEqual({ available: 1, draft: 0, comingSoon: 0 })
-    expect(templateCounts({ familyId: 'rustic-nature' })).toEqual({ available: 1, draft: 0, comingSoon: 0 })
+    for (const family of FAMILIES) {
+      expect(templateCounts({ familyId: family.id })).toEqual({ available: 8, draft: 0, comingSoon: 0 })
+    }
+    for (const collection of COLLECTIONS) {
+      expect(templateCounts({ collectionId: collection.id })).toEqual({ available: 2, draft: 0, comingSoon: 0 })
+    }
   })
 
   it('rejects aliases that collide with another id', () => {

@@ -12,6 +12,7 @@ export const minimalistTheme: RenderableTemplate = {
   description:
     'A precise, sans-led wedding design with a quiet date rail, soft paper tones and a deliberate photographic frame.',
   previewImage: thumbnail,
+  config: { variant: 'still-form' },
   fonts: {
     href: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap',
   },

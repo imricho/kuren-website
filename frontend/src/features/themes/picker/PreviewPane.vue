@@ -18,7 +18,7 @@ import SelectTemplateButton from './SelectTemplateButton.vue'
 
 const props = defineProps<{ template: RenderableTemplate; notice?: string | null }>()
 
-const device = ref<Device>('phone')
+const device = ref<Device>('desktop')
 const path = computed(() => templatePath(props.template.id)!)
 const { t } = useAppLocale()
 const action = computed(() => localizedActions())

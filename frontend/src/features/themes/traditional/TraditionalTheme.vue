@@ -20,7 +20,7 @@ const view = useWeddingView(props)
 </script>
 
 <template>
-  <article class="t-trad">
+  <article class="t-trad" :data-variant="config?.variant ?? 'royal-maroon'">
     <!-- Opening -->
     <header class="trad-hero">
       <div class="trad-frame">

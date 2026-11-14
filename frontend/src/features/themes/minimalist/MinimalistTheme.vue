@@ -13,7 +13,7 @@ const view = useWeddingView(props)
 </script>
 
 <template>
-  <article class="t-minimal">
+  <article class="t-minimal" :data-variant="config?.variant ?? 'still-form'">
     <header class="mf-hero" :class="{ 'mf-hero--photo': content.opening.coverImage }">
       <div class="mf-hero__topline">
         <span>{{ view.t.weddingOf }}</span>
@@ -31,6 +31,9 @@ const view = useWeddingView(props)
         </div>
         <div v-if="content.opening.coverImage" class="mf-hero__photo">
           <ThemeImage :image="content.opening.coverImage" eager />
+          <span v-if="config?.variant === 'monogram'" class="mf-monogram-mark" aria-hidden="true">
+            {{ content.couple.groom.name.charAt(0) }}<i>&amp;</i>{{ content.couple.bride.name.charAt(0) }}
+          </span>
           <span class="mf-photo-index" aria-hidden="true">01 / 01</span>
         </div>
         <div v-else class="mf-hero__monogram" aria-hidden="true">

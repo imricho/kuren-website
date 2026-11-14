@@ -2,7 +2,7 @@
   <rect width="320" height="200" fill="#f0eadf"/>
   <rect x="15" y="15" width="290" height="170" fill="none" stroke="#c9c7b8"/>
   <path d="M24 160c45-18 60-61 104-109M63 120C42 107 40 90 55 80c18 12 18 29 8 40Zm21-23c-1-24 12-35 29-27 1 19-11 29-29 27Zm18-27c-8-19 0-34 18-35 11 16 4 31-18 35Z" fill="none" stroke="#73836d" stroke-width="2"/>
-  <text x="143" y="59" font-family="Georgia,serif" font-size="25" fill="#34463a">Alexander</text>
+  <text x="143" y="59" font-family="Georgia,serif" font-size="25" fill="#34463a">Alex</text>
   <text x="143" y="86" font-family="Georgia,serif" font-style="italic" font-size="20" fill="#a9654a">&amp;</text>
   <text x="143" y="116" font-family="Georgia,serif" font-size="25" fill="#34463a">Sarah</text>
   <path d="M143 132h126" stroke="#aeb7a7"/>

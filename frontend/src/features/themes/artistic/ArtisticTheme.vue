@@ -19,7 +19,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
 </script>
 
 <template>
-  <article class="t-art">
+  <article class="t-art" :data-variant="config?.variant ?? 'gallery-bold'">
     <!-- Opening -->
     <header class="art-hero">
       <p class="art-hero__vertical" aria-hidden="true">{{ view.date.short }}</p>

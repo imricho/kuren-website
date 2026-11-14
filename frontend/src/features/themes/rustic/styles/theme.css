@@ -20,9 +20,25 @@
   font-family: var(--rn-body);
   line-height: 1.72;
 }
+
+/* Nature-led variants shift through landscape, orchard and paper moods without rustic clichés. */
+.t-rustic[data-variant='meadowlight'] { --rn-forest:#50624b; --rn-forest-deep:#374a37; --rn-sage:#a3b296; --rn-sage-pale:#e4eadc; --rn-oat:#f2eedf; --rn-paper:#fbf8ef; --rn-clay:#a47b55; --rn-ink:#393b32; --rn-muted:#73746a; --rn-line:#d9d8c9; }
+.t-rustic[data-variant='olive-grove'] { --rn-forest:#596341; --rn-forest-deep:#3e492f; --rn-sage:#a5a585; --rn-sage-pale:#e4e2ce; --rn-oat:#f1eddf; --rn-paper:#faf7ee; --rn-clay:#a87850; --rn-ink:#37392f; --rn-muted:#707165; --rn-line:#d7d5c5; }
+.t-rustic[data-variant='orchard-table'] { --rn-forest:#526044; --rn-forest-deep:#384632; --rn-sage:#a6ae8c; --rn-sage-pale:#e4e6d5; --rn-oat:#f0e8d9; --rn-paper:#faf5eb; --rn-clay:#b56f4d; --rn-ink:#39352f; --rn-muted:#746d60; --rn-line:#d7d1c2; }
+.t-rustic[data-variant='coastal-pine'] { --rn-forest:#38534f; --rn-forest-deep:#263d3b; --rn-sage:#88a49b; --rn-sage-pale:#dce7e1; --rn-oat:#e9eeea; --rn-paper:#f4f7f3; --rn-clay:#aa7b63; --rn-ink:#2e3938; --rn-muted:#667471; --rn-line:#ced9d4; }
+.t-rustic[data-variant='golden-hour-garden'] { --rn-forest:#55553a; --rn-forest-deep:#393c2e; --rn-sage:#a39a6f; --rn-sage-pale:#e9e1c8; --rn-oat:#f0e5d1; --rn-paper:#faf3e7; --rn-clay:#b16c48; --rn-ink:#3a332a; --rn-muted:#776a58; --rn-line:#d8cbb8; }
+.t-rustic[data-variant='gathered-branch'] { --rn-forest:#514c3e; --rn-forest-deep:#39372f; --rn-sage:#999782; --rn-sage-pale:#e4e1d4; --rn-oat:#f1ecdf; --rn-paper:#faf8f1; --rn-clay:#927051; --rn-ink:#36342e; --rn-muted:#706d63; --rn-line:#d8d4c8; }
+.t-rustic[data-variant='wildflower-press'] { --rn-forest:#59624a; --rn-forest-deep:#3f4939; --rn-sage:#aaa0b4; --rn-sage-pale:#e8e0eb; --rn-oat:#efe8e4; --rn-paper:#faf6f3; --rn-clay:#9c6a83; --rn-ink:#39343b; --rn-muted:#746b74; --rn-line:#d8ced8; }
+.t-rustic[data-variant='meadowlight'] .rn-hero__landscape { filter:hue-rotate(8deg) saturate(.82); }
+.t-rustic[data-variant='olive-grove'] .rn-hero__copy { text-align:left; margin-inline:auto 0; }
+.t-rustic[data-variant='orchard-table'] .rn-event { border-radius:1.25rem; }
+.t-rustic[data-variant='coastal-pine'] .rn-hero__landscape { filter:hue-rotate(24deg) saturate(.75); }
+.t-rustic[data-variant='golden-hour-garden'] .rn-hero__veil { background:linear-gradient(180deg, rgb(60 39 20 / .16), rgb(60 39 20 / .7)); }
+.t-rustic[data-variant='gathered-branch'] .rn-story__marker { border-radius:0; transform:rotate(45deg); }
+.t-rustic[data-variant='wildflower-press'] .rn-gallery__item:nth-child(even) { transform:translateY(1rem) rotate(1deg); }
 :where(.t-rustic) :where(h1, h2, h3, p, figure) { margin: 0; }
 :where(.t-rustic) :where(h1, h2, h3) { color: var(--rn-forest); font-family: var(--rn-display); font-weight: 400; line-height: 1.08; }
-.rn-kicker { color: var(--rn-clay); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.16em; line-height: 1.5; text-transform: uppercase; }
+.rn-kicker { color: var(--rn-forest); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.16em; line-height: 1.5; text-transform: uppercase; }
 .rn-body { color: var(--rn-muted); font-size: 0.96rem; }
 .rn-section { padding: 4.75rem 1.25rem; }
 .rn-section-heading { display: grid; gap: 1rem; max-width: 42rem; margin-bottom: 2.75rem; }
@@ -42,7 +58,7 @@
 .rn-hero__bottomline { display: flex; justify-content: space-between; gap: 1rem; color: rgb(247 244 237 / 0.86); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; }
 .rn-hero__topline { padding-bottom: 0.9rem; border-bottom: 1px solid rgb(247 244 237 / 0.34); }
 .rn-hero__bottomline { padding-top: 0.8rem; border-top: 1px solid rgb(247 244 237 / 0.34); }
-.rn-hero__copy { display: grid; justify-items: start; gap: 1rem; max-width: 52rem; margin: auto 0; padding: 3rem 0; }
+.rn-hero__copy { position: relative; display: grid; justify-items: start; gap: 1rem; max-width: 52rem; margin: auto 0; padding: 3rem 0; }
 .rn-hero__copy .rn-kicker { color: #e8c5a8; }
 .rn-hero__copy h1 { display: grid; color: var(--rn-paper); font-size: clamp(3.7rem, 17cqi, 8rem); letter-spacing: -0.045em; line-height: 0.92; }
 .rn-hero__copy h1 i { padding-left: 0.45em; color: #d3d9c8; font-size: 0.52em; font-weight: 400; }
@@ -122,7 +138,7 @@
 .rn-closing__photo { aspect-ratio: 16 / 10; overflow: hidden; }
 .rn-closing__copy { display: grid; justify-items: center; gap: 1rem; padding: 3.5rem 1.25rem 4.5rem; text-align: center; }
 .rn-closing__message { max-width: 42rem; color: var(--rn-forest); font-family: var(--rn-display); font-size: clamp(1.6rem, 5.5cqi, 3rem); line-height: 1.3; }
-.rn-closing__thanks { color: var(--rn-clay); font-family: var(--rn-display); font-size: 1.15rem; font-style: italic; }
+.rn-closing__thanks { color: var(--rn-forest); font-family: var(--rn-display); font-size: 1.15rem; font-style: italic; }
 .rn-closing__names { padding-top: 0.75rem; color: var(--rn-forest); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
 
 @container site (min-width: 48rem) {
@@ -151,6 +167,121 @@
   .rn-closing { grid-template-columns: 1fr 1fr; align-items: center; }
   .rn-closing__photo { height: 100%; min-height: 26rem; aspect-ratio: auto; }
   .rn-closing__copy { padding: 4rem; }
+}
+
+/* Field-to-garden composition profiles: natural materials remain common, but
+   landscape, orchard, herbarium and journal formats get separate page rhythms. */
+@container site (min-width: 48rem) {
+  .t-rustic[data-variant='meadowlight'] .rn-hero { min-height: 82cqh; }
+  .t-rustic[data-variant='meadowlight'] .rn-hero__copy { width: min(72%, 58rem); padding-block: 3rem; }
+  .t-rustic[data-variant='meadowlight'] .rn-hero__copy h1 { display: flex; flex-wrap: wrap; gap: 0 .2em; }
+  .t-rustic[data-variant='meadowlight'] .rn-intro { grid-template-columns: 1fr; text-align: center; justify-items: center; }
+  .t-rustic[data-variant='meadowlight'] .rn-intro__copy { justify-items: center; }
+  .t-rustic[data-variant='meadowlight'] .rn-story__list::before { left: 1rem; }
+  .t-rustic[data-variant='meadowlight'] .rn-story__entry { grid-template-columns: 3rem 1fr 1.4fr; }
+  .t-rustic[data-variant='meadowlight'] .rn-story__marker { grid-column: 1; grid-row: 1; }
+  .t-rustic[data-variant='meadowlight'] .rn-story__photo { grid-column: 2; grid-row: 1; }
+  .t-rustic[data-variant='meadowlight'] .rn-story__copy { grid-column: 3; grid-row: 1; }
+  .t-rustic[data-variant='meadowlight'] .rn-gallery__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .t-rustic[data-variant='meadowlight'] .rn-gallery__item:first-child { grid-column: 1 / -1; }
+
+  .t-rustic[data-variant='olive-grove'] .rn-hero { align-items: end; padding-inline: 8cqi; }
+  .t-rustic[data-variant='olive-grove'] .rn-hero__copy { width: 52%; margin-left: auto; margin-right: 0; padding: 5rem 0; }
+  .t-rustic[data-variant='olive-grove'] .rn-hero__copy h1 { display: grid; }
+  .t-rustic[data-variant='olive-grove'] .rn-couple__grid { grid-template-columns: .8fr 1.2fr; align-items: center; }
+  .t-rustic[data-variant='olive-grove'] .rn-person--second { margin-top: 7rem; }
+  .t-rustic[data-variant='olive-grove'] .rn-person__photo { aspect-ratio: 3 / 4; padding: .9rem; }
+  .t-rustic[data-variant='olive-grove'] .rn-story__entry { grid-template-columns: 1fr 3rem 1fr; }
+  .t-rustic[data-variant='olive-grove'] .rn-story__photo { grid-column: 1; grid-row: 1; }
+  .t-rustic[data-variant='olive-grove'] .rn-story__copy { grid-column: 3; grid-row: 1; }
+  .t-rustic[data-variant='olive-grove'] .rn-events__list { grid-template-columns: 1fr; max-width: 58rem; }
+  .t-rustic[data-variant='olive-grove'] .rn-event { grid-template-columns: 5rem 1fr; border: 0; border-bottom: 1px solid rgb(240 234 223 / .35); background: none; }
+
+  .t-rustic[data-variant='orchard-table'] .rn-hero__copy { width: 74%; max-width: 68rem; margin-inline: auto; text-align: center; justify-items: center; }
+  .t-rustic[data-variant='orchard-table'] .rn-hero__copy h1 { display: flex; flex-wrap: wrap; justify-content: center; }
+  .t-rustic[data-variant='orchard-table'] .rn-intro { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .t-rustic[data-variant='orchard-table'] .rn-intro__copy { justify-items: center; }
+  .t-rustic[data-variant='orchard-table'] .rn-events__list { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .t-rustic[data-variant='orchard-table'] .rn-event { grid-template-columns: 1fr; text-align: center; justify-items: center; padding: 2.5rem; border-color: var(--rn-clay); background: var(--rn-oat); color: var(--rn-ink); }
+  .t-rustic[data-variant='orchard-table'] .rn-event :where(h3,p,a) { color: inherit; }
+  .t-rustic[data-variant='orchard-table'] .rn-event__date { border: 0; border-bottom: 1px solid var(--rn-line); }
+  .t-rustic[data-variant='orchard-table'] .rn-event__index { display: none; }
+  .t-rustic[data-variant='orchard-table'] .rn-gallery__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .t-rustic[data-variant='coastal-pine'] .rn-hero { min-height: 72cqh; }
+  .t-rustic[data-variant='coastal-pine'] .rn-hero__copy { width: 50%; margin-left: auto; }
+  .t-rustic[data-variant='coastal-pine'] .rn-hero__copy h1 { display: flex; flex-wrap: wrap; }
+  .t-rustic[data-variant='coastal-pine'] .rn-intro { grid-template-columns: 1fr; }
+  .t-rustic[data-variant='coastal-pine'] .rn-couple__grid { grid-template-columns: 1fr 1fr; gap: 4rem; }
+  .t-rustic[data-variant='coastal-pine'] .rn-person--second { margin-top: 0; }
+  .t-rustic[data-variant='coastal-pine'] .rn-story__list::before { top: 50%; bottom: auto; left: 0; right: 0; width: auto; height: 1px; }
+  .t-rustic[data-variant='coastal-pine'] .rn-story__entry { grid-template-columns: 1fr 2.5rem 1fr; min-height: 19rem; }
+  .t-rustic[data-variant='coastal-pine'] .rn-story__marker { grid-column: 2; grid-row: 1; align-self: center; }
+  .t-rustic[data-variant='coastal-pine'] .rn-events__list { grid-template-columns: 1fr; }
+  .t-rustic[data-variant='coastal-pine'] .rn-event { grid-template-columns: 4rem 1fr 3rem; }
+
+  .t-rustic[data-variant='golden-hour-garden'] .rn-hero { min-height: 92cqh; }
+  .t-rustic[data-variant='golden-hour-garden'] .rn-hero__veil { background: linear-gradient(0deg, rgb(45 29 20 / .86), rgb(45 29 20 / .02) 76%); }
+  .t-rustic[data-variant='golden-hour-garden'] .rn-hero__copy { width: min(76%, 65rem); padding-bottom: 2rem; }
+  .t-rustic[data-variant='golden-hour-garden'] .rn-hero__copy h1 { display: flex; flex-wrap: wrap; gap: 0 .22em; font-size: clamp(4.8rem, 18cqi, 10rem); }
+  .t-rustic[data-variant='golden-hour-garden'] .rn-couple { background: var(--rn-forest); color: var(--rn-paper); }
+  .t-rustic[data-variant='golden-hour-garden'] .rn-couple :where(h2,h3,p) { color: inherit; }
+  .t-rustic[data-variant='golden-hour-garden'] .rn-person__photo { padding: 0; box-shadow: 1rem 1rem 0 rgb(232 197 168 / .25); }
+  .t-rustic[data-variant='golden-hour-garden'] .rn-events__list { grid-template-columns: 1fr; max-width: 58rem; }
+  .t-rustic[data-variant='golden-hour-garden'] .rn-event { grid-template-columns: 5rem 1fr; }
+
+  .t-rustic[data-variant='gathered-branch'] .rn-hero { min-height: 78cqh; }
+  .t-rustic[data-variant='gathered-branch'] .rn-hero__topline,
+  .t-rustic[data-variant='gathered-branch'] .rn-hero__bottomline { border-color: var(--rn-clay); }
+  .t-rustic[data-variant='gathered-branch'] .rn-hero__copy { width: 56%; margin-left: auto; padding-block: 4rem; border-inline: 1px solid rgb(247 244 237 / .45); padding-inline: 2rem; }
+  .t-rustic[data-variant='gathered-branch'] .rn-story__list::before { left: 1.1rem; }
+  .t-rustic[data-variant='gathered-branch'] .rn-story__entry { grid-template-columns: 3rem 1fr 1.2fr; }
+  .t-rustic[data-variant='gathered-branch'] .rn-story__marker { grid-column: 1; grid-row: 1; }
+  .t-rustic[data-variant='gathered-branch'] .rn-story__photo { grid-column: 2; grid-row: 1; }
+  .t-rustic[data-variant='gathered-branch'] .rn-story__copy { grid-column: 3; grid-row: 1; }
+  .t-rustic[data-variant='gathered-branch'] .rn-gallery__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .t-rustic[data-variant='gathered-branch'] .rn-gallery__item:first-child { grid-column: 1; }
+
+  .t-rustic[data-variant='wildflower-press'] .rn-hero { background: var(--rn-oat); color: var(--rn-ink); }
+  .t-rustic[data-variant='wildflower-press'] .rn-hero__copy { width: 42%; margin-left: auto; }
+  .t-rustic[data-variant='wildflower-press'] .rn-hero__copy h1 { color: var(--rn-forest); }
+  .t-rustic[data-variant='wildflower-press'] .rn-hero__date,
+  .t-rustic[data-variant='wildflower-press'] .rn-hero__topline,
+  .t-rustic[data-variant='wildflower-press'] .rn-hero__bottomline { color: var(--rn-ink); }
+  .t-rustic[data-variant='wildflower-press'] .rn-hero__veil { display: none; }
+  .t-rustic[data-variant='wildflower-press'] .rn-gallery__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .t-rustic[data-variant='wildflower-press'] .rn-gallery__item { padding: .75rem; border: 1px solid var(--rn-line); background: var(--rn-paper); }
+  .t-rustic[data-variant='wildflower-press'] .rn-gallery__item:nth-child(3n + 2) { margin-top: 2.5rem; }
+  .t-rustic[data-variant='wildflower-press'] .rn-events__list { grid-template-columns: 1fr; max-width: 60rem; }
+.t-rustic[data-variant='orchard-table'] .rn-event__date { color: var(--rn-forest); }
+.t-rustic[data-variant='wildflower-press'] .rn-hero__photo { filter: grayscale(.55); opacity: .18; }
+.t-rustic[data-variant='wildflower-press'] .rn-hero__copy .rn-kicker,
+.t-rustic[data-variant='wildflower-press'] .rn-sprig { color: var(--rn-forest); }
+.t-rustic[data-variant='field-notes'] .rn-hero__copy::after { content: ''; display: block; width: 4rem; height: 1rem; margin-top: .4rem; background: radial-gradient(ellipse at 50% 100%, transparent 55%, var(--rn-sage) 57% 60%, transparent 62%); }
+.t-rustic[data-variant='meadowlight'] .rn-hero__copy::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2.4rem; aspect-ratio: 1; border: 1px solid #f4ead8; border-radius: 50%; box-shadow: 0 0 0 .5rem rgb(244 234 216 / .14); }
+.t-rustic[data-variant='olive-grove'] .rn-hero__copy::after { content: ''; display: block; width: 3rem; height: 1.4rem; margin-top: .35rem; border-left: 1px solid var(--rn-clay); border-radius: 50%; background: radial-gradient(ellipse at 20% 35%, var(--rn-sage) 0 3px, transparent 4px), radial-gradient(ellipse at 80% 70%, var(--rn-sage) 0 3px, transparent 4px); }
+.t-rustic[data-variant='orchard-table'] .rn-hero__copy::after { content: ''; display: block; width: 1.6rem; aspect-ratio: 1; margin-top: .4rem; border: 1px solid var(--rn-clay); border-radius: 50%; box-shadow: inset 0 0 0 .3rem var(--rn-paper), inset 0 0 0 .38rem var(--rn-clay); }
+.t-rustic[data-variant='coastal-pine'] .rn-hero__copy::after { content: ''; display: block; width: 5rem; height: 1rem; margin-top: .4rem; background: repeating-radial-gradient(ellipse at 50% 100%, transparent 0 5px, var(--rn-sage) 6px 7px, transparent 8px 12px); }
+.t-rustic[data-variant='golden-hour-garden'] .rn-hero__copy::after { content: ''; position: absolute; top: .2rem; right: 1rem; width: 3rem; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, #f1d29a 0 44%, transparent 47%); box-shadow: 0 0 1.5rem rgb(241 210 154 / .3); }
+.t-rustic[data-variant='gathered-branch'] .rn-hero__copy::after { content: ''; position: absolute; top: 10%; right: .2rem; width: 1px; height: 80%; background: linear-gradient(transparent, var(--rn-clay), transparent); box-shadow: .6rem 1rem 0 -.3px var(--rn-sage), -.5rem 2rem 0 -.3px var(--rn-sage); }
+.t-rustic[data-variant='wildflower-press'] .rn-hero__copy::after { content: ''; display: block; width: 2rem; height: 2.5rem; margin-top: .5rem; border-left: 1px solid var(--rn-clay); background: radial-gradient(ellipse at 0 20%, var(--rn-sage) 0 3px, transparent 4px), radial-gradient(ellipse at 100% 48%, var(--rn-clay) 0 3px, transparent 4px), radial-gradient(ellipse at 0 76%, var(--rn-sage) 0 3px, transparent 4px); }
+}
+
+@container site (max-width: 47.99rem) {
+  .t-rustic[data-variant='meadowlight'] .rn-hero__copy { justify-items: center; text-align: center; }
+  .t-rustic[data-variant='meadowlight'] .rn-hero__copy h1 { display: flex; justify-content: center; }
+  .t-rustic[data-variant='olive-grove'] .rn-hero__copy { justify-items: end; text-align: right; margin-left: auto; }
+  .t-rustic[data-variant='olive-grove'] .rn-person__photo { padding: .25rem; }
+  .t-rustic[data-variant='orchard-table'] .rn-hero__copy { justify-items: center; text-align: center; margin-inline: auto; }
+  .t-rustic[data-variant='orchard-table'] .rn-event { grid-template-columns: 1fr; text-align: center; }
+  .t-rustic[data-variant='coastal-pine'] .rn-hero__copy h1 { display: flex; flex-wrap: wrap; }
+  .t-rustic[data-variant='coastal-pine'] .rn-person--second { margin-top: 0; }
+  .t-rustic[data-variant='golden-hour-garden'] .rn-hero__veil { background: linear-gradient(0deg, rgb(45 29 20 / .88), rgb(45 29 20 / .03) 78%); }
+  .t-rustic[data-variant='gathered-branch'] .rn-story__list::before { left: 1rem; }
+  .t-rustic[data-variant='wildflower-press'] .rn-hero { background: var(--rn-oat); color: var(--rn-ink); }
+  .t-rustic[data-variant='wildflower-press'] .rn-hero__copy h1 { color: var(--rn-forest); }
+  .t-rustic[data-variant='wildflower-press'] .rn-hero__veil { display: none; }
+  .t-rustic[data-variant='wildflower-press'] .rn-gallery__item { padding: .4rem; border: 1px solid var(--rn-line); background: var(--rn-paper); }
 }
 
 @media (prefers-reduced-motion: reduce) {

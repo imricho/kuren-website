@@ -76,7 +76,68 @@ const collectionCopy = {
   contemporary: ['Kontemporer', 'Komposisi seperti galeri dengan tipografi besar, foto kolase, dan satu aksen cerah.', 'Desain grafis kontemporer dan tata letak buku seni.'],
   'quiet-form': ['Bentuk Hening', 'Komposisi hangat dengan jarak presisi, kontras lembut, dan tipografi percaya diri.', 'Arah desain modern orisinal yang berfokus pada kisi, keselarasan, kontras, dan ruang lega.'],
   'field-notes': ['Catatan Alam', 'Undangan bernuansa taman dengan hijau hutan, ilustrasi botani, dan warna kertas hangat.', 'Karya dan tata letak terinspirasi alam; tidak mewakili tempat, komunitas, atau motif budaya tertentu.'],
+  'formal-signatures': ['Tanda Tangan Formal', 'Tipografi seremonial, warna malam yang pekat, dan bingkai yang anggun.', 'Komposisi alat tulis formal orisinal tanpa mewakili tradisi budaya tertentu.'],
+  'abstract-heritage': ['Warisan Abstrak', 'Garis kontemporer, geometri, dan tekstur tanpa atribusi budaya.', 'Sistem garis dan geometri abstrak orisinal, bukan salinan seni budaya tertentu.'],
+  'coastal-journal': ['Jurnal Pesisir', 'Tata letak editorial lapang, warna kaca laut, dan fotografi lanskap.', 'Desain editorial kontemporer dan fotografi lanskap.'],
+  'city-editions': ['Edisi Kota', 'Fotografi dokumenter, kisi asimetris, dan keterangan bergaya arsip.', 'Majalah kota kontemporer dan fotografi dokumenter.'],
+  'after-hours': ['Selepas Senja', 'Fotografi senja, warna gelap, dan detail editorial bercahaya lembut.', 'Editorial malam kontemporer dan fotografi fesyen.'],
+  'botanical-classics': ['Klasik Botani', 'Ilustrasi botani, hijau pucat, dan bingkai undangan yang anggun.', 'Ilustrasi botani orisinal dan komposisi alat tulis klasik.'],
+  'fine-keepsakes': ['Kenang-Kenangan Istimewa', 'Garis metalik lembut, foto berbingkai, dan aksen bunga terpilih.', 'Alat tulis kenang-kenangan kontemporer dan fotografi bunga.'],
+  'estate-gardens': ['Taman Manor', 'Fotografi taman formal, serif klasik, dan suasana senja.', 'Konvensi undangan taman klasik dan fotografi manor.'],
+  'color-experiments': ['Eksperimen Warna', 'Bidang warna tegas, tata letak modular, dan tipografi geometris.', 'Studi warna kontemporer orisinal dan desain grafis modular.'],
+  'photo-studies': ['Studi Foto', 'Foto candid berlapis, tekstur kertas, dan komposisi editorial.', 'Esai foto kontemporer dan desain cetak independen.'],
+  'gallery-editions': ['Edisi Galeri', 'Ritme katalog seni, bagian bernomor, keterangan ringkas, dan ruang lega.', 'Katalog seni dan grafis pameran.'],
+  'soft-essentials': ['Esensi Lembut', 'Kertas terang, kisi modular, detail tanggal, dan margin lega.', 'Desain cetak minimalis dan antarmuka kontemporer.'],
+  'evening-minimal': ['Minimalis Malam', 'Kontras tegas, bidang gelap, dan tipografi presisi untuk suasana malam.', 'Alat tulis pesta formal modern dan sistem tipografi.'],
+  'fine-lines': ['Garis Halus', 'Bingkai garis tipis, crop foto terarah, dan susunan seperti galeri.', 'Pembingkaian geometris orisinal dan arahan seni kontemporer.'],
+  'garden-gatherings': ['Perjamuan Taman', 'Dedaunan zaitun, foto kebun, dan detail acara yang santai.', 'Fotografi pernikahan alam dan karya botani orisinal.'],
+  'landscape-editions': ['Edisi Lanskap', 'Cakrawala terbuka, warna hijau lembut, dan cahaya alami sinematik.', 'Fotografi lanskap kontemporer dan desain cetak bernuansa alam.'],
+  'botanical-paper': ['Kertas Botani', 'Detail bunga kering, permukaan kertas hangat, dan alur cerita organik.', 'Ilustrasi botani orisinal dan desain kertas bertekstur.'],
 } as const
+
+const templateTaglines: Record<string, string> = {
+  'ivory-processional': 'Nuansa seremonial dalam warna gading dan emas antik',
+  'terracotta-geometry': 'Tanah liat hangat, pasir, dan geometri orisinal',
+  'gilded-vow': 'Arang, emas antik, dan tipografi berkontras tinggi',
+  'candlelit-hall': 'Warna plum gelap dan hangatnya cahaya lilin',
+  'pressed-filigree': 'Batu pucat, garis perunggu, dan simetri tenang',
+  'loomed-lines': 'Kisi berkesan anyaman dalam warna krem dan permata',
+  'the-monograph': 'Kisah cinta dengan margin luas dan alur editorial',
+  'coastal-issue': 'Warna kaca laut dan cakrawala yang lapang',
+  'the-sunday-edit': 'Beige hangat, zaitun, dan foto candid',
+  'city-journal': 'Kisi cerita terbelah dengan karakter dokumenter',
+  'gallery-no-08': 'Tipografi besar, blok foto, dan nomor yang halus',
+  'modern-heirloom': 'Navy, krem, dan detail foto bergaya arsip',
+  afterglow: 'Foto senja dalam espresso dan sampanye',
+  rosewater: 'Merah muda lembut, krem, dan tulisan anggun',
+  'lily-and-lace': 'Hijau sage pucat dan ilustrasi lili orisinal',
+  'the-conservatory': 'Foto rumah kaca dan detail hijau pakis',
+  'pearl-keepsake': 'Gading, abu mutiara, dan garis metalik halus',
+  'peony-season': 'Merah muda hangat, hijau daun, dan bunga ekspresif',
+  'bluebell-manor': 'Biru lembut dan krem dalam tata letak formal',
+  'garden-at-dusk': 'Mauve, hijau tua, dan suasana taman senja',
+  'cut-paper': 'Lapisan bentuk kertas koral dan biru ultramarin',
+  'color-study': 'Bidang warna luas dan kisi tipografi tegas',
+  'chromatic-vows': 'Aksen merah-oranye dan kartu modular',
+  afterimage: 'Lapisan foto lembut dalam ungu dan merah hangat',
+  'sunday-collage': 'Komposisi foto bertape di atas kertas hangat',
+  'the-exhibition': 'Alur katalog seni dengan momen bernomor',
+  'negative-space': 'Satu potret dramatis dikelilingi ruang lega',
+  monogram: 'Inisial, simetri, dan hitam lembut di atas krem',
+  'soft-grid': 'Batu pucat, zaitun lembut, dan bagian modular',
+  'paper-light': 'Putih cerah, detail halus, dan margin lebar',
+  'black-tie': 'Hero terbelah dalam hitam, putih, dan kuningan',
+  'quiet-contrast': 'Abu hangat, satu bidang gelap, dan crop potret',
+  outline: 'Bingkai garis halus dalam taupe dan warna kapur',
+  atelier: 'Kisi galeri dengan keterangan grafit',
+  meadowlight: 'Padang bunga liar bernuansa oat dan hijau lembut',
+  'olive-grove': 'Zaitun, krem, dan foto pepohonan bermandikan matahari',
+  'orchard-table': 'Buah, dedaunan, dan kartu perjamuan yang lapang',
+  'coastal-pine': 'Kaca laut, hijau pinus, dan cakrawala terbuka',
+  'golden-hour-garden': 'Cahaya madu, lumut, dan foto yang intim',
+  'gathered-branch': 'Ilustrasi ranting orisinal dan alur cerita vertikal',
+  'wildflower-press': 'Bunga kering di atas kertas perkamen lavender',
+}
 
 const templateCopy = {
   traditional: ['Formal, seremonial, dan tak lekang waktu', 'Undangan klasik dengan bingkai elegan, hiasan ornamental, dan palet merah marun kaya.'],
@@ -98,6 +159,7 @@ export function localizedCatalogText(id: string, field: 'name' | 'tagline' | 'de
   if (collection) return field === 'name' ? collection[0] : field === 'description' ? collection[1] : field === 'reference' ? collection[2] : fallback
   const template = templateCopy[id as keyof typeof templateCopy]
   if (template) return field === 'tagline' ? template[0] : field === 'description' ? template[1] : fallback
+  if (field === 'tagline' && templateTaglines[id]) return templateTaglines[id]
   return fallback
 }
 

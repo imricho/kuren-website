@@ -298,6 +298,10 @@
   color: var(--eth-indigo);
 }
 
+.t-eth .eth-chapter__meta,
+.t-eth .eth-chapter__num,
+.t-eth .eth-label--accent { color: var(--eth-indigo); }
+
 /* --- Events ---------------------------------------------------------------------------------- */
 .eth-events__list {
   max-width: 60rem;

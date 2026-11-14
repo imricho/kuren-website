@@ -18,6 +18,22 @@
   line-height: 1.7;
 }
 
+/* Magazine-inspired variations: each changes palette and image/text pacing. */
+.t-intl[data-variant='the-monograph'] { --bg:#f5f2ec; --bg-alt:#e9e4db; --ink:#242321; --muted:#716d67; --line:#d1cbc1; --accent:#74664f; --serif:'Cormorant Garamond',Georgia,serif; }
+.t-intl[data-variant='coastal-issue'] { --bg:#f4f7f6; --bg-alt:#e3eeed; --ink:#263638; --muted:#667879; --line:#cbd9d8; --accent:#718f91; --serif:'Cormorant Garamond',Georgia,serif; }
+.t-intl[data-variant='the-sunday-edit'] { --bg:#f4f0e6; --bg-alt:#eae5d4; --ink:#33362b; --muted:#777664; --line:#d4d0bd; --accent:#74806a; --serif:'Cormorant Garamond',Georgia,serif; }
+.t-intl[data-variant='city-journal'] { --bg:#efeeeb; --bg-alt:#e2e0dc; --ink:#252729; --muted:#696b6d; --line:#cdcecc; --accent:#9a725e; --serif:'Cormorant Garamond',Georgia,serif; }
+.t-intl[data-variant='gallery-no-08'] { --bg:#fff; --bg-alt:#f0efec; --ink:#151515; --muted:#696969; --line:#dedede; --accent:#d05b3d; --serif:'Cormorant Garamond',Georgia,serif; }
+.t-intl[data-variant='modern-heirloom'] { --bg:#f2f0e9; --bg-alt:#e4e1d7; --ink:#263147; --muted:#707581; --line:#d1d1cf; --accent:#9e8663; --serif:'Cormorant Garamond',Georgia,serif; }
+.t-intl[data-variant='afterglow'] { --bg:#302722; --bg-alt:#40352e; --ink:#f4eee4; --muted:#d0c1ae; --line:#65564a; --accent:#d5b68a; --serif:'Cormorant Garamond',Georgia,serif; }
+.t-intl[data-variant='the-monograph'] .intl-hero { text-align:left; align-items:center; padding-inline:8cqi; }
+.t-intl[data-variant='the-monograph'] .intl-hero__names { align-items:flex-start; }
+.t-intl[data-variant='coastal-issue'] .intl-hero { text-align:left; }
+.t-intl[data-variant='city-journal'] .intl-hero__text { margin-left:auto; max-width:34rem; text-align:left; }
+.t-intl[data-variant='gallery-no-08'] .intl-hero__names { font-size:clamp(4rem,19cqi,10rem); }
+.t-intl[data-variant='modern-heirloom'] .intl-hero--image .intl-hero__media::after { background:linear-gradient(90deg, rgb(20 28 46 / .72), rgb(20 28 46 / .08)); }
+.t-intl[data-variant='afterglow'] .intl-hero--image .intl-hero__media::after { background:linear-gradient(to top, rgb(28 20 18 / .78), rgb(28 20 18 / .04) 68%); }
+
 /* Zero-specificity resets so theme classes always win. */
 :where(.t-intl) :where(h1, h2, h3) {
   color: inherit;
@@ -424,6 +440,11 @@
   line-height: 1;
 }
 
+/* Small accent copy uses the text token; the brighter accent stays reserved
+   for rules and ornamental marks. */
+.intl-chapter__date,
+.intl-closing__thanks { color: var(--ink); }
+
 /* --- Tablet & up -------------------------------------------------------------------- */
 @container site (min-width: 48rem) {
   .intl-section {
@@ -488,3 +509,107 @@
     aspect-ratio: 21 / 9;
   }
 }
+
+/* Template art directions. Each keeps the editorial family signature but changes
+   the page rhythm, image role and information hierarchy—not only its palette. */
+@container site (min-width: 48rem) {
+  .t-intl[data-variant='the-monograph'] .intl-hero { grid-template-columns: .72fr 1.28fr; align-items: center; gap: 4cqi; padding: 4rem 6cqi; text-align: left; }
+  .t-intl[data-variant='the-monograph'] .intl-hero__media { position: relative; inset: auto; grid-column: 2; grid-row: 1; height: 72cqh; }
+  .t-intl[data-variant='the-monograph'] .intl-hero__text { grid-column: 1; grid-row: 1; justify-items: start; max-width: 27rem; }
+  .t-intl[data-variant='the-monograph'] .intl-hero__names { flex-direction: column; align-items: flex-start; font-size: clamp(3rem, 7cqi, 6rem); }
+  .t-intl[data-variant='the-monograph'] .intl-timeline { max-width: 48rem; margin-inline: auto; }
+  .t-intl[data-variant='the-monograph'] .intl-chapter { grid-template-columns: 7rem 1fr; padding-block: 2rem; border-top: 1px solid var(--line); }
+  .t-intl[data-variant='the-monograph'] .intl-chapter__photo { grid-column: 2; width: min(100%, 24rem); aspect-ratio: 3 / 2; }
+  .t-intl[data-variant='the-monograph'] .intl-gallery__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .t-intl[data-variant='the-monograph'] .intl-gallery__item:first-child { grid-column: auto; grid-row: auto; }
+
+  .t-intl[data-variant='coastal-issue'] .intl-hero { min-height: 78cqh; text-align: center; }
+  .t-intl[data-variant='coastal-issue'] .intl-hero__text { justify-items: center; max-width: 54rem; margin-inline: auto; }
+  .t-intl[data-variant='coastal-issue'] .intl-hero__names { flex-direction: row; justify-content: center; font-size: clamp(3.5rem, 11cqi, 9rem); }
+  .t-intl[data-variant='coastal-issue'] .intl-itinerary { display: flex; gap: 0; border-block: 1px solid var(--line); }
+  .t-intl[data-variant='coastal-issue'] .intl-event { display: block; flex: 1; padding: 2rem; border: 0; }
+  .t-intl[data-variant='coastal-issue'] .intl-event + .intl-event { border-left: 1px solid var(--line); }
+  .t-intl[data-variant='coastal-issue'] .intl-gallery__grid { grid-template-columns: 1.5fr 1fr 1fr; align-items: center; }
+  .t-intl[data-variant='coastal-issue'] .intl-gallery__item:first-child { grid-row: auto; aspect-ratio: 16 / 9; }
+
+  .t-intl[data-variant='the-sunday-edit'] .intl-hero { text-align: left; align-items: end; padding: 4rem 7cqi; }
+  .t-intl[data-variant='the-sunday-edit'] .intl-hero__text { justify-items: start; max-width: 42rem; }
+  .t-intl[data-variant='the-sunday-edit'] .intl-hero__names { font-size: clamp(3.3rem, 9cqi, 7rem); }
+  .t-intl[data-variant='the-sunday-edit'] .intl-couple__grid { gap: 1.25rem; }
+  .t-intl[data-variant='the-sunday-edit'] .intl-person:nth-child(2) { margin-top: 2.5rem; }
+  .t-intl[data-variant='the-sunday-edit'] .intl-person__photo { aspect-ratio: 4 / 5; }
+  .t-intl[data-variant='the-sunday-edit'] .intl-gallery__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
+  .t-intl[data-variant='the-sunday-edit'] .intl-gallery__item:first-child { grid-column: span 2; grid-row: auto; }
+  .t-intl[data-variant='the-sunday-edit'] .intl-gallery__item:nth-child(3n + 2) { margin-top: 3rem; }
+  .t-intl[data-variant='the-sunday-edit'] .intl-gallery__item:first-child .intl-gallery__frame { aspect-ratio: 4 / 5; }
+
+  .t-intl[data-variant='city-journal'] .intl-hero { grid-template-columns: 1fr 1.1fr; align-items: stretch; gap: 4cqi; padding: 3rem 4cqi; text-align: left; }
+  .t-intl[data-variant='city-journal'] .intl-hero__media { position: relative; inset: auto; grid-column: 2; grid-row: 1; min-height: 70cqh; }
+  .t-intl[data-variant='city-journal'] .intl-hero__text { grid-column: 1; grid-row: 1; align-self: center; justify-items: start; }
+  .t-intl[data-variant='city-journal'] .intl-hero__names { flex-direction: column; align-items: flex-start; font-size: clamp(3.2rem, 8cqi, 7rem); }
+  .t-intl[data-variant='city-journal'] .intl-chapter { grid-template-columns: 5rem 1fr 1.35fr; border-top: 1px solid var(--line); }
+  .t-intl[data-variant='city-journal'] .intl-chapter__date { writing-mode: vertical-rl; }
+  .t-intl[data-variant='city-journal'] .intl-gallery__grid { grid-template-columns: 1fr 1fr 1fr; }
+  .t-intl[data-variant='city-journal'] .intl-gallery__item:first-child { grid-column: 1; grid-row: span 2; }
+
+  .t-intl[data-variant='gallery-no-08'] .intl-hero { align-items: center; text-align: left; padding-inline: 8cqi; }
+  .t-intl[data-variant='gallery-no-08'] .intl-hero__names { display: grid; justify-items: start; font-size: clamp(4.5rem, 14cqi, 11rem); }
+  .t-intl[data-variant='gallery-no-08'] .intl-hero__text { max-width: 66rem; margin-inline: auto; }
+  .t-intl[data-variant='gallery-no-08'] .intl-heading { max-width: none; display: flex; align-items: end; justify-content: space-between; border-bottom: 1px solid var(--line); }
+  .t-intl[data-variant='gallery-no-08'] .intl-gallery__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 15cqh; }
+  .t-intl[data-variant='gallery-no-08'] .intl-gallery__item:first-child { grid-column: span 2; grid-row: span 2; }
+  .t-intl[data-variant='gallery-no-08'] .intl-gallery__item:nth-child(4n + 3) { grid-column: span 2; }
+  .t-intl[data-variant='gallery-no-08'] .intl-gallery__item:first-child .intl-gallery__frame { height: 100%; }
+
+  .t-intl[data-variant='modern-heirloom'] .intl-hero { padding: 4rem 7cqi; text-align: left; }
+  .t-intl[data-variant='modern-heirloom'] .intl-hero__media { inset: 7% 7% 7% 43%; border: 1rem solid rgb(248 245 237 / .86); }
+  .t-intl[data-variant='modern-heirloom'] .intl-hero__media::after { background: linear-gradient(90deg, rgb(20 28 46 / .72), rgb(20 28 46 / .05) 78%); }
+  .t-intl[data-variant='modern-heirloom'] .intl-hero__text { justify-items: start; max-width: 44rem; }
+  .t-intl[data-variant='modern-heirloom'] .intl-hero__names { flex-direction: column; align-items: flex-start; }
+  .t-intl[data-variant='modern-heirloom'] .intl-couple__grid { align-items: stretch; gap: 1rem; }
+  .t-intl[data-variant='modern-heirloom'] .intl-person { padding: 1rem; border: 1px solid var(--line); }
+  .t-intl[data-variant='modern-heirloom'] .intl-chapter { grid-template-columns: 8rem 1fr 1fr; }
+  .t-intl[data-variant='modern-heirloom'] .intl-chapter__date { border-right: 1px solid var(--line); }
+
+  .t-intl[data-variant='afterglow'] .intl-hero { align-items: end; text-align: left; padding: 4rem 8cqi; }
+  .t-intl[data-variant='afterglow'] .intl-hero__media::after { background: linear-gradient(0deg, rgb(24 18 16 / .9), rgb(24 18 16 / .02) 78%); }
+  .t-intl[data-variant='afterglow'] .intl-hero__text { justify-items: start; width: min(100%, 68rem); margin-inline: auto; }
+  .t-intl[data-variant='afterglow'] .intl-hero__names { flex-direction: row; align-items: baseline; font-size: clamp(3.7rem, 12cqi, 10rem); }
+  .t-intl[data-variant='afterglow'] .intl-events { background: #26211f; color: var(--ink); }
+  .t-intl[data-variant='afterglow'] .intl-event { border-color: rgb(255 255 255 / .2); }
+  .t-intl[data-variant='afterglow'] .intl-gallery__grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .t-intl[data-variant='afterglow'] .intl-gallery__item:first-child { grid-column: 1 / -1; grid-row: auto; }
+  .t-intl[data-variant='afterglow'] .intl-gallery__item:first-child .intl-gallery__frame { aspect-ratio: 21 / 8; }
+}
+
+@container site (max-width: 47.99rem) {
+  .t-intl[data-variant='the-monograph'] .intl-hero { min-height: auto; display: flex; flex-direction: column; align-items: stretch; gap: 1.5rem; padding: 2rem 1.25rem; text-align: left; background: var(--bg); }
+  .t-intl[data-variant='the-monograph'] .intl-hero__media { position: relative; inset: auto; aspect-ratio: 4 / 3; }
+  .t-intl[data-variant='the-monograph'] .intl-hero__media::after { display: none; }
+  .t-intl[data-variant='the-monograph'] .intl-hero__text { justify-items: start; color: var(--ink); }
+  .t-intl[data-variant='the-monograph'] .intl-hero__names { align-items: flex-start; font-size: clamp(3rem, 16cqi, 5rem); }
+  .t-intl[data-variant='coastal-issue'] .intl-hero__text { text-align: center; }
+  .t-intl[data-variant='coastal-issue'] .intl-hero__names { flex-direction: row; justify-content: center; font-size: clamp(2.5rem, 13cqi, 4rem); }
+  .t-intl[data-variant='the-sunday-edit'] .intl-hero__text,
+  .t-intl[data-variant='city-journal'] .intl-hero__text { justify-items: start; text-align: left; }
+  .t-intl[data-variant='gallery-no-08'] .intl-hero__names { font-size: clamp(4rem, 20cqi, 6.5rem); }
+  .t-intl[data-variant='modern-heirloom'] .intl-hero__media { inset: .75rem; border: .5rem solid rgb(248 245 237 / .85); }
+  .t-intl[data-variant='afterglow'] .intl-hero { text-align: left; }
+  .t-intl[data-variant='afterglow'] .intl-hero__text { justify-items: start; }
+  .t-intl[data-variant='afterglow'] .intl-gallery__grid { gap: 1.25rem; }
+}
+
+/* Small printmaking devices distinguish each editorial edition without sitting
+   behind names, body copy or controls. */
+.t-intl[data-variant='editorial-ivory'] .intl-hero__text::after { content: ''; position: absolute; top: -1rem; right: 0; width: 3rem; height: 1.4rem; border-block: 1px solid var(--accent); opacity: .7; }
+.t-intl[data-variant='the-monograph'] .intl-hero__text::after { content: ''; position: absolute; top: 0; left: -1.25rem; height: 100%; border-left: 2px solid var(--accent); box-shadow: 4px 0 0 -3px var(--line); }
+.t-intl[data-variant='coastal-issue'] .intl-hero__text::after { content: ''; position: absolute; top: -1rem; left: 50%; width: 2.2rem; aspect-ratio: 1; border: 1px solid var(--accent); border-radius: 50%; transform: translateX(-50%); box-shadow: 0 0 0 .35rem rgb(113 143 145 / .12); }
+.t-intl[data-variant='the-sunday-edit'] .intl-hero__text::after { content: ''; position: absolute; right: 0; bottom: -.8rem; width: 5rem; height: 1px; background: linear-gradient(90deg, var(--accent), transparent); }
+.t-intl[data-variant='city-journal'] .intl-hero__text::after { content: ''; position: absolute; top: -1rem; right: 0; width: 2.6rem; aspect-ratio: 1; background: linear-gradient(90deg, transparent 48%, var(--line) 49% 51%, transparent 52%), linear-gradient(transparent 48%, var(--line) 49% 51%, transparent 52%); border: 1px solid var(--accent); opacity: .7; }
+.t-intl[data-variant='gallery-no-08'] .intl-hero__text::after { content: ''; position: absolute; top: -1rem; right: 0; width: 1.5rem; height: 1.5rem; background: linear-gradient(90deg, transparent 47%, var(--accent) 48% 52%, transparent 53%), linear-gradient(transparent 47%, var(--accent) 48% 52%, transparent 53%); }
+.t-intl[data-variant='modern-heirloom'] .intl-hero__text::after { content: ''; position: absolute; top: -.7rem; left: -.7rem; width: 2rem; height: 2rem; border-top: 1px solid var(--accent); border-left: 1px solid var(--accent); }
+.t-intl[data-variant='afterglow'] .intl-hero__text::after { content: ''; position: absolute; top: -1rem; right: 0; width: 2.5rem; aspect-ratio: 1; border: 1px solid var(--accent); border-radius: 50%; box-shadow: inset 0 0 0 .35rem transparent, inset 0 0 0 .4rem rgb(213 182 138 / .45); }
+.t-intl[data-variant='the-monograph'] .intl-hero__text { color: var(--ink); }
+.t-intl[data-variant='the-monograph'] .intl-eyebrow { color: var(--muted); }
+.t-intl[data-variant='the-monograph'] .intl-hero__names,
+.t-intl[data-variant='the-monograph'] .intl-hero__date { color: var(--ink); }

@@ -12,6 +12,7 @@ export const rusticTheme: RenderableTemplate = {
   description:
     'A nature-led invitation with forest-green panels, botanical details, layered photography and a warm paper palette.',
   previewImage: thumbnail,
+  config: { variant: 'field-notes' },
   fonts: {
     href: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap',
   },

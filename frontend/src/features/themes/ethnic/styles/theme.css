@@ -197,7 +197,9 @@
 
 /* --- Couple ------------------------------------------------------------------------------ */
 .eth-couple {
-  background: var(--eth-indigo) var(--eth-lattice);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgb(217 164 65 / 0.14), transparent 54%),
+    var(--eth-indigo);
   color: var(--eth-cream);
 }
 .eth-couple__grid {
@@ -237,27 +239,33 @@
   color: rgb(243 234 217 / 0.78);
 }
 
-/* --- Story (horizontal, swipeable on phones) -------------------------------------------- */
+/* --- Story: visible stack on phones, curated triptych on wider screens -------------------- */
 .eth-story__track {
   list-style: none;
-  margin: 2.5rem -1.25rem 0;
-  padding: 0 1.25rem 1rem;
+  margin: 2.5rem auto 0;
+  padding: 0;
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 82%;
-  gap: 1rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  overscroll-behavior-x: contain;
-  scrollbar-width: thin;
+  gap: 1.5rem;
+  max-width: 68rem;
 }
 .eth-chapter {
-  scroll-snap-align: start;
+  position: relative;
   display: grid;
   align-content: start;
   background: #fbf5ea;
   border-top: 6px solid var(--eth-terracotta);
-  box-shadow: 0 1px 0 rgb(31 42 68 / 0.08);
+  box-shadow: 0 1rem 2.5rem rgb(31 42 68 / 0.1);
+  overflow: hidden;
+}
+.eth-chapter::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto auto;
+  width: 5rem;
+  height: 5rem;
+  background: var(--eth-lattice) center / 3rem;
+  opacity: 0.32;
+  pointer-events: none;
 }
 .eth-chapter__photo {
   aspect-ratio: 4 / 3;
@@ -498,6 +506,12 @@
     grid-template-columns: 1fr 1fr;
     gap: 3rem;
   }
+  .eth-chapter:nth-child(2) {
+    margin-top: 3rem;
+  }
+  .eth-chapter:nth-child(3) {
+    margin-top: 6rem;
+  }
   .eth-story__track {
     margin: 3rem auto 0;
     padding: 0;
@@ -507,6 +521,7 @@
     grid-auto-columns: auto;
     overflow: visible;
     gap: 1.5rem;
+    align-items: start;
   }
   .eth-events__list {
     grid-template-columns: 1fr 1fr;

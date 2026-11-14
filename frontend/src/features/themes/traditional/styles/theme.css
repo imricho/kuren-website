@@ -133,12 +133,29 @@
   display: grid;
   place-items: center;
   padding: 4.5rem 1.5rem;
+  background:
+    radial-gradient(circle at 50% 42%, rgb(201 167 107 / 0.1), transparent 28%),
+    linear-gradient(90deg, transparent 49.8%, rgb(201 167 107 / 0.08) 50%, transparent 50.2%);
 }
 .trad-hero__content {
+  position: relative;
+  isolation: isolate;
   display: grid;
   gap: 1.5rem;
   justify-items: center;
   text-align: center;
+}
+.trad-hero__content:not(:has(.trad-medallion))::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -2.5rem;
+  width: clamp(8rem, 34cqi, 15rem);
+  aspect-ratio: 1;
+  border: 1px solid rgb(201 167 107 / 0.26);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1rem rgb(201 167 107 / 0.035), inset 0 0 0 0.65rem rgb(201 167 107 / 0.04);
+  pointer-events: none;
 }
 .trad-medallion {
   width: clamp(150px, 46cqi, 240px);
@@ -319,6 +336,15 @@
   outline: 1px solid rgb(176 141 87 / 0.6);
   outline-offset: -7px;
   background: var(--maroon-deep);
+  box-shadow: 0 1rem 2.5rem rgb(28 5 7 / 0.18);
+}
+.trad-event::before {
+  content: '';
+  display: block;
+  width: 2.5rem;
+  height: 2px;
+  margin: 0 auto 0.75rem;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
 }
 .trad-event__title {
   font-family: var(--display);

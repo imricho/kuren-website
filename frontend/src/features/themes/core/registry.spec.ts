@@ -13,6 +13,7 @@ import {
   getTemplate,
   getTheme,
   isThemeId,
+  templateCounts,
   templatePath,
   templatesOf,
   validateCatalog,
@@ -197,5 +198,41 @@ describe('validateCatalog catches mistakes', () => {
       [{ ...ok, id: 'international' }],
     )
     expect(problems).toContain('family "empty" is available but has no available templates')
+  })
+})
+
+describe('naming, aliases and counts', () => {
+  it('uses one canonical display name for the Conventional / Classic family, with the old slug as an alias', () => {
+    expect(getFamily('classic')?.name).toBe('Conventional / Classic')
+    expect(getFamily('conventional')?.id).toBe('classic')
+  })
+
+  it('resolves template aliases to the canonical template', () => {
+    expect(getTheme('blush-garden')?.id).toBe('conventional')
+    expect(getTheme('royal-maroon')?.id).toBe('traditional')
+    expect(isThemeId('woven-indigo')).toBe(true)
+  })
+
+  it('shows alternative names for regional collections', () => {
+    expect(getCollection('minangkabau')?.alsoKnownAs).toBe('Minang')
+    expect(getCollection('malay')?.alsoKnownAs).toBe('Melayu')
+    expect(getCollection('balinese')?.alsoKnownAs).toBe('Bali')
+    expect(getCollection('papuan')?.alsoKnownAs).toBe('Papua')
+  })
+
+  it('counts templates by availability per family and collection', () => {
+    expect(templateCounts({ familyId: 'traditional' })).toEqual({ available: 2, comingSoon: 3 })
+    expect(templateCounts({ collectionId: 'nusantara-heritage' })).toEqual({ available: 2, comingSoon: 0 })
+    expect(templateCounts({ collectionId: 'javanese' })).toEqual({ available: 0, comingSoon: 2 })
+    expect(templateCounts({ familyId: 'modern-minimalist' })).toEqual({ available: 0, comingSoon: 0 })
+  })
+
+  it('rejects aliases that collide with another id', () => {
+    const problems = validateCatalog(
+      FAMILIES.map((f) => (f.id === 'artistic' ? { ...f, aliases: ['classic'] } : f)),
+      COLLECTIONS,
+      TEMPLATES,
+    )
+    expect(problems).toContain('duplicate family id "classic"')
   })
 })

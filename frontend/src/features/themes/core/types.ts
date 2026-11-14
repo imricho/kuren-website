@@ -32,7 +32,10 @@ export interface ThemeProps {
 
 export interface ThemeFamily {
   id: string
+  /** Canonical display name, used everywhere in the app. */
   name: string
+  /** Older ids/URL slugs that should resolve to this family (e.g. "conventional"). */
+  aliases?: string[]
   tagline: string
   description: string
   coverImage?: string
@@ -57,6 +60,8 @@ export interface ThemeCollection {
   id: string
   familyId: string
   name: string
+  /** Common alternative name, e.g. "Melayu" for Malay. Shown alongside the name. */
+  alsoKnownAs?: string
   description: string
   coverImage?: string
   reference: ThemeReference
@@ -69,6 +74,8 @@ interface TemplateBase {
   familyId: string
   collectionId: string
   name: string
+  /** Other slugs that resolve to this template (e.g. its display name as a slug). */
+  aliases?: string[]
   tagline: string
   description: string
   /** e.g. "Yogyakarta" vs "Surakarta (Solo)" within the Javanese collection. */

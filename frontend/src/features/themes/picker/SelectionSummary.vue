@@ -1,31 +1,40 @@
 <script setup lang="ts">
-/** "Your selection: Classic › Blush Garden" banner shown across the picker. */
+/**
+ * "Selected: Family › Collection › Template". It is a polite live region, so
+ * choosing a template is announced to screen-reader users as well as shown.
+ */
 import { computed } from 'vue'
 
 import { useThemeSelectionStore } from '@/stores/themeSelection'
 
 import { templatePath } from '../core/registry'
+import { formatTemplatePath } from './format'
+import { collectionRoute } from './routes'
 
 const selection = useThemeSelectionStore()
 const path = computed(() => templatePath(selection.selectedThemeId))
+const label = computed(() => formatTemplatePath(selection.selectedThemeId))
 </script>
 
 <template>
   <div
-    v-if="path"
-    class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm"
+    class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border px-4 py-3 text-sm"
+    :class="path ? 'border-rose-100 bg-rose-50' : 'border-dashed border-line bg-surface'"
     data-testid="selection-summary"
   >
-    <span class="font-medium text-rose-700">Your selection</span>
-    <span class="text-ink-700">
-      {{ path.family.name }} › <template v-if="path.collection.name !== path.family.name">{{ path.collection.name }} › </template>
-      <strong class="font-semibold text-ink-900">{{ path.template.name }}</strong>
-    </span>
+    <p role="status" aria-live="polite" class="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <template v-if="path">
+        <span class="font-medium text-rose-700">Selected</span>
+        <span class="text-ink-700">{{ label }}</span>
+      </template>
+      <span v-else class="text-ink-500">No template selected yet — preview freely, then select the one you love.</span>
+    </p>
     <RouterLink
-      :to="{ name: 'theme-collection', params: { familyId: path.family.id, collectionId: path.collection.id } }"
-      class="ml-auto font-medium text-rose-600 hover:text-rose-700"
+      v-if="path"
+      :to="collectionRoute(path.family.id, path.collection.id)"
+      class="ml-auto rounded font-medium text-rose-600 hover:text-rose-700"
     >
-      View →
+      View collection <span aria-hidden="true">→</span>
     </RouterLink>
   </div>
 </template>

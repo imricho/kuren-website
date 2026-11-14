@@ -52,11 +52,18 @@ export const RESERVED_IDS: ReadonlySet<string> = new Set(['preview'])
 
 // --- Lookups --------------------------------------------------------------------
 
-const familyById = new Map(FAMILIES.map((f) => [f.id, f]))
-const collectionById = new Map(COLLECTIONS.map((c) => [c.id, c]))
-const templateById = new Map(TEMPLATES.map((t) => [t.id, t]))
+/** id and every alias → entry. Aliases let old or friendlier URLs resolve to the canonical entry. */
+function indexWithAliases<T extends { id: string; aliases?: string[] }>(items: readonly T[]) {
+  const map = new Map<string, T>()
+  for (const item of items) for (const key of [item.id, ...(item.aliases ?? [])]) if (!map.has(key)) map.set(key, item)
+  return map
+}
 
-/** A template that can be rendered (available or hidden). Unknown/planned ids → undefined. */
+const familyById = indexWithAliases(FAMILIES)
+const collectionById = new Map(COLLECTIONS.map((c) => [c.id, c]))
+const templateById = indexWithAliases(TEMPLATES)
+
+/** A template that can be rendered (available or hidden), by id or alias. Unknown/planned → undefined. */
 export function getTheme(id: string | null | undefined): RenderableTemplate | undefined {
   const template = id ? templateById.get(id) : undefined
   return template && isRenderable(template) ? template : undefined
@@ -98,6 +105,20 @@ export function availableCountInFamily(familyId: string): number {
   return THEMES.filter((t) => t.familyId === familyId).length
 }
 
+/** Template counts by availability, for a family or a collection. Single source for picker labels. */
+export function templateCounts(scope: { familyId?: string; collectionId?: string }) {
+  const listed = TEMPLATES.filter(
+    (t) =>
+      t.status !== 'hidden' &&
+      (scope.familyId === undefined || t.familyId === scope.familyId) &&
+      (scope.collectionId === undefined || t.collectionId === scope.collectionId),
+  )
+  return {
+    available: listed.filter((t) => t.status === 'available').length,
+    comingSoon: listed.filter((t) => t.status === 'coming_soon').length,
+  }
+}
+
 /** Family and collection a template belongs to, for breadcrumbs and labels. */
 export function templatePath(id: string | null | undefined) {
   const template = getTemplate(id)
@@ -123,9 +144,10 @@ export function validateCatalog(
       seen.add(id)
     }
   }
-  unique('family', families.map((f) => f.id))
+  // Ids and aliases share one namespace per level, so an alias can never shadow another entry.
+  unique('family', families.flatMap((f) => [f.id, ...(f.aliases ?? [])]))
   unique('collection', collections.map((c) => c.id))
-  unique('template', templates.map((t) => t.id))
+  unique('template', templates.flatMap((t) => [t.id, ...(t.aliases ?? [])]))
 
   const fams = new Map(families.map((f) => [f.id, f]))
   const cols = new Map(collections.map((c) => [c.id, c]))

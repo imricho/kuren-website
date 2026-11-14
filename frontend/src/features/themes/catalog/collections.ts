@@ -54,6 +54,7 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     id: 'minangkabau',
     familyId: 'traditional',
     name: 'Minangkabau',
+    alsoKnownAs: 'Minang',
     description: 'Designs inspired by Minangkabau wedding traditions.',
     reference: cultural('West Sumatra', 'Attire and ornament vary between nagari (villages/regions); confirm the specific source.'),
     status: 'coming_soon',
@@ -89,6 +90,7 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     id: 'malay',
     familyId: 'traditional',
     name: 'Malay',
+    alsoKnownAs: 'Melayu',
     description: 'Designs inspired by Malay wedding traditions.',
     reference: cultural(
       'Riau, Riau Islands, coastal Sumatra & West Kalimantan',
@@ -108,6 +110,7 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     id: 'balinese',
     familyId: 'traditional',
     name: 'Balinese',
+    alsoKnownAs: 'Bali',
     description: 'Designs inspired by Balinese wedding traditions.',
     reference: cultural(
       'Bali',
@@ -138,6 +141,7 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
     id: 'papuan',
     familyId: 'traditional',
     name: 'Papuan',
+    alsoKnownAs: 'Papua',
     description: 'Designs inspired by Papuan wedding traditions.',
     reference: cultural(
       'Papua',

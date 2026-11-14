@@ -1,18 +1,14 @@
 <script setup lang="ts">
-/** Step 3: view the templates in a collection, preview them, and select one. */
+/** Step 3: view a collection's templates, preview them (no commitment), and select one. */
 import { computed, nextTick, ref, watch } from 'vue'
 
-import BaseButton from '@/components/ui/BaseButton.vue'
-import {
-  availableTemplatesOf,
-  collectionsOf,
-  getCollection,
-  getFamily,
-  templatesOf,
-} from '@/features/themes/core/registry'
+import { availableTemplatesOf, getCollection, getFamily, templatesOf } from '@/features/themes/core/registry'
+import { ACTION, countLabel } from '@/features/themes/picker/format'
 import LivePreview from '@/features/themes/picker/LivePreview.vue'
 import PickerBreadcrumbs from '@/features/themes/picker/PickerBreadcrumbs.vue'
+import PickerSteps from '@/features/themes/picker/PickerSteps.vue'
 import SelectionSummary from '@/features/themes/picker/SelectionSummary.vue'
+import SelectTemplateButton from '@/features/themes/picker/SelectTemplateButton.vue'
 import StatusBadge from '@/features/themes/picker/StatusBadge.vue'
 import { useThemeSelectionStore } from '@/stores/themeSelection'
 
@@ -22,10 +18,8 @@ const selection = useThemeSelectionStore()
 const family = computed(() => getFamily(props.familyId))
 const collection = computed(() => {
   const c = getCollection(props.collectionId)
-  return c && c.familyId === props.familyId ? c : undefined
+  return c && c.familyId === family.value?.id ? c : undefined
 })
-// When the family has only this collection, the family page was skipped — so is its breadcrumb level.
-const isOnlyCollection = computed(() => collectionsOf(props.familyId).length === 1)
 const templates = computed(() => templatesOf(props.collectionId))
 const available = computed(() => availableTemplatesOf(props.collectionId))
 
@@ -43,18 +37,22 @@ async function preview(id: string) {
   previewId.value = id
   await nextTick()
   previewEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  previewEl.value?.querySelector<HTMLElement>('#preview-heading')?.focus({ preventScroll: true })
 }
 </script>
 
 <template>
   <div v-if="family && collection" class="space-y-10">
     <section class="space-y-3">
-      <PickerBreadcrumbs :family="family" :collection="isOnlyCollection ? undefined : collection" />
+      <PickerSteps :current="3" />
+      <PickerBreadcrumbs :family="family" :collection="collection" />
       <div class="flex flex-wrap items-center gap-3">
-        <h1 class="text-4xl font-semibold sm:text-5xl">{{ isOnlyCollection ? family.name : collection.name }}</h1>
-        <StatusBadge v-if="collection.status !== 'available'" :status="collection.status" />
+        <h1 class="text-4xl font-semibold sm:text-5xl">{{ collection.name }}</h1>
+        <StatusBadge :status="collection.status" />
       </div>
-      <p class="max-w-2xl text-ink-500">{{ isOnlyCollection ? family.description : collection.description }}</p>
+      <p v-if="collection.alsoKnownAs" class="text-ink-700">Also known as {{ collection.alsoKnownAs }}</p>
+      <p class="max-w-2xl text-ink-500">{{ collection.description }}</p>
+      <p class="text-sm font-medium text-ink-700" data-testid="collection-count">{{ countLabel({ collectionId: collection.id }) }}</p>
     </section>
 
     <!-- Design / cultural reference -->
@@ -67,7 +65,7 @@ async function preview(id: string) {
         {{ collection.reference.kind === 'cultural' ? 'Cultural reference' : 'Design reference' }}
       </p>
       <div class="space-y-1 text-ink-500">
-        <p v-if="collection.reference.region"><span class="text-ink-700">{{ collection.reference.region }}</span></p>
+        <p v-if="collection.reference.region" class="text-ink-700">{{ collection.reference.region }}</p>
         <p>{{ collection.reference.notes }}</p>
         <p v-if="collection.reference.review === 'needs_review'" class="text-xs text-rose-700">
           Templates in this collection are released only after review with cultural advisers.
@@ -81,8 +79,12 @@ async function preview(id: string) {
     <section aria-labelledby="templates-heading">
       <h2 id="templates-heading" class="mb-4 text-xl font-semibold">Templates</h2>
 
-      <p v-if="templates.length === 0" class="rounded-xl border border-dashed border-line bg-surface p-8 text-center text-sm text-ink-500" data-testid="collection-empty">
-        Templates for this collection are in development.
+      <p
+        v-if="templates.length === 0"
+        class="rounded-xl border border-dashed border-line bg-surface p-8 text-center text-sm text-ink-500"
+        data-testid="collection-empty"
+      >
+        Templates for this collection are in development and can't be previewed or selected yet.
       </p>
 
       <ul v-else class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -98,12 +100,13 @@ async function preview(id: string) {
             v-if="t.status === 'available'"
             type="button"
             class="group relative block aspect-[16/10] overflow-hidden bg-canvas"
-            :aria-label="`Preview ${t.name}`"
+            tabindex="-1"
+            aria-hidden="true"
             @click="preview(t.id)"
           >
             <img
               :src="t.previewImage"
-              :alt="`${t.name} template thumbnail`"
+              alt=""
               class="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
               loading="lazy"
             />
@@ -117,7 +120,7 @@ async function preview(id: string) {
           </div>
 
           <div class="flex flex-1 flex-col gap-2 p-5">
-            <div class="flex items-center justify-between gap-3">
+            <div class="flex items-start justify-between gap-3">
               <h3 class="text-2xl font-semibold">{{ t.name }}</h3>
               <StatusBadge :status="selection.selectedThemeId === t.id ? 'selected' : t.status" />
             </div>
@@ -127,15 +130,17 @@ async function preview(id: string) {
             <p class="text-sm font-medium text-ink-700">{{ t.tagline }}</p>
             <p class="flex-1 text-sm text-ink-500">{{ t.description }}</p>
             <div v-if="t.status === 'available'" class="mt-3 flex flex-wrap gap-2">
-              <BaseButton variant="secondary" @click="preview(t.id)">Preview</BaseButton>
-              <BaseButton
-                :variant="selection.selectedThemeId === t.id ? 'ghost' : 'primary'"
-                :disabled="selection.selectedThemeId === t.id"
-                @click="selection.select(t.id)"
+              <button
+                type="button"
+                class="rounded-lg border border-line bg-surface px-4 py-2.5 text-sm font-medium text-ink-900 hover:bg-rose-50"
+                :aria-label="`${ACTION.preview} ${t.name}`"
+                @click="preview(t.id)"
               >
-                {{ selection.selectedThemeId === t.id ? 'Selected' : 'Select template' }}
-              </BaseButton>
+                {{ ACTION.preview }}
+              </button>
+              <SelectTemplateButton :template-id="t.id" :template-name="t.name" />
             </div>
+            <p v-else class="mt-3 text-sm text-ink-500">Not yet available to preview or select.</p>
           </div>
         </li>
       </ul>

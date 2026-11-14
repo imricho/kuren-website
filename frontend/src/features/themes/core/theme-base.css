@@ -27,6 +27,13 @@
   color: #6b5e57;
 }
 
+/* Visible keyboard focus inside every theme (the dashboard's focus style stops at .wedding-site). */
+.wedding-site :focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 /* Shared scroll-in animation (see core/directives/reveal.ts). */
 .wedding-site .reveal {
   opacity: 0;

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { canonicalCollection, canonicalFamily, canonicalPreview } from '@/features/themes/picker/guards'
 import { useAuthStore } from '@/stores/auth'
 
 declare module 'vue-router' {
@@ -41,7 +42,8 @@ const router = createRouter({
           component: () => import('@/pages/DashboardPage.vue'),
           meta: { title: 'Dashboard' },
         },
-        // Theme selection: family → collection → template.
+        // Theme selection: family → collection → template. Every family has an explicit
+        // collection step; guards redirect aliases to canonical URLs.
         {
           path: 'themes',
           name: 'themes',
@@ -54,16 +56,7 @@ const router = createRouter({
           component: () => import('@/pages/ThemeFamilyPage.vue'),
           props: true,
           meta: { title: 'Themes' },
-          // A family with a single collection skips straight to its templates.
-          beforeEnter: async (to) => {
-            // Loaded lazily so the theme catalog stays out of the initial bundle.
-            const { collectionsOf } = await import('@/features/themes/core/registry')
-            const familyId = String(to.params.familyId)
-            const collections = collectionsOf(familyId)
-            if (collections.length === 1) {
-              return { name: 'theme-collection', params: { familyId, collectionId: collections[0]!.id }, replace: true }
-            }
-          },
+          beforeEnter: canonicalFamily,
         },
         {
           path: 'themes/:familyId/:collectionId',
@@ -71,6 +64,7 @@ const router = createRouter({
           component: () => import('@/pages/ThemeCollectionPage.vue'),
           props: true,
           meta: { title: 'Themes' },
+          beforeEnter: canonicalCollection,
         },
         {
           path: 'account',
@@ -81,12 +75,21 @@ const router = createRouter({
       ],
     },
     {
-      // Full-screen theme preview, outside the dashboard chrome.
-      path: '/themes/:themeId/preview',
+      // Full-screen template preview, outside the dashboard chrome. Canonical URL.
+      path: '/themes/:familyId/:collectionId/:templateId/preview',
       name: 'theme-preview',
       component: () => import('@/pages/ThemePreviewPage.vue'),
       props: true,
-      meta: { requiresAuth: true, title: 'Theme preview' },
+      meta: { requiresAuth: true, title: 'Template preview' },
+      beforeEnter: canonicalPreview,
+    },
+    {
+      // Workstream 2 URL (and template aliases) → redirected to the canonical preview URL.
+      path: '/themes/:themeId/preview',
+      name: 'theme-preview-legacy',
+      component: () => import('@/pages/ThemePreviewPage.vue'),
+      meta: { requiresAuth: true },
+      beforeEnter: canonicalPreview,
     },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/pages/NotFoundPage.vue') },
   ],

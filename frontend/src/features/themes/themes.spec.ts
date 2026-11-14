@@ -104,6 +104,32 @@ describe.each(THEMES.map((t) => [t.id]))('%s theme', (themeId) => {
     expect(wrapper.text()).toContain('Lihat peta')
   })
 
+  it('hides the RSVP form and explains why when the deadline has passed', async () => {
+    const content = clone(sampleWedding)
+    content.rsvp.deadline = '2020-01-01'
+    const wrapper = await renderTheme(content, themeId)
+    expect(wrapper.text()).toContain('RSVP has closed')
+    expect(wrapper.find('.rsvp-form').exists()).toBe(false)
+  })
+
+  it('omits optional text and images without leaving empty placeholders', async () => {
+    const content = clone(sampleWedding)
+    delete content.opening.headline
+    delete content.opening.introduction
+    delete content.couple.groom.image
+    delete content.couple.groom.description
+    delete content.closing.thankYou
+    delete content.closing.image
+    content.story!.timeline = []
+    const wrapper = await renderTheme(content, themeId)
+    const text = wrapper.text()
+    expect(text).not.toContain(sampleWedding.opening.headline)
+    expect(text).not.toContain(sampleWedding.story.title)
+    expect(text).not.toContain('undefined')
+    expect(wrapper.find('img[src*="groom"]').exists()).toBe(false)
+    expect(wrapper.findAll('.theme-image--placeholder')).toHaveLength(0)
+  })
+
   it('lazy-loads images below the cover', async () => {
     const wrapper = await renderTheme(sampleWedding, themeId)
     const lazy = wrapper.findAll('img').filter((img) => img.attributes('loading') === 'lazy')

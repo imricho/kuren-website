@@ -27,7 +27,9 @@ export const FAMILIES: readonly ThemeFamily[] = [
   },
   {
     id: 'classic',
-    name: 'Classic',
+    // Canonical display name. "Conventional" was the Workstream 2 term; its slug still resolves here.
+    name: 'Conventional / Classic',
+    aliases: ['conventional'],
     tagline: 'The timeless invitation feel',
     description: 'Romantic, familiar designs: florals, soft pastels, elegant script and arched photo frames.',
     coverImage: classicCover,

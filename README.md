@@ -102,7 +102,8 @@ site builder: fixed structure, predefined sections, theme-based styling.
   this; themes never define their own schema. `validateWeddingContent()` checks it at runtime.
 - **Catalog & registry** — themes are organised as **Family → Collection → Template**
   (`features/themes/catalog/` + `core/registry.ts`). Families: Traditional, International,
-  Classic, Artistic (available) and Modern Minimalist, Rustic / Nature (coming soon).
+  Conventional / Classic, Artistic (available) and Modern Minimalist, Rustic / Nature (coming soon —
+  no templates yet, so they can't be previewed or selected).
   Traditional holds a general *Nusantara Heritage* collection plus 12 regional collections
   (Javanese … Papuan) that are coming soon and gated by cultural review. Every level has an
   availability status; templates carry a description, preview, reference, optional regional
@@ -112,12 +113,13 @@ site builder: fixed structure, predefined sections, theme-based styling.
 - **Responsive** — themes use CSS **container queries**, so the dashboard's phone/tablet
   preview frames show the real mobile layout, identical to the published page.
 - **Templates** — Editorial Ivory (International), Royal Maroon and Woven Indigo (Traditional ›
-  Nusantara Heritage), Blush Garden (Classic), Gallery Bold (Artistic). Ids from Workstream 2
+  Nusantara Heritage), Blush Garden (Conventional / Classic), Gallery Bold (Artistic). Ids from Workstream 2
   (`international`, `traditional`, `ethnic`, `conventional`, `artistic`) are unchanged. All
   decoration is original inline SVG/CSS; sample images are original placeholder illustrations.
-- **Picker** — `/themes` (families) → `/themes/:family` (collections; skipped for single-collection
-  families) → `/themes/:family/:collection` (templates, live preview with device toggles) and
-  full-screen preview (`/themes/:id/preview`). The selection is stored in the browser only for now
+- **Picker** — `/themes` (families) → `/themes/:family` (collections, always shown) →
+  `/themes/:family/:collection` (templates, inline preview with device sizes) →
+  `/themes/:family/:collection/:template/preview` (full screen). Aliases and the old
+  `/themes/:id/preview` URL redirect to the canonical route. Previewing never changes the selection. The selection is stored in the browser only for now
   (`stores/themeSelection.ts`); the CMS workstream will persist it on the wedding.
 
 **How to add a family, collection or template:** see [`frontend/src/features/themes/README.md`](frontend/src/features/themes/README.md).

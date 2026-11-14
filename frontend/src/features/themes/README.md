@@ -13,9 +13,9 @@ ThemeFamily         broad visual or cultural category          catalog/families.
 
 | Family | Collections | Templates (id → name) |
 |---|---|---|
-| Traditional | Nusantara Heritage (general, pan-Indonesian) + 12 regional: Javanese, Sundanese, Minangkabau, Batak, Bugis, Betawi, Malay, Madura, Balinese, Dayak, Ambon / Maluku, Papuan | `traditional` → Royal Maroon, `ethnic` → Woven Indigo; planned: Yogyakarta Paes Ageng, Solo Basahan, Batak Toba |
+| Traditional | Nusantara Heritage (general, culturally neutral) + 12 regional: Javanese, Sundanese, Minangkabau (Minang), Batak, Bugis, Betawi, Malay (Melayu), Madura, Balinese (Bali), Dayak, Ambon / Maluku, Papuan (Papua) | `traditional` → Royal Maroon, `ethnic` → Woven Indigo; planned: Yogyakarta Paes Ageng, Solo Basahan, Batak Toba |
 | International | Editorial | `international` → Editorial Ivory |
-| Classic | Romantic Floral | `conventional` → Blush Garden |
+| Conventional / Classic (`classic`, alias `conventional`) | Romantic Floral | `conventional` → Blush Garden |
 | Artistic | Contemporary | `artistic` → Gallery Bold |
 | Modern Minimalist | — (coming soon) | — |
 | Rustic / Nature | — (coming soon) | — |
@@ -32,9 +32,34 @@ ThemeFamily         broad visual or cultural category          catalog/families.
 - **Integrity**: `validateCatalog()` checks unique kebab-case ids, reserved ids (`preview`),
   family/collection references, status consistency and renderers. It runs in tests and logs in dev.
 
-Picker routes: `/themes` (families) → `/themes/:familyId` (collections; skipped when a family has a
-single collection) → `/themes/:familyId/:collectionId` (templates + live preview) and
-`/themes/:templateId/preview` (full screen).
+- **Canonical names**: one display name per entry, used on every page and in the dashboard
+  ("Conventional / Classic" for the `classic` family). Old slugs are `aliases`, never shown.
+
+### Picker routes and behaviour
+
+| Step | Canonical route |
+|---|---|
+| 1 Family | `/themes` |
+| 2 Collection | `/themes/:familyId` — **always shown**, even for single-collection and planned families |
+| 3 Template | `/themes/:familyId/:collectionId` — template cards + inline preview |
+| Full-screen preview | `/themes/:familyId/:collectionId/:templateId/preview` |
+
+`picker/guards.ts` redirects family aliases (`/themes/conventional`), collections under the wrong
+family, template aliases (`/themes/blush-garden/preview`) and the Workstream 2 URL
+(`/themes/:templateId/preview`) to the canonical route. Unknown templates show the default with a notice;
+planned templates lead to their collection.
+
+- **Preview ≠ select.** Previewing never changes the selection. Every page uses the same labels from
+  `picker/format.ts` (`Preview`, `Select template`, `Selected`, `Full-screen preview`), the same
+  `SelectTemplateButton` (stays focusable via `aria-disabled` once selected) and the same
+  "Selected: Family › Collection › Template" summary, which is a polite live region.
+- **Counts and statuses** all come from `templateCounts()` / `countLabel()` and `STATUS_LABEL`
+  ("Available", "Coming soon", "In development").
+- **Accessibility**: device size is a native radio group (arrow keys, "radio 1 of 3"); cards expose a
+  single link named after the entry with a visible focus ring; the preview frame is a labelled,
+  keyboard-scrollable region capped to the screen height; themes get a visible `:focus-visible` outline.
+- **Full-screen controls** sit in a sticky bar *above* the invitation; full-height sections use
+  `--site-vh = 100svh − bar height`, so the bar never covers invitation content.
 
 ```
 WeddingContent (features/wedding/types.ts)
@@ -48,6 +73,26 @@ Theme registry (core/registry.ts)  ──  id → ThemeDefinition
         ▼
 <XxxTheme :content>  ──  the couple's website
 ```
+
+## Shared content contract
+
+Every renderable template receives exactly `ThemeProps` — `{ content: WeddingContent, config? }` —
+from `ThemeRenderer`, and all previews use the same `sampleWedding`. Templates differ only in
+presentation. Shared behaviour for optional, missing and disabled content:
+
+| Content | Behaviour (all templates) |
+|---|---|
+| Optional text (headline, introduction, descriptions, thank-you) missing | Element omitted |
+| Optional image missing | Image frame omitted (no empty placeholder) |
+| Image fails to load or has an unsafe `src` | `ThemeImage` shows a neutral placeholder with the alt text |
+| Story with no entries / gallery with no images | Whole section omitted (`useWeddingView`) |
+| `rsvp.enabled = false` | Section shows "RSVP is not being collected online", no form |
+| RSVP deadline passed | "RSVP has closed", no form |
+| Event without `endTime` / `mapsUrl` | "From HH:mm" / Google Maps search link from venue + address |
+| Wedding date in the past | Countdown hidden |
+
+These are enforced by `themes.spec.ts`, which renders every template with the full, minimal and
+edge-case content.
 
 ## Rules for themes
 

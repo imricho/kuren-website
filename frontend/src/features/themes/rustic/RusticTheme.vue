@@ -13,7 +13,7 @@ const view = useWeddingView(props)
 </script>
 
 <template>
-  <article class="t-rustic">
+  <article class="t-rustic" :data-variant="config?.variant ?? 'field-notes'">
     <header class="rn-hero" :class="{ 'rn-hero--photo': content.opening.coverImage }">
       <div v-if="content.opening.coverImage" class="rn-hero__photo"><ThemeImage :image="content.opening.coverImage" eager /></div>
       <div v-else class="rn-hero__landscape" aria-hidden="true"><span /><span /><span /></div>

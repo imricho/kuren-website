@@ -14,6 +14,22 @@
   font-family: var(--mono);
   line-height: 1.65;
 }
+
+/* Each art direction changes its color system and the rhythm of the opening. */
+.t-art[data-variant='cut-paper'] { --paper:#f6eee6; --paper-deep:#e6d8cb; --ink:#24212a; --muted:#625a61; --accent:#e45f46; --display:'Fraunces',Georgia,serif; }
+.t-art[data-variant='color-study'] { --paper:#f1efe9; --paper-deep:#e1ddd4; --ink:#171a22; --muted:#5c606b; --accent:#355eaa; --display:'Fraunces',Georgia,serif; }
+.t-art[data-variant='chromatic-vows'] { --paper:#fff0e7; --paper-deep:#f0d5c5; --ink:#291d1a; --muted:#6f554b; --accent:#e33d2e; --display:'Fraunces',Georgia,serif; }
+.t-art[data-variant='afterimage'] { --paper:#f0eaf0; --paper-deep:#e2d6e0; --ink:#2b2430; --muted:#675d69; --accent:#9d5a72; --display:'Fraunces',Georgia,serif; }
+.t-art[data-variant='sunday-collage'] { --paper:#f3eee1; --paper-deep:#e6dac5; --ink:#25241f; --muted:#6b6558; --accent:#bf714e; --display:'Fraunces',Georgia,serif; }
+.t-art[data-variant='the-exhibition'] { --paper:#f5f4f1; --paper-deep:#e8e7e2; --ink:#202020; --muted:#696967; --accent:#7a6856; --display:'Fraunces',Georgia,serif; }
+.t-art[data-variant='negative-space'] { --paper:#fbfaf7; --paper-deep:#eeece7; --ink:#171717; --muted:#77736e; --accent:#8b3f35; --display:'Fraunces',Georgia,serif; }
+.t-art[data-variant='cut-paper'] .art-hero { background:linear-gradient(135deg, #d3e1f2 0 35%, #ee6b52 35% 62%, var(--paper) 62%); }
+.t-art[data-variant='color-study'] .art-hero { background:linear-gradient(105deg, var(--accent) 0 38%, var(--paper) 38%); }
+.t-art[data-variant='chromatic-vows'] .art-hero { background:linear-gradient(135deg, #f7c35f 0 24%, #ef6344 24% 58%, var(--paper) 58%); }
+.t-art[data-variant='afterimage'] .art-hero__media { filter:saturate(.78) contrast(.92); }
+.t-art[data-variant='sunday-collage'] .art-hero__media { transform:rotate(-1.3deg); box-shadow:12px 12px 0 var(--paper-deep); }
+.t-art[data-variant='the-exhibition'] .art-hero { text-align:left; }
+.t-art[data-variant='negative-space'] .art-hero__names { max-width:7ch; }
 /* Zero-specificity resets so theme classes always win. */
 :where(.t-art) :where(h1, h2, h3) {
   color: inherit;
@@ -576,5 +592,92 @@
     align-items: center;
     gap: 4rem;
   }
+}
+
+/* Art-school editions: the family keeps expressive display type and collage
+   energy, while each template uses a different grid and image grammar. */
+@container site (min-width: 48rem) {
+  .t-art[data-variant='cut-paper'] .art-hero { grid-template-columns: .9fr 1.1fr; grid-template-rows: 1fr auto; align-items: center; padding: 5rem 6cqi; }
+  .t-art[data-variant='cut-paper'] .art-hero__names { grid-column: 1; grid-row: 1; align-self: center; font-size: clamp(4rem, 13cqi, 10rem); }
+  .t-art[data-variant='cut-paper'] .art-hero__media { grid-column: 2; grid-row: 1 / span 2; width: 90%; margin: 0; justify-self: center; }
+  .t-art[data-variant='cut-paper'] .art-hero__photo { transform: rotate(0); aspect-ratio: 4 / 5; }
+  .t-art[data-variant='cut-paper'] .art-block { inset: 8% -9% -8% 10%; }
+  .t-art[data-variant='cut-paper'] .art-intro__grid { grid-template-columns: 1fr 1fr; }
+  .t-art[data-variant='cut-paper'] .art-chapter { grid-template-columns: 3rem 1fr 1fr; padding: 1.5rem; background: var(--paper-deep); }
+  .t-art[data-variant='cut-paper'] .art-chapter:nth-child(even) { transform: translateX(3rem); }
+
+  .t-art[data-variant='color-study'] .art-hero { grid-template-columns: 1fr 1fr; padding: 4rem 5cqi; background: linear-gradient(90deg, var(--accent) 0 43%, var(--paper) 43%); }
+  .t-art[data-variant='color-study'] .art-hero__names { grid-column: 1 / -1; grid-row: 1; max-width: 75rem; }
+  .t-art[data-variant='color-study'] .art-hero__media { grid-column: 2; grid-row: 1 / span 2; width: 100%; margin: 8rem 0 0; }
+  .t-art[data-variant='color-study'] .art-hero__photo { aspect-ratio: 3 / 4; transform: none; }
+  .t-art[data-variant='color-study'] .art-hero__meta { grid-column: 1; grid-row: 2; align-self: end; color: var(--paper); }
+  .t-art[data-variant='color-study'] .art-gallery__grid { grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: stretch; }
+  .t-art[data-variant='color-study'] .art-fig:nth-child(3n + 1) { grid-column: span 7; }
+  .t-art[data-variant='color-study'] .art-fig:nth-child(3n + 2) { grid-column: span 5; margin-top: 4rem; }
+  .t-art[data-variant='color-study'] .art-fig:nth-child(3n) { grid-column: span 4; }
+  .t-art[data-variant='color-study'] .art-fig__img { aspect-ratio: 4 / 3; }
+
+  .t-art[data-variant='chromatic-vows'] .art-hero__names { text-transform: uppercase; letter-spacing: -.08em; }
+  .t-art[data-variant='chromatic-vows'] .art-chapters { gap: .75rem; }
+  .t-art[data-variant='chromatic-vows'] .art-chapter { grid-template-columns: 3.5rem 1fr 1fr; align-items: stretch; padding: 1.25rem; background: var(--paper-deep); }
+  .t-art[data-variant='chromatic-vows'] .art-chapter__num { display: grid; place-items: start center; background: var(--accent); color: white; }
+  .t-art[data-variant='chromatic-vows'] .art-events__list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .t-art[data-variant='chromatic-vows'] .art-event { display: grid; grid-template-columns: 5rem 1fr; padding: 1.5rem; background: var(--paper-deep); }
+  .t-art[data-variant='chromatic-vows'] .art-event__day { grid-row: span 2; font-size: clamp(3rem, 8cqi, 6rem); }
+  .t-art[data-variant='chromatic-vows'] .art-gallery__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+
+  .t-art[data-variant='afterimage'] .art-hero__media { width: 92%; margin-top: 4rem; }
+  .t-art[data-variant='afterimage'] .art-hero__photo { transform: rotate(0); filter: saturate(.72) contrast(.92); box-shadow: 2rem 1.5rem 0 rgb(157 90 114 / .22); }
+  .t-art[data-variant='afterimage'] .art-hero__names { font-size: clamp(4.5rem, 18cqi, 12rem); }
+  .t-art[data-variant='afterimage'] .art-person__photo { aspect-ratio: 1; border-radius: 50%; }
+  .t-art[data-variant='afterimage'] .art-chapter { grid-template-columns: 2rem 1.3fr .7fr; }
+  .t-art[data-variant='afterimage'] .art-chapter__photo { aspect-ratio: 3 / 4; }
+  .t-art[data-variant='afterimage'] .art-fig:nth-child(even) { transform: translateY(3rem); }
+
+  .t-art[data-variant='sunday-collage'] .art-hero__media { width: 82%; margin: 2rem 0 0; }
+  .t-art[data-variant='sunday-collage'] .art-hero__photo { transform: rotate(-4deg); outline: .8rem solid var(--paper); box-shadow: 0 1.5rem 3rem rgb(37 36 31 / .18); }
+  .t-art[data-variant='sunday-collage'] .art-intro { background: var(--paper-deep); }
+  .t-art[data-variant='sunday-collage'] .art-chapter { grid-template-columns: 3rem 1fr 1fr; padding: 1.5rem; border: 1px solid var(--line); }
+  .t-art[data-variant='sunday-collage'] .art-chapter:nth-child(even) { transform: rotate(.5deg) translateX(2rem); }
+  .t-art[data-variant='sunday-collage'] .art-chapter:nth-child(odd) { transform: rotate(-.5deg); }
+  .t-art[data-variant='sunday-collage'] .art-fig:nth-child(3n + 1) { transform: rotate(-2deg); }
+  .t-art[data-variant='sunday-collage'] .art-fig:nth-child(3n + 2) { transform: translateY(2.5rem) rotate(1.5deg); }
+  .t-art[data-variant='sunday-collage'] .art-fig__img { border: .6rem solid white; box-shadow: 0 .7rem 1.6rem rgb(37 36 31 / .12); }
+
+  .t-art[data-variant='the-exhibition'] .art-hero__names { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .2em; font-size: clamp(3.8rem, 11cqi, 9rem); }
+  .t-art[data-variant='the-exhibition'] .art-intro__grid { grid-template-columns: .5fr 1fr; border-top: 1px solid var(--line); padding-top: 2rem; }
+  .t-art[data-variant='the-exhibition'] .art-chapter { grid-template-columns: 4rem 1.1fr .9fr; align-items: center; border-top: 1px solid var(--line); padding-block: 1.5rem; }
+  .t-art[data-variant='the-exhibition'] .art-chapter__num { font-size: 1.1rem; }
+  .t-art[data-variant='the-exhibition'] .art-events__list { border-top: 1px solid var(--line); }
+  .t-art[data-variant='the-exhibition'] .art-event { grid-template-columns: 5rem 1fr; padding-block: 1.5rem; border-bottom: 1px solid var(--line); }
+  .t-art[data-variant='the-exhibition'] .art-gallery__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .t-art[data-variant='the-exhibition'] .art-fig:first-child { grid-column: span 2; grid-row: span 2; }
+
+  .t-art[data-variant='negative-space'] .art-hero { grid-template-columns: .55fr 1.45fr; align-content: center; padding: 3rem 5cqi; }
+  .t-art[data-variant='negative-space'] .art-hero__names { grid-column: 1; grid-row: 1; align-self: center; writing-mode: vertical-rl; font-size: clamp(3rem, 8cqi, 7rem); }
+  .t-art[data-variant='negative-space'] .art-hero__media { grid-column: 2; grid-row: 1 / span 2; width: 100%; margin: 0; }
+  .t-art[data-variant='negative-space'] .art-hero__photo { aspect-ratio: 5 / 4; transform: none; }
+  .t-art[data-variant='negative-space'] .art-hero__meta { grid-column: 1; grid-row: 2; align-self: end; }
+  .t-art[data-variant='negative-space'] .art-couple { gap: 6rem; }
+  .t-art[data-variant='negative-space'] .art-person--b { margin-top: 0; }
+  .t-art[data-variant='negative-space'] .art-chapters { max-width: 52rem; margin-inline: auto; }
+  .t-art[data-variant='negative-space'] .art-chapter { grid-template-columns: 2rem 1fr; padding-block: 2.5rem; border-top: 1px solid var(--line); }
+  .t-art[data-variant='negative-space'] .art-chapter__photo { grid-column: 2; width: 70%; aspect-ratio: 16 / 9; }
+  .t-art[data-variant='negative-space'] .art-chapter__text { grid-column: 2; }
+  .t-art[data-variant='negative-space'] .art-gallery__grid { grid-template-columns: 1fr 1fr; }
+  .t-art[data-variant='negative-space'] .art-fig:first-child { grid-column: 1 / -1; }
+}
+
+@container site (max-width: 47.99rem) {
+  .t-art[data-variant='cut-paper'] .art-block { inset: 10% -5% -5% 12%; }
+  .t-art[data-variant='cut-paper'] .art-hero__photo { transform: rotate(0); }
+  .t-art[data-variant='color-study'] .art-hero { background: linear-gradient(180deg, var(--accent) 0 35%, var(--paper) 35%); }
+  .t-art[data-variant='color-study'] .art-hero__meta { color: var(--ink); }
+  .t-art[data-variant='chromatic-vows'] .art-hero__names { text-transform: uppercase; letter-spacing: -.08em; }
+  .t-art[data-variant='afterimage'] .art-hero__photo { transform: none; filter: saturate(.72); }
+  .t-art[data-variant='sunday-collage'] .art-hero__photo { transform: rotate(-3deg); outline: .45rem solid white; }
+  .t-art[data-variant='the-exhibition'] .art-hero__names { display: flex; flex-direction: row; flex-wrap: wrap; gap: 0 .15em; }
+  .t-art[data-variant='negative-space'] .art-hero__names { font-size: clamp(3.1rem, 16cqi, 5rem); }
+  .t-art[data-variant='negative-space'] .art-hero__photo { transform: none; }
 }
 

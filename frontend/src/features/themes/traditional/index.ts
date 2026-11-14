@@ -12,6 +12,7 @@ export const traditionalTheme: RenderableTemplate = {
   description:
     'A formal, symmetrical design with deep maroon and antique-gold accents, framed panels and original ornamental borders.',
   previewImage: thumbnail,
+  config: { variant: 'royal-maroon' },
   fonts: {
     href: 'https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap',
   },

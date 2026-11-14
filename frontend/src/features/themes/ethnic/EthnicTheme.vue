@@ -18,7 +18,7 @@ const view = useWeddingView(props)
 </script>
 
 <template>
-  <article class="t-eth" :style="activeMotifSet.cssVars" :data-motif="activeMotifSet.id">
+  <article class="t-eth" :style="activeMotifSet.cssVars" :data-motif="activeMotifSet.id" :data-variant="config?.variant ?? 'woven-indigo'">
     <!-- Opening -->
     <header class="eth-hero">
       <div v-if="content.opening.coverImage" class="eth-hero__media">

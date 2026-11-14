@@ -7,18 +7,23 @@
 ```
 ThemeFamily         broad visual category                      catalog/families.ts
 └─ ThemeCollection  specific design direction                  catalog/collections.ts
-   └─ ThemeTemplate the selectable, renderable design         <template folder>/index.ts
+   └─ ThemeTemplate the selectable, renderable design         family module or catalog/variants.ts
                     (planned templates without a renderer)    catalog/planned.ts
 ```
 
-| Family | Collections | Templates (id → name) |
+| Family | Collections | Templates |
 |---|---|---|
-| Traditional | Ceremonial Classic; Artisan Pattern (origin-neutral design directions) | `traditional` → Royal Maroon, `ethnic` → Woven Indigo |
-| International | Editorial | `international` → Editorial Ivory |
-| Conventional / Classic (`classic`, alias `conventional`) | Romantic Floral | `conventional` → Blush Garden |
-| Artistic | Contemporary | `artistic` → Gallery Bold |
-| Modern Minimalist | Quiet Form | `still-form` → Still Form |
-| Rustic / Nature | Field Notes | `wildwood-gathering` → Field Notes |
+| Traditional | Ceremonial Classic; Artisan Pattern; Formal Signatures; Abstract Heritage | 8 templates |
+| International | Editorial; Coastal Journal; City Editions; After Hours | 8 templates |
+| Conventional / Classic (`classic`, alias `conventional`) | Romantic Floral; Botanical Classics; Fine Keepsakes; Estate Gardens | 8 templates |
+| Artistic | Contemporary; Color Experiments; Photo Studies; Gallery Editions | 8 templates |
+| Modern Minimalist | Quiet Form; Soft Essentials; Evening Minimal; Fine Lines | 8 templates |
+| Rustic / Nature | Field Notes; Garden Gatherings; Landscape Editions; Botanical Paper | 8 templates |
+
+Each family has 4 collections with 2 available templates per collection (48 total). Base templates
+retain their original ids; additional variants keep a distinct id and slug while reusing their
+family renderer with a `config.variant` visual preset. The family stylesheet owns the variant
+palette and composition changes. All templates use the same `WeddingContent` contract.
 
 - **Status** (`available` / `coming_soon` / `hidden`) exists at every level. Hidden templates render by
   direct link (QA) but aren't listed.
@@ -39,7 +44,7 @@ ThemeFamily         broad visual category                      catalog/families.
 ### Theme studio (picker)
 
 One page, two columns on desktop (≥1024px): **sidebar on the left** to browse Family → Collection →
-Template, **live preview on the right**. Below 1024px the sidebar becomes a collapsible
+Template, **live preview on the right**. The initial preview size is desktop. Below 1024px the sidebar becomes a collapsible
 "Browse themes" selector above the preview; it collapses after a template is chosen and the preview
 scrolls into view.
 
@@ -126,8 +131,17 @@ Data only — no code changes:
 
 ## Adding a new template
 
-New templates go in `features/themes/templates/<family>/<collection>/<template-id>/`. (The five
-Workstream 2 templates keep their original folders, e.g. `traditional/` holds the Royal Maroon renderer.)
+For an additional design within an existing family, add its metadata and renderer mapping in
+`catalog/variants.ts`, then define its visual treatment under the family's root-class and
+`data-variant` selector in `styles/theme.css`. A variant should change at least three page regions:
+the hero plus two or more of the couple, story, events, gallery, RSVP or closing sections. Change
+composition, typography hierarchy and photo framing as well as palette, while retaining the
+family's signature materials and typography. Keep source order meaningful and make multi-column
+layouts responsive with container queries. A new renderer is appropriate when the layout cannot
+be expressed clearly with an existing family's structure.
+
+New, structurally distinct templates may go in `features/themes/templates/<family>/<collection>/<template-id>/`.
+The original family modules remain the base renderers (e.g. `traditional/` holds Royal Maroon).
 
 1. Create the template folder:
    ```

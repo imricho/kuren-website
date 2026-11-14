@@ -4,19 +4,17 @@ import { ACTION, STATUS_LABEL, countLabel, familySummary, formatTemplatePath } f
 
 describe('picker wording', () => {
   it('formats counts the same way everywhere', () => {
-    expect(countLabel({ collectionId: 'ceremonial-classic' })).toBe('1 template available')
-    expect(countLabel({ collectionId: 'romantic-floral' })).toBe('1 template available')
-    expect(countLabel({ familyId: 'modern-minimalist' })).toBe('1 template available')
-    expect(countLabel({ familyId: 'rustic-nature' })).toBe('1 template available')
-    expect(countLabel({ familyId: 'traditional' })).toBe('2 templates available')
+    expect(countLabel({ collectionId: 'ceremonial-classic' })).toBe('2 templates available')
+    expect(countLabel({ collectionId: 'romantic-floral' })).toBe('2 templates available')
+    expect(countLabel({ familyId: 'modern-minimalist' })).toBe('8 templates available')
+    expect(countLabel({ familyId: 'rustic-nature' })).toBe('8 templates available')
+    expect(countLabel({ familyId: 'traditional' })).toBe('8 templates available')
   })
 
   it('summarises families in terms that agree with collection statuses', () => {
-    expect(familySummary('traditional')).toBe('2 templates available')
-    expect(familySummary('classic')).toBe('1 template available')
-    expect(familySummary('international')).toBe('1 template available')
-    expect(familySummary('modern-minimalist')).toBe('1 template available')
-    expect(familySummary('rustic-nature')).toBe('1 template available')
+    for (const family of ['traditional', 'classic', 'international', 'artistic', 'modern-minimalist', 'rustic-nature']) {
+      expect(familySummary(family)).toBe('8 templates available')
+    }
   })
 
   it('formats the selected path as Family › Collection › Template', () => {

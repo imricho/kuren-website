@@ -20,6 +20,20 @@
   font-family: var(--serif);
   line-height: 1.75;
 }
+
+/* Classic stationery variants remain romantic while shifting floral color stories and framing. */
+.t-conv[data-variant='rosewater'] { --conv-blush:#f6e7e7; --conv-cream:#fffaf8; --conv-rose:#cb8f9a; --conv-blush-deep:#e5c2c5; --conv-cream-petal:#fbefeb; --conv-rose-deep:#925f6a; --conv-sage:#aab9a6; --conv-sage-deep:#738573; --conv-gold:#c7a36e; }
+.t-conv[data-variant='lily-and-lace'] { --conv-blush:#e9eee7; --conv-cream:#fffdf9; --conv-rose:#9ba992; --conv-blush-deep:#cbd6c8; --conv-cream-petal:#f4f4eb; --conv-rose-deep:#687762; --conv-sage:#aebca5; --conv-sage-deep:#74836d; --conv-gold:#b5a278; }
+.t-conv[data-variant='the-conservatory'] { --conv-blush:#e3e9dc; --conv-cream:#f8f5ec; --conv-rose:#7f936d; --conv-blush-deep:#c8d0bd; --conv-cream-petal:#f0ead9; --conv-rose-deep:#51654b; --conv-sage:#92a17e; --conv-sage-deep:#596d54; --conv-gold:#b59b68; }
+.t-conv[data-variant='pearl-keepsake'] { --conv-blush:#eeece8; --conv-cream:#fffefa; --conv-rose:#b7afa6; --conv-blush-deep:#d6d1cb; --conv-cream-petal:#f6f3ef; --conv-rose-deep:#77716e; --conv-sage:#a9b1a4; --conv-sage-deep:#727a70; --conv-gold:#bca77f; }
+.t-conv[data-variant='peony-season'] { --conv-blush:#f5e1de; --conv-cream:#fff8f3; --conv-rose:#d9818d; --conv-blush-deep:#eab9b7; --conv-cream-petal:#fbeee4; --conv-rose-deep:#99535f; --conv-sage:#a6b18a; --conv-sage-deep:#6f805e; --conv-gold:#c29a5c; }
+.t-conv[data-variant='bluebell-manor'] { --conv-blush:#e8edf3; --conv-cream:#fbfaf6; --conv-rose:#8ca3bb; --conv-blush-deep:#cbd8e5; --conv-cream-petal:#f3f3ee; --conv-rose-deep:#5b7187; --conv-sage:#9fae9c; --conv-sage-deep:#6d806e; --conv-gold:#b9a678; }
+.t-conv[data-variant='garden-at-dusk'] { --conv-blush:#e7dde4; --conv-cream:#f7f1ee; --conv-rose:#9d718c; --conv-blush-deep:#d2bccb; --conv-cream-petal:#f1e6dd; --conv-rose-deep:#68465f; --conv-sage:#829078; --conv-sage-deep:#52664f; --conv-gold:#c19d69; }
+.t-conv[data-variant='rosewater'] .conv-hero { background:radial-gradient(ellipse at 50% 50%, #fff8f7, var(--conv-blush) 76%); }
+.t-conv[data-variant='the-conservatory'] .conv-hero { background:linear-gradient(135deg, var(--conv-cream), var(--conv-blush)); }
+.t-conv[data-variant='peony-season'] .conv-hero__photo { transform:rotate(-1.5deg); }
+  .t-conv[data-variant='bluebell-manor'] .conv-arch { border-radius:48% 48% 2px 2px; }
+.t-conv[data-variant='garden-at-dusk'] .conv-hero { background:radial-gradient(ellipse at 50% 48%, #f6e5db, var(--conv-blush) 75%); }
 /* Zero-specificity resets so theme classes always win. */
 :where(.t-conv) :where(h1, h2, h3) {
   color: inherit;
@@ -495,4 +509,85 @@
   .conv-card {
     padding: 4rem 4rem;
   }
+}
+
+/* Invitation signatures: distinct stationery compositions inside the romantic
+   Classic family (arched crops, script names and botanical detail remain shared). */
+@container site (min-width: 48rem) {
+  .t-conv[data-variant='rosewater'] .conv-hero__content { width: min(100%, 43rem); padding: 3.5rem 4rem; border: 1px solid var(--conv-rose); outline: 1px solid var(--conv-rose); outline-offset: .55rem; }
+  .t-conv[data-variant='rosewater'] .conv-arch--hero { width: min(13rem, 44cqi); }
+  .t-conv[data-variant='rosewater'] .conv-timeline { max-width: 54rem; margin-inline: auto; }
+  .t-conv[data-variant='rosewater'] .conv-moment { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .t-conv[data-variant='rosewater'] .conv-moment__photo { width: min(22rem, 100%); }
+  .t-conv[data-variant='rosewater'] .conv-events__list { grid-template-columns: 1fr; max-width: 54rem; margin-inline: auto; }
+  .t-conv[data-variant='rosewater'] .conv-event { display: grid; grid-template-columns: 8rem 1fr; text-align: left; }
+
+  .t-conv[data-variant='lily-and-lace'] .conv-hero { padding-inline: 8cqi; }
+  .t-conv[data-variant='lily-and-lace'] .conv-hero__content { grid-template-columns: 1fr minmax(12rem, .65fr); column-gap: 3rem; justify-items: start; text-align: left; }
+  .t-conv[data-variant='lily-and-lace'] .conv-hero__content > :first-child,
+  .t-conv[data-variant='lily-and-lace'] .conv-hero__names,
+  .t-conv[data-variant='lily-and-lace'] .conv-hero__date { grid-column: 1; }
+  .t-conv[data-variant='lily-and-lace'] .conv-arch--hero { grid-column: 2; grid-row: 1 / span 3; width: 100%; }
+  .t-conv[data-variant='lily-and-lace'] .conv-couple__grid { gap: 4rem; }
+  .t-conv[data-variant='lily-and-lace'] .conv-person:nth-child(3) { margin-top: 7rem; }
+  .t-conv[data-variant='lily-and-lace'] .conv-events__list { grid-template-columns: 1fr; max-width: 56rem; }
+  .t-conv[data-variant='lily-and-lace'] .conv-event { text-align: left; border-left: 2px solid var(--conv-sage); }
+
+  .t-conv[data-variant='the-conservatory'] .conv-hero { place-items: stretch; text-align: left; padding: 4rem 6cqi; }
+  .t-conv[data-variant='the-conservatory'] .conv-hero__content { grid-template-columns: 1fr 1.1fr; align-items: center; justify-items: start; gap: 1.4rem 4cqi; text-align: left; width: 100%; }
+  .t-conv[data-variant='the-conservatory'] .conv-hero__content > :first-child,
+  .t-conv[data-variant='the-conservatory'] .conv-hero__names,
+  .t-conv[data-variant='the-conservatory'] .conv-hero__date { grid-column: 1; }
+  .t-conv[data-variant='the-conservatory'] .conv-arch--hero { grid-column: 2; grid-row: 1 / span 3; width: 100%; }
+  .t-conv[data-variant='the-conservatory'] .conv-story { background: var(--conv-cream-petal); }
+  .t-conv[data-variant='the-conservatory'] .conv-moment { grid-template-columns: .8fr 1.2fr; }
+  .t-conv[data-variant='the-conservatory'] .conv-moment__photo { aspect-ratio: 4 / 5; }
+  .t-conv[data-variant='the-conservatory'] .conv-gallery__grid { columns: 2; column-gap: 2rem; }
+
+  .t-conv[data-variant='pearl-keepsake'] .conv-hero__content { width: min(100%, 38rem); padding: 2rem; border: 1px solid var(--conv-gold); box-shadow: inset 0 0 0 .5rem var(--conv-cream), inset 0 0 0 .56rem var(--conv-gold); }
+  .t-conv[data-variant='pearl-keepsake'] .conv-arch--hero { width: min(12rem, 40cqi); }
+  .t-conv[data-variant='pearl-keepsake'] .conv-couple__grid { grid-template-columns: 1fr 1fr; align-items: start; }
+  .t-conv[data-variant='pearl-keepsake'] .conv-person:nth-child(3) { margin-top: 5rem; }
+  .t-conv[data-variant='pearl-keepsake'] .conv-timeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .t-conv[data-variant='pearl-keepsake'] .conv-moment { display: block; padding: 1rem; border: 1px solid var(--conv-gold); }
+  .t-conv[data-variant='pearl-keepsake'] .conv-gallery__grid { columns: 2; }
+
+  .t-conv[data-variant='peony-season'] .conv-hero { padding: 3rem 6cqi; }
+  .t-conv[data-variant='peony-season'] .conv-hero__content { grid-template-columns: 1.15fr .85fr; align-items: center; justify-items: start; text-align: left; width: 100%; }
+  .t-conv[data-variant='peony-season'] .conv-hero__names { grid-column: 1; grid-row: 2; z-index: 1; font-size: clamp(4rem, 10cqi, 8rem); }
+  .t-conv[data-variant='peony-season'] .conv-arch--hero { grid-column: 2; grid-row: 1 / span 3; width: 100%; transform: rotate(2deg); }
+  .t-conv[data-variant='peony-season'] .conv-moment:nth-child(even) .conv-moment__photo { order: 0; }
+  .t-conv[data-variant='peony-season'] .conv-moment__photo { width: 100%; aspect-ratio: 16 / 10; }
+  .t-conv[data-variant='peony-season'] .conv-gallery__grid { columns: 2; column-gap: 2rem; }
+  .t-conv[data-variant='peony-season'] .conv-photo:nth-child(odd) { margin-top: 4rem; }
+
+  .t-conv[data-variant='bluebell-manor'] .conv-hero__content { width: min(100%, 47rem); padding: 3rem; border: 1px solid var(--conv-rose); outline: 1px solid var(--conv-rose); outline-offset: -.65rem; }
+  .t-conv[data-variant='bluebell-manor'] .conv-arch--hero { width: min(16rem, 45cqi); }
+  .t-conv[data-variant='bluebell-manor'] .conv-couple__grid { max-width: 74rem; margin-inline: auto; }
+  .t-conv[data-variant='bluebell-manor'] .conv-person:nth-child(3) { margin-top: 0; }
+  .t-conv[data-variant='bluebell-manor'] .conv-events__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .t-conv[data-variant='bluebell-manor'] .conv-event { border: 1px solid var(--conv-rose); background: var(--conv-cream); }
+  .t-conv[data-variant='bluebell-manor'] .conv-gallery__grid { columns: 2; }
+
+  .t-conv[data-variant='garden-at-dusk'] .conv-hero { background: linear-gradient(145deg, #332b35, #594657); color: #fff8f3; }
+  .t-conv[data-variant='garden-at-dusk'] .conv-hero::after { border-color: rgb(255 248 243 / .45); border-radius: 0; inset: 2rem; }
+  .t-conv[data-variant='garden-at-dusk'] .conv-hero__content { color: #fff8f3; }
+  .t-conv[data-variant='garden-at-dusk'] .conv-hero__date,
+  .t-conv[data-variant='garden-at-dusk'] .conv-caps { color: #f2d9d6; }
+  .t-conv[data-variant='garden-at-dusk'] .conv-arch--hero { width: min(14rem, 45cqi); }
+  .t-conv[data-variant='garden-at-dusk'] .conv-events { background: #382e38; color: #fff8f3; }
+  .t-conv[data-variant='garden-at-dusk'] .conv-events :where(h2,h3,p) { color: inherit; }
+  .t-conv[data-variant='garden-at-dusk'] .conv-event { border: 1px solid rgb(255 248 243 / .25); background: rgb(255 248 243 / .04); }
+  .t-conv[data-variant='garden-at-dusk'] .conv-rsvp { background: #eee5e8; }
+}
+
+@container site (max-width: 47.99rem) {
+  .t-conv[data-variant='rosewater'] .conv-hero__content { padding: 1.25rem; outline: 1px solid var(--conv-rose); outline-offset: -.6rem; }
+  .t-conv[data-variant='lily-and-lace'] .conv-hero__content { text-align: left; justify-items: start; }
+  .t-conv[data-variant='the-conservatory'] .conv-hero__content { justify-items: stretch; }
+  .t-conv[data-variant='pearl-keepsake'] .conv-hero__content { padding: .75rem; border: 1px solid var(--conv-gold); box-shadow: inset 0 0 0 .35rem var(--conv-cream), inset 0 0 0 .4rem var(--conv-gold); }
+  .t-conv[data-variant='peony-season'] .conv-arch--hero { transform: rotate(2deg); }
+  .t-conv[data-variant='bluebell-manor'] .conv-hero::after { border-radius: 48% 48% 0 0; }
+  .t-conv[data-variant='garden-at-dusk'] .conv-hero { background: linear-gradient(145deg, #332b35, #594657); color: #fff8f3; }
+  .t-conv[data-variant='garden-at-dusk'] .conv-hero__content :where(p,h1) { color: inherit; }
 }

@@ -12,6 +12,7 @@ export const conventionalTheme: RenderableTemplate = {
   description:
     'The classic invitation feel: blush and sage pastels, hand-drawn-style florals, arched photo frames and an elegant script for your names.',
   previewImage: thumbnail,
+  config: { variant: 'blush-garden' },
   fonts: {
     href: 'https://fonts.googleapis.com/css2?family=Great+Vibes&family=Lora:ital,wght@0,400;0,500;1,400&display=swap',
   },

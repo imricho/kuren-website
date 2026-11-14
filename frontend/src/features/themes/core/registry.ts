@@ -2,12 +2,12 @@
  * Central theme registry: Family → Collection → Template.
  *
  * - Families and collections are configuration (catalog/).
- * - Templates with a renderer live in their own folder and are listed in
- *   RENDERABLE_TEMPLATES; planned ones are in catalog/planned.ts.
+ * - Base templates use their family modules. Additional variants in
+ *   catalog/variants.ts reuse those renderers with visual-preset keys.
+ * - Planned templates without a renderer are in catalog/planned.ts.
  *
- * To add a template: create its folder with an `index.ts` exporting a
- * RenderableTemplate (with familyId + collectionId), then add it below.
- * The renderer and the content model don't change.
+ * To add a variant: add its metadata in catalog/variants.ts and a scoped
+ * variant treatment in its family's stylesheet. The content model stays shared.
  *
  * Backwards compatible with Workstream 2: THEMES, getTheme, isThemeId and
  * DEFAULT_THEME_ID behave exactly as before.
@@ -16,6 +16,7 @@ import { artisticTheme } from '../artistic'
 import { COLLECTIONS } from '../catalog/collections'
 import { FAMILIES } from '../catalog/families'
 import { PLANNED_TEMPLATES } from '../catalog/planned'
+import { ADDITIONAL_TEMPLATES } from '../catalog/variants'
 import { conventionalTheme } from '../conventional'
 import { ethnicTheme } from '../ethnic'
 import { internationalTheme } from '../international'
@@ -38,6 +39,7 @@ const RENDERABLE_TEMPLATES: readonly RenderableTemplate[] = [
   artisticTheme,
   minimalistTheme,
   rusticTheme,
+  ...ADDITIONAL_TEMPLATES,
 ]
 
 /** Every template (renderable and planned), in display order. */

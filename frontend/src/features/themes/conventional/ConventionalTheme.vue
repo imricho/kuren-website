@@ -18,7 +18,7 @@ const view = useWeddingView(props)
 </script>
 
 <template>
-  <article class="t-conv">
+  <article class="t-conv" :data-variant="config?.variant ?? 'blush-garden'">
     <!-- Opening -->
     <header class="conv-hero">
       <ConvBouquet class="conv-bouquet--tl" />

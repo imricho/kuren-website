@@ -42,7 +42,7 @@ export interface PersonProfile {
 
 export interface OpeningSection {
   weddingTitle: string
-  /** Display form, e.g. "Alexander & Sarah". */
+  /** Display form, e.g. "Alex & Sarah". */
   coupleNames: string
   headline?: string
   introduction?: string

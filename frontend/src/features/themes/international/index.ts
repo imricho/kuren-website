@@ -12,6 +12,7 @@ export const internationalTheme: RenderableTemplate = {
   description:
     'A minimalist, magazine-inspired design with refined serif typography, generous white space and full-bleed photography in a soft neutral palette.',
   previewImage: thumbnail,
+  config: { variant: 'editorial-ivory' },
   fonts: {
     href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Jost:wght@300;400;500&display=swap',
   },

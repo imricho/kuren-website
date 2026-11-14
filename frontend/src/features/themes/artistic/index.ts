@@ -12,6 +12,7 @@ export const artisticTheme: RenderableTemplate = {
   description:
     'A contemporary, gallery-like design with oversized type, asymmetric compositions, collage-style photos and a single vivid accent — expressive, but always readable.',
   previewImage: thumbnail,
+  config: { variant: 'gallery-bold' },
   fonts: {
     href: 'https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300;1,9..144,500&family=Space+Grotesk:wght@400;500&display=swap',
   },

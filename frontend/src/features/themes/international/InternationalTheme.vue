@@ -16,7 +16,7 @@ const view = useWeddingView(props)
 </script>
 
 <template>
-  <article class="t-intl">
+  <article class="t-intl" :data-variant="config?.variant ?? 'editorial-ivory'">
     <!-- Opening -->
     <header class="intl-hero" :class="{ 'intl-hero--image': content.opening.coverImage }">
       <div v-if="content.opening.coverImage" class="intl-hero__media">

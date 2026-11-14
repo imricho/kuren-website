@@ -1,6 +1,14 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const THEME_IDS = ['international', 'traditional', 'ethnic', 'conventional', 'artistic', 'still-form', 'wildwood-gathering']
+const THEME_IDS = [
+  'international', 'traditional', 'ethnic', 'conventional', 'artistic', 'still-form', 'wildwood-gathering',
+  'ivory-processional', 'terracotta-geometry', 'gilded-vow', 'candlelit-hall', 'pressed-filigree', 'loomed-lines',
+  'the-monograph', 'coastal-issue', 'the-sunday-edit', 'city-journal', 'gallery-no-08', 'modern-heirloom', 'afterglow',
+  'rosewater', 'lily-and-lace', 'the-conservatory', 'pearl-keepsake', 'peony-season', 'bluebell-manor', 'garden-at-dusk',
+  'cut-paper', 'color-study', 'chromatic-vows', 'afterimage', 'sunday-collage', 'the-exhibition', 'negative-space',
+  'monogram', 'soft-grid', 'paper-light', 'black-tie', 'quiet-contrast', 'outline', 'atelier',
+  'meadowlight', 'olive-grove', 'orchard-table', 'coastal-pine', 'golden-hour-garden', 'gathered-branch', 'wildflower-press',
+]
 
 const VIEWPORTS = {
   phone: { width: 375, height: 812 },
@@ -10,7 +18,7 @@ const VIEWPORTS = {
 
 // Text from the shared sample wedding that every theme must show.
 const MUST_SHOW = [
-  'Alexander Wijaya',
+  'Alex Wijaya',
   'Sarah Putri',
   'The First Hello',
   'Akad Nikah',
@@ -18,7 +26,7 @@ const MUST_SHOW = [
   'Kencana Grand Ballroom',
   'Moments',
   'Will You Join Us?',
-  'With love, Alexander & Sarah',
+  'With love, Alex & Sarah',
 ]
 
 function collectErrors(page: Page) {
@@ -159,10 +167,11 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
     ])
     await expect(page.locator('[data-family-card="classic"]')).toContainText('Conventional / Classic')
     await expect(page.locator('[data-family-card="traditional"] [data-testid="family-summary"]')).toHaveText(
-      '2 templates available',
+      '8 templates available',
     )
-    await expect(page.locator('[data-family-card="modern-minimalist"] [data-testid="family-summary"]')).toHaveText('1 template available')
-    await expect(page.locator('[data-family-card="rustic-nature"] [data-testid="family-summary"]')).toHaveText('1 template available')
+    for (const familyId of ['international', 'classic', 'artistic', 'modern-minimalist', 'rustic-nature']) {
+      await expect(page.locator(`[data-family-card="${familyId}"] [data-testid="family-summary"]`)).toHaveText('8 templates available')
+    }
     await expect(page.locator('[aria-current="step"]')).toContainText('Family')
   })
 

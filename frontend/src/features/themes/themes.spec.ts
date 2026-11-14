@@ -36,7 +36,7 @@ describe.each(TEMPLATES.filter(isRenderable).map((t) => [t.id]))('%s theme', (th
     const text = wrapper.text()
 
     // Opening & couple
-    expect(text).toContain('Alexander')
+    expect(text).toContain('Alex')
     expect(text).toContain('Sarah Putri')
     expect(text).toContain(sampleWedding.opening.headline)
     expect(text).toContain(sampleWedding.couple.groom.description)

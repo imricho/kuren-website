@@ -21,8 +21,12 @@ import type { WeddingContent } from '@/features/wedding/types'
  */
 export type ThemeStatus = 'available' | 'draft' | 'coming_soon' | 'hidden'
 
-/** Free-form, template-specific settings passed to the renderer (palette, motif set…). */
-export type ThemeConfig = Readonly<object>
+/** Template-specific visual preset consumed by its family's renderer. */
+export interface ThemeConfig {
+  /** Stable visual variation key used by the family stylesheet. */
+  variant?: string
+  [key: string]: unknown
+}
 
 /** Props every theme component receives. Themes consume ONLY the shared content model. */
 export interface ThemeProps {

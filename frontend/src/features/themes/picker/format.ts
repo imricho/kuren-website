@@ -2,7 +2,7 @@
  * Shared wording for the theme picker, so labels, counts and paths read the
  * same on every page (cards, inline preview, full-screen preview, dashboard).
  */
-import { templateCounts, templatePath } from '../core/registry'
+import { collectionCounts, collectionsOf, templateCounts, templatePath } from '../core/registry'
 import type { ThemeStatus } from '../core/types'
 
 export const ACTION = {
@@ -27,6 +27,27 @@ export function countLabel(scope: { familyId?: string; collectionId?: string }):
   if (available) return `${plural(available, 'template')} available`
   if (comingSoon) return `${plural(comingSoon, 'template')} coming soon`
   return 'In development'
+}
+
+/**
+ * Family summary that agrees with the collection-level statuses, e.g.
+ *   "2 templates available · 12 regional collections coming soon"
+ *   "1 template available"
+ *   "In development — no collections yet"
+ */
+export function familySummary(familyId: string): string {
+  const { available } = templateCounts({ familyId })
+  const cols = collectionCounts(familyId)
+  if (cols.total === 0) return 'In development — no collections yet'
+  const parts = [available ? `${plural(available, 'template')} available` : 'No templates available yet']
+  if (cols.comingSoon) {
+    const comingSoonRegional = collectionsOf(familyId).filter(
+      (c) => c.status === 'coming_soon' && c.reference.kind === 'cultural',
+    ).length
+    const kind = comingSoonRegional === cols.comingSoon ? 'regional collection' : 'collection'
+    parts.push(`${plural(cols.comingSoon, kind)} coming soon`)
+  }
+  return parts.join(' · ')
 }
 
 /** "Family › Collection › Template" for a template id (or undefined). */

@@ -36,5 +36,15 @@ export const useThemeSelectionStore = defineStore('themeSelection', () => {
     }
   }
 
-  return { selectedThemeId, selectedTheme, select }
+  /**
+   * The template currently shown in the preview pane. Previewing is session-only and never
+   * changes `selectedThemeId`; it just lets the preview persist while the user browses levels.
+   */
+  const previewedThemeId = ref<string | null>(null)
+  function preview(idOrAlias: string) {
+    const id = getTheme(idOrAlias)?.id
+    if (id) previewedThemeId.value = id
+  }
+
+  return { selectedThemeId, selectedTheme, select, previewedThemeId, preview }
 })

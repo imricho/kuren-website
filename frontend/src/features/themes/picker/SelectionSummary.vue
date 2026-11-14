@@ -11,6 +11,7 @@ import { templatePath } from '../core/registry'
 import { formatTemplatePath } from './format'
 import { collectionRoute } from './routes'
 
+defineProps<{ compact?: boolean }>()
 const selection = useThemeSelectionStore()
 const path = computed(() => templatePath(selection.selectedThemeId))
 const label = computed(() => formatTemplatePath(selection.selectedThemeId))
@@ -18,8 +19,9 @@ const label = computed(() => formatTemplatePath(selection.selectedThemeId))
 
 <template>
   <div
-    class="flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border px-4 py-3 text-sm"
-    :class="path ? 'border-rose-100 bg-rose-50' : 'border-dashed border-line bg-surface'"
+    class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border text-sm"
+    :data-compact="compact || undefined"
+    :class="[path ? 'border-rose-100 bg-rose-50' : 'border-dashed border-line bg-surface', compact ? 'px-3 py-2.5' : 'min-h-12 px-4 py-3']"
     data-testid="selection-summary"
   >
     <p role="status" aria-live="polite" class="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -30,7 +32,7 @@ const label = computed(() => formatTemplatePath(selection.selectedThemeId))
       <span v-else class="text-ink-500">No template selected yet — preview freely, then select the one you love.</span>
     </p>
     <RouterLink
-      v-if="path"
+      v-if="path && !compact"
       :to="collectionRoute(path.family.id, path.collection.id)"
       class="ml-auto rounded font-medium text-rose-600 hover:text-rose-700"
     >

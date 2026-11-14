@@ -7,7 +7,7 @@ export const ethnicTheme: RenderableTemplate = {
   collectionId: 'nusantara-heritage',
   name: 'Woven Indigo',
   status: 'available',
-  aliases: ['woven-indigo'],
+  slug: 'woven-indigo',
   tagline: 'Textile-inspired, warm and distinctive',
   description:
     'A modern take on woven-textile patterns in indigo, terracotta and ochre. Motifs are a modular set, so regional variations can be introduced without changing the layout.',

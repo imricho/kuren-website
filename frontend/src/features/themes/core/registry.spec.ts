@@ -7,6 +7,7 @@ import {
   TEMPLATES,
   THEMES,
   availableTemplatesOf,
+  collectionCounts,
   collectionsOf,
   getCollection,
   getFamily,
@@ -15,6 +16,7 @@ import {
   isThemeId,
   templateCounts,
   templatePath,
+  templateSlug,
   templatesOf,
   validateCatalog,
 } from './registry'
@@ -207,7 +209,13 @@ describe('naming, aliases and counts', () => {
     expect(getFamily('conventional')?.id).toBe('classic')
   })
 
-  it('resolves template aliases to the canonical template', () => {
+  it('gives every template a URL slug that resolves to it (ids stay the stored key)', () => {
+    expect(templateSlug(getTheme('conventional')!)).toBe('blush-garden')
+    expect(templateSlug(getTemplate('solo-basahan')!)).toBe('solo-basahan')
+    for (const t of TEMPLATES) expect(getTemplate(templateSlug(t))?.id).toBe(t.id)
+  })
+
+  it('resolves template slugs to the canonical template', () => {
     expect(getTheme('blush-garden')?.id).toBe('conventional')
     expect(getTheme('royal-maroon')?.id).toBe('traditional')
     expect(isThemeId('woven-indigo')).toBe(true)
@@ -218,6 +226,12 @@ describe('naming, aliases and counts', () => {
     expect(getCollection('malay')?.alsoKnownAs).toBe('Melayu')
     expect(getCollection('balinese')?.alsoKnownAs).toBe('Bali')
     expect(getCollection('papuan')?.alsoKnownAs).toBe('Papua')
+  })
+
+  it('counts collections by availability per family', () => {
+    expect(collectionCounts('traditional')).toEqual({ total: 13, available: 1, comingSoon: 12, regional: 12 })
+    expect(collectionCounts('classic')).toEqual({ total: 1, available: 1, comingSoon: 0, regional: 0 })
+    expect(collectionCounts('rustic-nature')).toEqual({ total: 0, available: 0, comingSoon: 0, regional: 0 })
   })
 
   it('counts templates by availability per family and collection', () => {

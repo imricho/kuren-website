@@ -35,49 +35,47 @@ ThemeFamily         broad visual or cultural category          catalog/families.
 - **Canonical names**: one display name per entry, used on every page and in the dashboard
   ("Conventional / Classic" for the `classic` family). Old slugs are `aliases`, never shown.
 
-### Picker routes and behaviour
+### Theme studio (picker)
 
-| Step | Canonical route |
+One page, two columns on desktop (≥1024px): **sidebar on the left** to browse Family → Collection →
+Template, **live preview on the right**. Below 1024px the sidebar becomes a collapsible
+"Browse themes" selector above the preview; it collapses after a template is chosen and the preview
+scrolls into view.
+
+| Level | Canonical route (all render `ThemeStudioPage`) |
 |---|---|
-| 1 Family | `/themes` |
-| 2 Collection | `/themes/:familyId` — **always shown**, even for single-collection and planned families |
-| 3 Template | `/themes/:familyId/:collectionId` — template cards + inline preview |
-| Full-screen preview | `/themes/:familyId/:collectionId/:templateId/preview` |
+| 1 Families | `/themes` |
+| 2 Collections | `/themes/:familyId` — always shown, including single-collection and in-development families |
+| 3 Templates | `/themes/:familyId/:collectionId` |
+| Template previewed | `/themes/:familyId/:collectionId/:templateSlug` |
+| Full-screen preview | `/themes/:familyId/:collectionId/:templateSlug/preview` |
 
-`picker/guards.ts` redirects family aliases (`/themes/conventional`), collections under the wrong
-family, template aliases (`/themes/blush-garden/preview`) and the Workstream 2 URL
-(`/themes/:templateId/preview`) to the canonical route. Unknown templates show the default with a notice;
-planned templates lead to their collection.
-
-- **Preview ≠ select.** Previewing never changes the selection. Every page uses the same labels from
-  `picker/format.ts` (`Preview`, `Select template`, `Selected`, `Full-screen preview`), the same
-  `SelectTemplateButton` (stays focusable via `aria-disabled` once selected) and the same
-  "Selected: Family › Collection › Template" summary, which is a polite live region.
-- **Counts and statuses** all come from `templateCounts()` / `countLabel()` and `STATUS_LABEL`
-  ("Available", "Coming soon", "In development").
-- **Accessibility**: device size is a native radio group (arrow keys, "radio 1 of 3"); cards expose a
-  single link named after the entry with a visible focus ring; the preview frame is a labelled,
-  keyboard-scrollable region capped to the screen height; themes get a visible `:focus-visible` outline.
-- **Full-screen controls** sit in a sticky bar *above* the invitation; full-height sections use
-  `--site-vh = 100svh − bar height`, so the bar never covers invitation content.
-
-```
-WeddingContent (features/wedding/types.ts)
-        │
-        ▼
-Theme registry (core/registry.ts)  ──  id → ThemeDefinition
-        │
-        ▼
-<ThemeRenderer :content :theme-id>  ──  lazy-loads the theme, loads its fonts,
-        │                               falls back to the default on unknown ids
-        ▼
-<XxxTheme :content>  ──  the couple's website
-```
+- **URLs use slugs.** Families use their id (`classic` for "Conventional / Classic"); templates use a
+  name-based `slug` (`blush-garden`), so a URL reads consistently. The template `id` (`conventional`)
+  remains the stored key. `picker/guards.ts` redirects family aliases (`/themes/conventional`),
+  template ids/aliases, collections under the wrong family, and the Workstream 2 URL
+  `/themes/:templateId/preview` to the canonical route.
+- **Preview ≠ select.** Clicking a template in the sidebar previews it (URL + preview pane; stored as
+  session-only `previewedThemeId`). Selecting is one action — `SelectTemplateButton` in the preview
+  pane and full-screen bar — reflected as "Selected" in the sidebar and in the
+  "Selected: Family › Collection › Template" live region.
+- **What the preview shows**: the URL's template; otherwise the last previewed or selected template if it
+  belongs to the current family/collection; otherwise that scope's first template. Levels with nothing
+  to preview (planned collections/families) keep the last template and say so in a notice.
+- **Summaries agree with statuses**: `familySummary()` (e.g. "2 templates available · 12 regional
+  collections coming soon"), `countLabel()` per collection, `STATUS_LABEL` everywhere.
+- **Accessibility**: the sidebar is a labelled navigation with step indicator, breadcrumbs and back
+  links; device size is a native radio group; items expose one named link with a focus ring; the preview
+  frame is a labelled, keyboard-scrollable region; themes get a visible focus outline.
+- **No obscured content**: preview controls sit above the frame, never over it. The frame is a size
+  container, so full-height invitation sections use `100cqh` (the frame height). The full-screen bar is a
+  sticky bar above the invitation with `--site-vh = 100svh − bar height`.
 
 ## Shared content contract
 
 Every renderable template receives exactly `ThemeProps` — `{ content: WeddingContent, config? }` —
-from `ThemeRenderer`, and all previews use the same `sampleWedding`. Templates differ only in
+from `ThemeRenderer`, and all previews use the same `sampleWedding` (RSVP is shown as a disabled
+sample form; no RSVP processing exists). Templates differ only in
 presentation. Shared behaviour for optional, missing and disabled content:
 
 | Content | Behaviour (all templates) |

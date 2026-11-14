@@ -7,7 +7,7 @@ export const artisticTheme: RenderableTemplate = {
   collectionId: 'contemporary',
   name: 'Gallery Bold',
   status: 'available',
-  aliases: ['gallery-bold'],
+  slug: 'gallery-bold',
   tagline: 'Bold, editorial and expressive',
   description:
     'A contemporary, gallery-like design with oversized type, asymmetric compositions, collage-style photos and a single vivid accent — expressive, but always readable.',

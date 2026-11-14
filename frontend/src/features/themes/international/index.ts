@@ -7,7 +7,7 @@ export const internationalTheme: RenderableTemplate = {
   collectionId: 'editorial',
   name: 'Editorial Ivory',
   status: 'available',
-  aliases: ['editorial-ivory'],
+  slug: 'editorial-ivory',
   tagline: 'Modern, editorial and quietly luxurious',
   description:
     'A minimalist, magazine-inspired design with refined serif typography, generous white space and full-bleed photography in a soft neutral palette.',

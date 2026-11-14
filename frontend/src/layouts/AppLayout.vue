@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import BrandMark from '@/components/BrandMark.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const signingOut = ref(false)
 
 const navItems = [
@@ -14,6 +15,10 @@ const navItems = [
   { name: 'themes', label: 'Themes' },
   { name: 'account', label: 'Account' },
 ] as const
+
+// "Themes" stays highlighted on every theme studio level (/themes/...).
+const isActive = (name: string) =>
+  name === 'themes' ? route.path === '/themes' || route.path.startsWith('/themes/') : route.name === name
 
 const initials = computed(() =>
   (auth.user?.full_name ?? '')
@@ -49,8 +54,9 @@ async function signOut() {
             v-for="item in navItems"
             :key="item.name"
             :to="{ name: item.name }"
-            class="rounded-md px-3 py-2 text-sm font-medium text-ink-500 transition-colors hover:text-ink-900"
-            active-class="!text-ink-900 bg-rose-50"
+            class="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-ink-900"
+            :class="isActive(item.name) ? 'bg-rose-50 text-ink-900' : 'text-ink-500'"
+            :aria-current="isActive(item.name) ? 'page' : undefined"
           >
             {{ item.label }}
           </RouterLink>
@@ -76,7 +82,14 @@ async function signOut() {
       </div>
     </header>
 
-    <main class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <!-- The theme studio uses the full width and (on desktop) the full remaining height. -->
+    <main
+      :class="
+        route.meta.layout === 'studio'
+          ? 'lg:h-[calc(100dvh-4rem)] lg:overflow-hidden'
+          : 'mx-auto max-w-6xl px-4 py-10 sm:px-6'
+      "
+    >
       <RouterView />
     </main>
   </div>

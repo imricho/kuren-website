@@ -7,7 +7,7 @@ export const conventionalTheme: RenderableTemplate = {
   collectionId: 'romantic-floral',
   name: 'Blush Garden',
   status: 'available',
-  aliases: ['blush-garden'],
+  slug: 'blush-garden',
   tagline: 'Romantic florals in soft pastels',
   description:
     'The classic invitation feel: blush and sage pastels, hand-drawn-style florals, arched photo frames and an elegant script for your names.',

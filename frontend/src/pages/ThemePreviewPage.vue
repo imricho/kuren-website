@@ -16,11 +16,11 @@ import SelectTemplateButton from '@/features/themes/picker/SelectTemplateButton.
 import { sampleWedding } from '@/features/wedding/sampleWedding'
 
 // Route params are canonical here (see picker/guards.ts).
-const props = defineProps<{ familyId?: string; collectionId?: string; templateId?: string }>()
+const props = defineProps<{ familyId?: string; collectionId?: string; templateSlug?: string }>()
 const route = useRoute()
 const router = useRouter()
 
-const path = computed(() => templatePath(props.templateId))
+const path = computed(() => templatePath(props.templateSlug))
 const template = computed(() => path.value?.template as RenderableTemplate | undefined)
 const siblings = computed(() => (path.value ? availableTemplatesOf(path.value.collection.id) : []))
 const notFound = computed(() => (typeof route.query.notFound === 'string' ? route.query.notFound : null))

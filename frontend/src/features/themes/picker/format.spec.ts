@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { ACTION, STATUS_LABEL, countLabel, formatTemplatePath } from './format'
+import { ACTION, STATUS_LABEL, countLabel, familySummary, formatTemplatePath } from './format'
 
 describe('picker wording', () => {
   it('formats counts the same way everywhere', () => {
@@ -10,6 +10,14 @@ describe('picker wording', () => {
     expect(countLabel({ collectionId: 'batak' })).toBe('1 template coming soon')
     expect(countLabel({ collectionId: 'dayak' })).toBe('In development')
     expect(countLabel({ familyId: 'traditional' })).toBe('2 templates available · 3 coming soon')
+  })
+
+  it('summarises families in terms that agree with collection statuses', () => {
+    expect(familySummary('traditional')).toBe('2 templates available · 12 regional collections coming soon')
+    expect(familySummary('classic')).toBe('1 template available')
+    expect(familySummary('international')).toBe('1 template available')
+    expect(familySummary('modern-minimalist')).toBe('In development — no collections yet')
+    expect(familySummary('rustic-nature')).toBe('In development — no collections yet')
   })
 
   it('formats the selected path as Family › Collection › Template', () => {

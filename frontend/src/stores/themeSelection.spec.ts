@@ -33,4 +33,19 @@ describe('theme selection store', () => {
     setActivePinia(createPinia())
     expect(useThemeSelectionStore().selectedThemeId).toBeNull()
   })
+
+  it('previewing a template never changes the selection', () => {
+    const store = useThemeSelectionStore()
+    store.select('international')
+    store.preview('blush-garden')
+    expect(store.previewedThemeId).toBe('conventional')
+    expect(store.selectedThemeId).toBe('international')
+    expect(localStorage.getItem('kuren.selectedThemeId')).toBe('international')
+  })
+
+  it('stores the canonical id when selecting by slug', () => {
+    const store = useThemeSelectionStore()
+    store.select('gallery-bold')
+    expect(store.selectedThemeId).toBe('artistic')
+  })
 })

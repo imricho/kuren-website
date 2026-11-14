@@ -1,9 +1,9 @@
 /**
  * Route guards that keep picker URLs canonical:
- *   - family aliases (e.g. /themes/conventional) → canonical family id
+ *   - family aliases (e.g. /themes/conventional) → canonical family id (/themes/classic)
  *   - a collection under the wrong family → its owning family
- *   - template aliases and the legacy /themes/:id/preview URL → canonical
- *     /themes/:familyId/:collectionId/:templateId/preview
+ *   - template ids, slugs and aliases, and the legacy /themes/:id/preview URL →
+ *     canonical /themes/:familyId/:collectionId/:templateSlug[/preview]
  *
  * The registry is imported lazily so the catalog stays out of the initial bundle.
  */
@@ -33,39 +33,45 @@ export async function canonicalCollection(to: RouteLocationNormalized): Promise<
   }
 }
 
-/** Works for both the canonical preview route and the legacy /themes/:themeId/preview route. */
-export async function canonicalPreview(to: RouteLocationNormalized): Promise<RouteLocationRaw | void> {
-  const { DEFAULT_THEME_ID, getTemplate } = await registry()
-  const requested = String(to.params.templateId ?? to.params.themeId)
+/**
+ * For the studio template route, the full-screen preview route and the legacy
+ * /themes/:themeId/preview route.
+ */
+export async function canonicalTemplate(to: RouteLocationNormalized): Promise<RouteLocationRaw | void> {
+  const { DEFAULT_THEME_ID, getTemplate, templateSlug } = await registry()
+  const requested = String(to.params.templateSlug ?? to.params.themeId)
   const template = getTemplate(requested)
+  // The legacy URL always means full-screen preview.
+  const target = to.name === 'theme-template' ? 'theme-template' : 'theme-preview'
 
   if (!template) {
-    // Unknown id: show the default template and tell the user (ThemePreviewPage reads `notFound`).
+    // Unknown template: show the default and tell the user (the page reads `notFound`).
     const fallback = getTemplate(DEFAULT_THEME_ID)!
     return {
-      name: 'theme-preview',
-      params: { familyId: fallback.familyId, collectionId: fallback.collectionId, templateId: fallback.id },
+      name: target,
+      params: { familyId: fallback.familyId, collectionId: fallback.collectionId, templateSlug: templateSlug(fallback) },
       query: { notFound: requested },
       replace: true,
     }
   }
   if (!isRenderable(template)) {
-    // Planned templates can't be previewed yet; show them in their collection instead.
+    // Planned templates can't be previewed yet; show their collection instead.
     return {
       name: 'theme-collection',
       params: { familyId: template.familyId, collectionId: template.collectionId },
       replace: true,
     }
   }
+  const slug = templateSlug(template)
   const isCanonical =
-    to.name === 'theme-preview' &&
-    to.params.templateId === template.id &&
+    to.name === target &&
+    to.params.templateSlug === slug &&
     to.params.familyId === template.familyId &&
     to.params.collectionId === template.collectionId
   if (!isCanonical) {
     return {
-      name: 'theme-preview',
-      params: { familyId: template.familyId, collectionId: template.collectionId, templateId: template.id },
+      name: target,
+      params: { familyId: template.familyId, collectionId: template.collectionId, templateSlug: slug },
       query: to.query,
       replace: true,
     }

@@ -61,7 +61,15 @@ function indexWithAliases<T extends { id: string; aliases?: string[] }>(items: r
 
 const familyById = indexWithAliases(FAMILIES)
 const collectionById = new Map(COLLECTIONS.map((c) => [c.id, c]))
-const templateById = indexWithAliases(TEMPLATES)
+// Templates resolve by id, URL slug or alias.
+const templateById = new Map<string, ThemeTemplate>()
+for (const t of TEMPLATES)
+  for (const key of [t.id, templateSlug(t), ...(t.aliases ?? [])]) if (!templateById.has(key)) templateById.set(key, t)
+
+/** The public URL slug of a template. */
+export function templateSlug(t: Pick<ThemeTemplate, 'id' | 'slug'>): string {
+  return t.slug ?? t.id
+}
 
 /** A template that can be rendered (available or hidden), by id or alias. Unknown/planned → undefined. */
 export function getTheme(id: string | null | undefined): RenderableTemplate | undefined {
@@ -103,6 +111,17 @@ export function availableTemplatesOf(collectionId: string): RenderableTemplate[]
 /** Number of selectable templates in a family. */
 export function availableCountInFamily(familyId: string): number {
   return THEMES.filter((t) => t.familyId === familyId).length
+}
+
+/** Collection counts by availability within a family. */
+export function collectionCounts(familyId: string) {
+  const listed = collectionsOf(familyId)
+  return {
+    total: listed.length,
+    available: listed.filter((c) => c.status === 'available').length,
+    comingSoon: listed.filter((c) => c.status === 'coming_soon').length,
+    regional: listed.filter((c) => c.reference.kind === 'cultural').length,
+  }
 }
 
 /** Template counts by availability, for a family or a collection. Single source for picker labels. */
@@ -147,7 +166,7 @@ export function validateCatalog(
   // Ids and aliases share one namespace per level, so an alias can never shadow another entry.
   unique('family', families.flatMap((f) => [f.id, ...(f.aliases ?? [])]))
   unique('collection', collections.map((c) => c.id))
-  unique('template', templates.flatMap((t) => [t.id, ...(t.aliases ?? [])]))
+  unique('template', templates.flatMap((t) => [...new Set([t.id, t.slug ?? t.id]), ...(t.aliases ?? [])]))
 
   const fams = new Map(families.map((f) => [f.id, f]))
   const cols = new Map(collections.map((c) => [c.id, c]))

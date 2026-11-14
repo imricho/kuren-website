@@ -7,7 +7,7 @@ export const traditionalTheme: RenderableTemplate = {
   collectionId: 'nusantara-heritage',
   name: 'Royal Maroon',
   status: 'available',
-  aliases: ['royal-maroon'],
+  slug: 'royal-maroon',
   tagline: 'Formal, ceremonial and timeless',
   description:
     'A classic, symmetrical design with deep maroon and antique-gold accents, framed panels and original ornamental borders. Kept culturally neutral so regional variations can be added later.',

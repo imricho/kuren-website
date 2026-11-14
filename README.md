@@ -56,11 +56,11 @@ site builder: fixed structure, predefined sections, theme-based styling.
 │   │   │   └── themes/            # theme system (see features/themes/README.md)
 │   │   │       ├── catalog/       # families, collections, planned templates (configuration)
 │   │   │       ├── core/          # registry, ThemeRenderer, shared components & composables
-│   │   │       ├── picker/        # family/collection/template picker components
+│   │   │       ├── picker/        # studio: sidebar, preview pane, guards, routes, shared labels
 │   │   │       ├── preview/       # DevicePreview (phone/tablet/desktop frames)
 │   │   │       └── international/ traditional/ ethnic/ conventional/ artistic/
 │   │   ├── layouts/               # AuthLayout (login/register), AppLayout (signed-in shell)
-│   │   ├── pages/                 # Login, Register, Dashboard, ThemeFamilies/Family/Collection, ThemePreview, Account, NotFound
+│   │   ├── pages/                 # Login, Register, Dashboard, ThemeStudio, ThemePreview, Account, NotFound
 │   │   ├── router/                # routes + auth guards
 │   │   ├── stores/                # Pinia: auth, themeSelection
 │   │   └── styles/main.css        # Tailwind + design tokens (@theme)
@@ -116,11 +116,13 @@ site builder: fixed structure, predefined sections, theme-based styling.
   Nusantara Heritage), Blush Garden (Conventional / Classic), Gallery Bold (Artistic). Ids from Workstream 2
   (`international`, `traditional`, `ethnic`, `conventional`, `artistic`) are unchanged. All
   decoration is original inline SVG/CSS; sample images are original placeholder illustrations.
-- **Picker** — `/themes` (families) → `/themes/:family` (collections, always shown) →
-  `/themes/:family/:collection` (templates, inline preview with device sizes) →
-  `/themes/:family/:collection/:template/preview` (full screen). Aliases and the old
-  `/themes/:id/preview` URL redirect to the canonical route. Previewing never changes the selection. The selection is stored in the browser only for now
-  (`stores/themeSelection.ts`); the CMS workstream will persist it on the wedding.
+- **Theme studio** — one page with a **sidebar on the left** (Family → Collection → Template, with
+  steps, breadcrumbs and back links) and a **live preview on the right** (device sizes, full-screen
+  link, *Select template*). Below 1024px the sidebar becomes a collapsible selector above the preview.
+  Routes: `/themes`, `/themes/:family`, `/themes/:family/:collection`,
+  `/themes/:family/:collection/:template-slug` (previewed) and `…/preview` (full screen); aliases and
+  the old `/themes/:id/preview` URL redirect. Previewing never changes the selection, which is stored
+  in the browser only for now (`stores/themeSelection.ts`); the CMS workstream will persist it.
 
 **How to add a family, collection or template:** see [`frontend/src/features/themes/README.md`](frontend/src/features/themes/README.md).
 

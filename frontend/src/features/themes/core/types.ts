@@ -69,8 +69,13 @@ export interface ThemeCollection {
 }
 
 interface TemplateBase {
-  /** Stable identifier stored with a wedding. Never rename once released. */
+  /** Stable identifier stored with a wedding. Never rename once released. Not shown in URLs. */
   id: string
+  /**
+   * Public URL slug, derived from the display name (e.g. "blush-garden"). Picker URLs use the
+   * slug so a template reads consistently with its family and collection. Defaults to `id`.
+   */
+  slug?: string
   familyId: string
   collectionId: string
   name: string

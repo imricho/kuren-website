@@ -5,9 +5,12 @@ choosing a theme, filling in predefined content, uploading photos, and
 publishing a shareable link. It is intentionally **not** a general-purpose
 site builder: fixed structure, predefined sections, theme-based styling.
 
-> **Status:** Workstream 1 — Platform Foundation. This provides the app
-> skeleton, authentication, database and Docker environment. Themes, content
-> editing, publishing and RSVP come in later workstreams.
+> **Status:** Workstreams 1–2 complete.
+> - **WS1 Platform Foundation:** app skeleton, authentication, database, Docker.
+> - **WS2 Theme & Template System:** shared wedding content model, theme registry
+>   and renderer, five themes, theme picker with live device previews.
+>
+> Content editing (CMS), photo uploads, publishing and RSVP processing come next.
 
 ---
 
@@ -15,7 +18,7 @@ site builder: fixed structure, predefined sections, theme-based styling.
 
 | Layer | Technology |
 |---|---|
-| Frontend | Vue 3, Vite 6, TypeScript, Vue Router 4, Pinia, Tailwind CSS v4, Vitest |
+| Frontend | Vue 3, Vite 6, TypeScript, Vue Router 4, Pinia, Tailwind CSS v4, Vitest + Vue Test Utils, Playwright (layout tests) |
 | Backend | Python 3.12, FastAPI, Pydantic v2 / pydantic-settings, SQLAlchemy 2.0, Alembic, Argon2 (argon2-cffi) |
 | Database | PostgreSQL 17 |
 | Dev environment | Docker, Docker Compose |
@@ -45,11 +48,19 @@ site builder: fixed structure, predefined sections, theme-based styling.
 │   │   ├── api/                   # fetch wrapper + typed API calls
 │   │   ├── components/            # BrandMark, ui/ (BaseButton, TextField, FormAlert)
 │   │   ├── composables/           # useForm (submit + API error mapping)
+│   │   ├── features/
+│   │   │   ├── wedding/           # SHARED content model: types, validation, formatting, sample data
+│   │   │   └── themes/            # theme system (see features/themes/README.md)
+│   │   │       ├── core/          # registry, ThemeRenderer, shared components & composables
+│   │   │       ├── preview/       # DevicePreview (phone/tablet/desktop frames)
+│   │   │       └── international/ traditional/ ethnic/ conventional/ artistic/
 │   │   ├── layouts/               # AuthLayout (login/register), AppLayout (signed-in shell)
-│   │   ├── pages/                 # Login, Register, Dashboard, Account, NotFound
+│   │   ├── pages/                 # Login, Register, Dashboard, Themes, ThemePreview, Account, NotFound
 │   │   ├── router/                # routes + auth guards
-│   │   ├── stores/                # Pinia auth store
+│   │   ├── stores/                # Pinia: auth, themeSelection
 │   │   └── styles/main.css        # Tailwind + design tokens (@theme)
+│   ├── public/sample-wedding/     # original placeholder illustrations for sample content
+│   ├── e2e/                       # Playwright layout tests
 │   ├── Dockerfile
 │   └── vite.config.ts             # dev proxy /api → backend
 ├── infrastructure/nginx/          # future production reverse-proxy sketch (unused locally)
@@ -76,6 +87,29 @@ site builder: fixed structure, predefined sections, theme-based styling.
   `{"error": {"code", "message", "details?"}}`. Unexpected exceptions are
   logged and returned as a generic 500 with no internals; validation errors
   never echo submitted values.
+
+## Theme system (Workstream 2)
+
+**One shared wedding content model, many independent theme presentations.**
+
+- **Content model** — `frontend/src/features/wedding/types.ts` defines `WeddingContent`
+  (opening, couple, story, events[], gallery, RSVP, closing). Every theme consumes exactly
+  this; themes never define their own schema. `validateWeddingContent()` checks it at runtime.
+- **Registry** — `features/themes/core/registry.ts` lists themes (id, name, category,
+  description, thumbnail, fonts, lazy component). Each theme is its own bundle chunk.
+- **Renderer** — `<ThemeRenderer :content :theme-id>` picks the theme, loads its web fonts
+  on demand, and falls back to the default theme (emitting `fallback`) for unknown ids.
+- **Responsive** — themes use CSS **container queries**, so the dashboard's phone/tablet
+  preview frames show the real mobile layout, identical to the published page.
+- **Themes** — International (editorial minimal), Traditional (formal, maroon & gold,
+  culturally neutral ornaments), Ethnic (woven-textile motifs as a swappable regional set),
+  Conventional (romantic florals), Artistic (asymmetric, oversized type). All decoration is
+  original inline SVG/CSS; sample images are original placeholder illustrations.
+- **Picker** — `/themes` shows all themes, a live preview with device toggles and full-screen
+  preview (`/themes/:id/preview`). The selection is stored in the browser only for now
+  (`stores/themeSelection.ts`); the CMS workstream will persist it on the wedding.
+
+**How to add a theme:** see [`frontend/src/features/themes/README.md`](frontend/src/features/themes/README.md).
 
 ## Prerequisites
 
@@ -147,10 +181,21 @@ After autogenerating, always review the new file in `backend/alembic/versions/`.
 # Backend (uses an auto-created "<POSTGRES_DB>_test" database; dev data is untouched)
 docker compose exec backend pytest
 
-# Frontend
+# Frontend unit/component tests
 docker compose exec frontend npm test
 docker compose exec frontend npm run typecheck
 ```
+
+Browser layout tests (Playwright) run on the host against the running stack. They render
+every theme at 375 / 768 / 1280 px and fail on horizontal overflow, clipped text, broken
+images or console errors; full-page screenshots land in `frontend/test-results/screens/`.
+
+```bash
+cd frontend && npx playwright install chromium   # once
+cd frontend && npm run test:e2e
+```
+
+Each run registers a throwaway `e2e-…@example.com` account in the dev database.
 
 ## API endpoints
 
@@ -164,6 +209,8 @@ All endpoints are under `/api/v1`.
 | POST | `/auth/logout` | cookie | Revoke the current session and clear the cookie (idempotent) | 204 |
 | GET | `/users/me` | cookie | Current user's profile | 200, 401 |
 | PATCH | `/users/me` | cookie | Update profile. Body: `full_name` | 200, 401, 422 |
+
+Workstream 2 added no API endpoints; themes and sample content are frontend-only.
 
 Example with curl:
 
@@ -184,5 +231,7 @@ curl -b jar.txt http://localhost:8000/api/v1/users/me
 | Health returns 503 | DB not reachable: `docker compose ps` and `docker compose logs db`. |
 | Frontend shows "Unable to reach the server" | Check `docker compose logs backend`; the Vite proxy forwards to `http://backend:8000`. |
 | Frontend changes don't hot-reload | Restart the service: `docker compose restart frontend`. On some file systems polling is needed — set `CHOKIDAR_USEPOLLING=true` for the frontend service. |
-| New npm dependency not found in container | `docker compose up --build frontend` and, if needed, `docker compose down -v` to refresh the `node_modules` volume. |
+| New npm dependency not found in container | Run `docker compose exec frontend npm ci` (the `node_modules` volume persists across rebuilds). |
+| `localStorage.clear is not a function` in tests on Node 25+ | Handled by `src/test/setup.ts`; make sure you run tests via `npm test`. |
+| Theme fonts look like Georgia/system fonts | Google Fonts are blocked or offline; themes fall back to bundled font stacks by design. |
 | Login works via curl but not in the browser | Use http://localhost:5173 (not 127.0.0.1) so the request `Origin` matches `CORS_ORIGINS`. |

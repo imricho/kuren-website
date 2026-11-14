@@ -11,6 +11,7 @@ const signingOut = ref(false)
 
 const navItems = [
   { name: 'dashboard', label: 'Dashboard' },
+  { name: 'themes', label: 'Themes' },
   { name: 'account', label: 'Account' },
 ] as const
 

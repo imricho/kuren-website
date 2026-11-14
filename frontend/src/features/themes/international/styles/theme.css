@@ -1,0 +1,447 @@
+/* International theme — scoped under .t-intl. Mobile first; breakpoints are
+   container queries on the .wedding-site container (see core/theme-base.css). */
+.t-intl {
+  --bg: #f7f4ef;
+  --bg-alt: #efeae2;
+  --ink: #1e1c1a;
+  --muted: #6f6860;
+  --line: #d9d2c7;
+  --accent: #8a7a66;
+  --serif: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
+  --sans: 'Jost', 'Futura', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+  --placeholder-bg: #e4ddd2;
+
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+/* Zero-specificity resets so theme classes always win. */
+:where(.t-intl) :where(h1, h2, h3) {
+  color: inherit;
+  font-family: var(--serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin: 0;
+}
+:where(.t-intl) :where(p) {
+  margin: 0;
+}
+
+/* --- Typography helpers ---------------------------------------------------- */
+.intl-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.intl-display {
+  font-size: clamp(2.1rem, 7.5cqi, 3.8rem);
+}
+.intl-lead {
+  font-family: var(--serif);
+  font-size: clamp(1.15rem, 3.6cqi, 1.45rem);
+  line-height: 1.6;
+  color: var(--ink);
+}
+.intl-body {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+.intl-link {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ink);
+  align-self: flex-start;
+}
+.intl-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* --- Layout ----------------------------------------------------------------- */
+.intl-section {
+  padding: 5.5rem 1.5rem;
+}
+.intl-narrow {
+  max-width: 38rem;
+  margin: 0 auto;
+  text-align: center;
+  display: grid;
+  gap: 1.5rem;
+  justify-items: center;
+}
+.intl-wide {
+  max-width: 70rem;
+  margin: 0 auto;
+}
+.intl-heading {
+  display: grid;
+  gap: 1rem;
+  max-width: 36rem;
+  margin-bottom: 3rem;
+}
+
+/* --- Hero ------------------------------------------------------------------- */
+.intl-hero {
+  position: relative;
+  min-height: var(--site-vh);
+  display: grid;
+  align-items: end;
+  padding: 2rem 1.5rem 3.5rem;
+  text-align: center;
+}
+.intl-hero:not(.intl-hero--image) {
+  align-items: center;
+}
+.intl-hero__media {
+  position: absolute;
+  inset: 0;
+}
+.intl-hero__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgb(20 18 16 / 0.62), rgb(20 18 16 / 0.05) 55%);
+}
+.intl-hero--image .intl-hero__text {
+  color: #fbf8f3;
+}
+.intl-hero--image .intl-eyebrow {
+  color: rgb(251 248 243 / 0.85);
+}
+.intl-hero__text {
+  position: relative;
+  display: grid;
+  gap: 1.25rem;
+}
+.intl-hero__names {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: clamp(3.2rem, 15cqi, 8.5rem);
+  line-height: 0.95;
+}
+.intl-amp {
+  font-style: italic;
+  font-size: 0.5em;
+  margin: 0.15em 0;
+}
+.intl-hero__date {
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+/* --- Intro / countdown -------------------------------------------------------- */
+.intl-intro .countdown {
+  display: flex;
+  margin-top: 1rem;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.intl-intro .countdown__unit {
+  display: grid;
+  padding: 1rem clamp(0.75rem, 4cqi, 2rem);
+}
+.intl-intro .countdown__unit + .countdown__unit {
+  border-left: 1px solid var(--line);
+}
+.intl-intro .countdown__value {
+  font-family: var(--serif);
+  font-size: clamp(1.6rem, 6cqi, 2.4rem);
+  line-height: 1.1;
+}
+.intl-intro .countdown__label {
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* --- Couple ------------------------------------------------------------------ */
+.intl-couple {
+  background: var(--bg-alt);
+}
+.intl-couple__grid {
+  max-width: 64rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 4rem;
+}
+.intl-person {
+  margin: 0;
+  display: grid;
+  gap: 1.5rem;
+}
+.intl-person figcaption {
+  display: grid;
+  gap: 0.75rem;
+}
+.intl-person__photo {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+.intl-person__name {
+  font-size: clamp(2rem, 6cqi, 2.8rem);
+}
+
+/* --- Story -------------------------------------------------------------------- */
+.intl-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.intl-chapter {
+  display: grid;
+  gap: 1rem;
+  padding: 2.5rem 0;
+  border-top: 1px solid var(--line);
+}
+.intl-chapter__date {
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.intl-chapter__body {
+  display: grid;
+  gap: 0.75rem;
+}
+.intl-chapter__title {
+  font-size: clamp(1.6rem, 5cqi, 2.2rem);
+}
+.intl-chapter__photo {
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+}
+
+/* --- Events ------------------------------------------------------------------- */
+.intl-events {
+  background: var(--ink);
+  color: #f3efe8;
+}
+.intl-events .intl-eyebrow,
+.intl-events .intl-body {
+  color: #b9b0a5;
+}
+.intl-events .intl-link {
+  color: #f3efe8;
+  border-color: #f3efe8;
+}
+.intl-itinerary {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.intl-event {
+  display: grid;
+  gap: 1.25rem;
+  padding: 2.5rem 0;
+  border-top: 1px solid rgb(243 239 232 / 0.2);
+}
+.intl-event__type {
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #c9b9a3;
+}
+.intl-event__main,
+.intl-event__where {
+  display: grid;
+  gap: 0.5rem;
+}
+.intl-event__title {
+  font-size: clamp(2rem, 6cqi, 2.8rem);
+}
+.intl-event__when {
+  font-size: 0.95rem;
+}
+.intl-event__venue {
+  font-family: var(--serif);
+  font-size: 1.35rem;
+}
+
+/* --- Gallery ------------------------------------------------------------------- */
+.intl-gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.intl-gallery__item {
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.intl-gallery__item:first-child {
+  grid-column: span 2;
+}
+.intl-gallery__frame {
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+.intl-gallery__item:first-child .intl-gallery__frame {
+  aspect-ratio: 3 / 2;
+}
+.intl-caption {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* --- RSVP ----------------------------------------------------------------------- */
+.intl-rsvp {
+  background: var(--bg-alt);
+}
+.t-intl .rsvp {
+  width: 100%;
+  display: grid;
+  gap: 1.5rem;
+}
+.t-intl .rsvp-status {
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.t-intl .rsvp-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.5rem;
+  text-align: left;
+}
+.t-intl .rsvp-field {
+  display: grid;
+  gap: 0.5rem;
+}
+.t-intl .rsvp-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.t-intl .rsvp-input {
+  font: inherit;
+  padding: 0.75rem 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+}
+.t-intl .rsvp-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+.t-intl .rsvp-choice {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  min-height: 44px;
+}
+.t-intl .rsvp-button {
+  min-height: 48px;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--ink);
+  border: 0;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+/* --- Closing --------------------------------------------------------------------- */
+.intl-closing {
+  text-align: center;
+}
+.intl-closing__media {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+.intl-closing__text {
+  padding: 5rem 1.5rem 6rem;
+}
+.intl-closing__thanks {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--accent);
+}
+.intl-closing__names {
+  font-family: var(--serif);
+  font-size: clamp(2.4rem, 9cqi, 4.5rem);
+  line-height: 1;
+}
+
+/* --- Tablet & up -------------------------------------------------------------------- */
+@container site (min-width: 48rem) {
+  .intl-section {
+    padding: 8rem 3rem;
+  }
+  .intl-hero {
+    text-align: left;
+    padding: 3rem 4rem 5rem;
+  }
+  .intl-hero__names {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.25em;
+    font-size: clamp(3.2rem, 9.5cqi, 8.5rem);
+  }
+  .intl-hero__text {
+    justify-items: start;
+  }
+  .intl-hero:not(.intl-hero--image) .intl-hero__text {
+    justify-items: center;
+    text-align: center;
+  }
+  .intl-couple__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+  }
+  .intl-couple__grid .intl-person:nth-child(2) {
+    margin-top: 6rem;
+  }
+  .intl-chapter {
+    grid-template-columns: 9rem 1fr 1.1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  .intl-chapter:not(:has(.intl-chapter__photo)) {
+    grid-template-columns: 9rem 1fr;
+  }
+  .intl-event {
+    grid-template-columns: 9rem 1.3fr 1fr;
+    gap: 2.5rem;
+  }
+  .intl-gallery__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+  .intl-gallery__item:first-child {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+  .intl-gallery__item:first-child .intl-gallery__frame {
+    aspect-ratio: auto;
+    height: 100%;
+  }
+  .intl-closing__media {
+    aspect-ratio: 21 / 9;
+  }
+}

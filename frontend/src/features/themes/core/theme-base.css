@@ -1,0 +1,63 @@
+/*
+ * Base styles shared by every theme. Theme-specific styling lives in each
+ * theme folder and is scoped under its own root class.
+ */
+.wedding-site {
+  /* Themes respond to THIS box's width (container queries), so a framed
+     phone preview inside the dashboard lays out exactly like a real phone. */
+  container: site / inline-size;
+  position: relative;
+  overflow-x: clip;
+  min-height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+.wedding-site img {
+  max-width: 100%;
+}
+
+.wedding-site__loading {
+  min-height: var(--site-vh, 100svh);
+}
+
+.wedding-site__error {
+  padding: 4rem 1.5rem;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+  color: #6b5e57;
+}
+
+/* Shared scroll-in animation (see core/directives/reveal.ts). */
+.wedding-site .reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+}
+.wedding-site .reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wedding-site .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Shared image behaviour (core/components/ThemeImage.vue). */
+.theme-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.theme-image--placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: var(--placeholder-bg, rgb(0 0 0 / 0.06));
+}

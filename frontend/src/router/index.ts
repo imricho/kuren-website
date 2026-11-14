@@ -42,12 +42,26 @@ const router = createRouter({
           meta: { title: 'Dashboard' },
         },
         {
+          path: 'themes',
+          name: 'themes',
+          component: () => import('@/pages/ThemesPage.vue'),
+          meta: { title: 'Themes' },
+        },
+        {
           path: 'account',
           name: 'account',
           component: () => import('@/pages/AccountPage.vue'),
           meta: { title: 'Account' },
         },
       ],
+    },
+    {
+      // Full-screen theme preview, outside the dashboard chrome.
+      path: '/themes/:themeId/preview',
+      name: 'theme-preview',
+      component: () => import('@/pages/ThemePreviewPage.vue'),
+      props: true,
+      meta: { requiresAuth: true, title: 'Theme preview' },
     },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/pages/NotFoundPage.vue') },
   ],

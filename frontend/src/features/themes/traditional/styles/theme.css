@@ -1,0 +1,545 @@
+/* Traditional theme — scoped under .t-trad. Mobile first, container queries. */
+.t-trad {
+  --parchment: #f6efe2;
+  --parchment-deep: #ede2cd;
+  --maroon: #5a1e1b;
+  --maroon-deep: #3e1412;
+  --gold: #b08d57;
+  --gold-light: #e2c891;
+  --ink: #2e211c;
+  --muted: #6e5a4e;
+  --display: 'Cinzel', 'Trajan Pro', 'Times New Roman', serif;
+  --serif: 'EB Garamond', Garamond, 'Times New Roman', serif;
+  --placeholder-bg: #e6d8bd;
+  /* Original geometric band: lozenges between rules (inline SVG, no external asset). */
+  --band: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'%3E%3Cg fill='none' stroke='%23b08d57' stroke-width='1.2'%3E%3Cpath d='M0 1.5H40M0 20.5H40'/%3E%3Cpath d='M20 4 L29 11 L20 18 L11 11Z'/%3E%3C/g%3E%3Cpath d='M20 8 L24 11 L20 14 L16 11Z' fill='%23b08d57'/%3E%3Ccircle cx='2' cy='11' r='1.6' fill='%23b08d57'/%3E%3Ccircle cx='38' cy='11' r='1.6' fill='%23b08d57'/%3E%3C/svg%3E");
+
+  background: var(--parchment);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.06rem;
+  line-height: 1.7;
+}
+/* Zero-specificity resets so theme classes always win. */
+:where(.t-trad) :where(h1, h2, h3) {
+  color: inherit;
+  margin: 0;
+  font-weight: 400;
+  line-height: 1.2;
+}
+:where(.t-trad) :where(p) {
+  margin: 0;
+}
+
+/* --- Shared pieces ----------------------------------------------------------- */
+.trad-caps {
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+.trad-gold {
+  color: var(--gold-light);
+}
+.trad-maroon {
+  color: var(--maroon);
+}
+.trad-title {
+  font-family: var(--display);
+  font-size: clamp(1.7rem, 6.5cqi, 2.8rem);
+  letter-spacing: 0.06em;
+  color: var(--maroon);
+}
+.trad-title--light {
+  color: var(--gold-light);
+}
+.trad-lead {
+  font-size: clamp(1.15rem, 3.8cqi, 1.4rem);
+  font-style: italic;
+  line-height: 1.6;
+}
+.trad-body {
+  color: var(--muted);
+}
+.trad-divider {
+  display: block;
+  width: min(220px, 70%);
+  height: auto;
+  margin: 0 auto;
+  color: var(--gold);
+}
+.trad-section {
+  padding: 5rem 1.5rem;
+}
+.trad-col {
+  max-width: 40rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 1.25rem;
+  justify-items: center;
+  text-align: center;
+}
+.trad-band {
+  height: 22px;
+  background: var(--maroon-deep) var(--band) repeat-x center;
+}
+
+/* --- Frames & corners ----------------------------------------------------------- */
+.trad-frame,
+.trad-panel {
+  position: relative;
+  border: 1.5px solid var(--gold);
+  outline: 1px solid var(--gold);
+  outline-offset: -8px;
+}
+.trad-corner {
+  position: absolute;
+  width: clamp(56px, 16cqi, 104px);
+  height: auto;
+  color: var(--gold);
+  pointer-events: none;
+}
+.trad-corner--tl {
+  top: 10px;
+  left: 10px;
+}
+.trad-corner--tr {
+  top: 10px;
+  right: 10px;
+  transform: scaleX(-1);
+}
+.trad-corner--bl {
+  bottom: 10px;
+  left: 10px;
+  transform: scaleY(-1);
+}
+.trad-corner--br {
+  bottom: 10px;
+  right: 10px;
+  transform: scale(-1, -1);
+}
+
+/* --- Hero ------------------------------------------------------------------------ */
+.trad-hero {
+  min-height: var(--site-vh);
+  display: grid;
+  padding: 1rem;
+  background:
+    radial-gradient(ellipse at 50% 35%, rgb(176 141 87 / 0.18), transparent 60%),
+    var(--maroon);
+  color: var(--gold-light);
+}
+.trad-hero .trad-frame {
+  display: grid;
+  place-items: center;
+  padding: 4.5rem 1.5rem;
+}
+.trad-hero__content {
+  display: grid;
+  gap: 1.5rem;
+  justify-items: center;
+  text-align: center;
+}
+.trad-medallion {
+  width: clamp(150px, 46cqi, 240px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--gold);
+  box-shadow:
+    0 0 0 6px var(--maroon),
+    0 0 0 7px var(--gold);
+}
+.trad-medallion--small {
+  width: clamp(120px, 34cqi, 180px);
+  box-shadow:
+    0 0 0 6px var(--parchment),
+    0 0 0 7px var(--gold);
+}
+.trad-hero__names {
+  display: grid;
+  gap: 0.9rem;
+  justify-items: center;
+  font-family: var(--display);
+  font-size: clamp(1.9rem, 9cqi, 3.6rem);
+  letter-spacing: 0.08em;
+  line-height: 1.15;
+  color: #f1dcae;
+}
+.trad-hero__date {
+  color: #f6ead2;
+}
+
+/* --- Intro / countdown --------------------------------------------------------------- */
+.trad-intro .countdown {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 26rem;
+  margin-top: 0.5rem;
+}
+.trad-intro .countdown__unit {
+  display: grid;
+  padding: 0.75rem 0.25rem;
+  border: 1px solid var(--gold);
+  outline: 1px solid var(--gold);
+  outline-offset: -4px;
+  background: var(--parchment-deep);
+}
+.trad-intro .countdown__value {
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 5.5cqi, 2rem);
+  color: var(--maroon);
+}
+.trad-intro .countdown__label {
+  font-family: var(--display);
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* --- Couple ------------------------------------------------------------------------- */
+.trad-couple {
+  background: var(--parchment-deep);
+}
+.trad-couple__grid {
+  max-width: 62rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 1.5rem;
+  justify-items: center;
+}
+.trad-person {
+  margin: 0;
+  display: grid;
+  gap: 1.25rem;
+  justify-items: center;
+  text-align: center;
+  max-width: 24rem;
+}
+.trad-person figcaption {
+  display: grid;
+  gap: 0.6rem;
+}
+.trad-portrait {
+  width: clamp(170px, 52cqi, 230px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--gold);
+  box-shadow:
+    0 0 0 6px var(--parchment-deep),
+    0 0 0 7px var(--gold);
+}
+.trad-person__name {
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 5.5cqi, 2.1rem);
+  color: var(--maroon);
+  letter-spacing: 0.04em;
+}
+.trad-amp {
+  font-family: var(--display);
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--gold);
+}
+
+/* --- Story --------------------------------------------------------------------------- */
+.trad-timeline {
+  list-style: none;
+  margin: 3rem auto 0;
+  padding: 0 0 0 1.75rem;
+  max-width: 56rem;
+  position: relative;
+  display: grid;
+  gap: 2.5rem;
+}
+.trad-timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.45rem;
+  border-left: 1px solid var(--gold);
+}
+.trad-moment {
+  position: relative;
+}
+.trad-moment__node {
+  position: absolute;
+  left: -1.75rem;
+  top: 0.5rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  background: var(--parchment);
+  border: 1.5px solid var(--gold);
+  transform: rotate(45deg);
+}
+.trad-moment__card {
+  display: grid;
+  gap: 0.6rem;
+}
+.trad-moment__photo {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid var(--gold);
+  padding: 5px;
+  background: var(--parchment-deep);
+  margin-bottom: 0.5rem;
+}
+.trad-moment__photo .theme-image {
+  height: 100%;
+}
+.trad-moment__title {
+  font-family: var(--display);
+  font-size: 1.35rem;
+  color: var(--maroon);
+}
+
+/* --- Events -------------------------------------------------------------------------- */
+.trad-events {
+  background: var(--maroon);
+  color: #f6ead2;
+}
+.trad-events__list {
+  max-width: 62rem;
+  margin: 3rem auto 0;
+  display: grid;
+  gap: 1.5rem;
+}
+.trad-event {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: center;
+  text-align: center;
+  padding: 2.75rem 1.5rem;
+  border: 1px solid var(--gold);
+  outline: 1px solid rgb(176 141 87 / 0.6);
+  outline-offset: -7px;
+  background: var(--maroon-deep);
+}
+.trad-event__title {
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 5.5cqi, 2rem);
+  color: #f1dcae;
+}
+.trad-event__date {
+  font-size: 1.1rem;
+}
+.trad-event__time {
+  font-family: var(--display);
+  letter-spacing: 0.12em;
+  color: var(--gold-light);
+}
+.trad-event .trad-divider {
+  margin: 0.75rem auto;
+  width: 140px;
+}
+.trad-event__venue {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+.trad-event__address,
+.trad-event__note {
+  color: #dcc8ac;
+}
+.trad-event__note {
+  font-style: italic;
+}
+.trad-button {
+  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 0 1.5rem;
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  text-decoration: none;
+  border: 1px solid var(--gold);
+  transition: background 0.2s;
+}
+.trad-button:hover {
+  background: rgb(176 141 87 / 0.18);
+}
+
+/* --- Gallery ---------------------------------------------------------------------------- */
+.trad-gallery__grid {
+  max-width: 64rem;
+  margin: 3rem auto 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+.trad-mat {
+  margin: 0;
+  padding: 6px;
+  background: #fbf6ec;
+  border: 1px solid var(--gold);
+  display: grid;
+  gap: 0.4rem;
+}
+.trad-mat__photo {
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+}
+.trad-mat figcaption {
+  text-align: center;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--muted);
+  padding-bottom: 0.2rem;
+}
+
+/* --- RSVP --------------------------------------------------------------------------------- */
+.trad-rsvp {
+  background: var(--parchment-deep);
+}
+.trad-panel {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+  background: var(--parchment);
+}
+.t-trad .rsvp {
+  width: 100%;
+  display: grid;
+  gap: 1.25rem;
+}
+.t-trad .rsvp-status {
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--maroon);
+}
+.t-trad .rsvp-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.25rem;
+  text-align: left;
+}
+.t-trad .rsvp-field {
+  display: grid;
+  gap: 0.4rem;
+}
+.t-trad .rsvp-label {
+  font-family: var(--display);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.t-trad .rsvp-input {
+  font: inherit;
+  min-height: 46px;
+  padding: 0 0.85rem;
+  background: #fffaf1;
+  border: 1px solid var(--gold);
+}
+.t-trad .rsvp-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+}
+.t-trad .rsvp-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  accent-color: var(--maroon);
+}
+.t-trad .rsvp-button {
+  min-height: 48px;
+  font-family: var(--display);
+  font-size: 0.75rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  background: var(--maroon);
+  border: 1px solid var(--gold);
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* --- Closing ------------------------------------------------------------------------------ */
+.trad-closing {
+  background: var(--maroon);
+  color: #f6ead2;
+}
+.trad-closing__inner {
+  padding: 5rem 1.5rem 6rem;
+}
+.trad-closing .trad-medallion--small {
+  box-shadow:
+    0 0 0 6px var(--maroon),
+    0 0 0 7px var(--gold);
+}
+.trad-closing__thanks {
+  font-style: italic;
+  color: var(--gold-light);
+}
+.trad-closing__names {
+  font-family: var(--display);
+  font-size: clamp(1.7rem, 7cqi, 2.8rem);
+  letter-spacing: 0.08em;
+  color: #f1dcae;
+}
+
+/* --- Tablet & up --------------------------------------------------------------------------- */
+@container site (min-width: 48rem) {
+  .trad-section {
+    padding: 7rem 3rem;
+  }
+  .trad-hero {
+    padding: 1.75rem;
+  }
+  .trad-couple__grid {
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 2rem;
+  }
+  .trad-timeline {
+    padding: 0;
+  }
+  .trad-timeline::before {
+    left: 50%;
+  }
+  .trad-moment {
+    width: calc(50% - 2.5rem);
+  }
+  .trad-moment:nth-child(odd) {
+    justify-self: start;
+    text-align: right;
+  }
+  .trad-moment:nth-child(even) {
+    justify-self: end;
+  }
+  .trad-moment__node {
+    top: 1rem;
+  }
+  .trad-moment:nth-child(odd) .trad-moment__node {
+    left: auto;
+    right: calc(-2.5rem - 0.45rem);
+  }
+  .trad-moment:nth-child(even) .trad-moment__node {
+    left: calc(-2.5rem - 0.45rem);
+  }
+  .trad-events__list {
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: 2rem;
+  }
+  .trad-gallery__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+  .trad-panel {
+    padding: 5rem 4rem;
+  }
+}

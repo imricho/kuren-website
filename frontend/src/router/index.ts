@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { canonicalCollection, canonicalFamily, canonicalTemplate } from '@/features/themes/picker/guards'
 import { useAuthStore } from '@/stores/auth'
 
 declare module 'vue-router' {
@@ -9,8 +10,13 @@ declare module 'vue-router' {
     /** Page is only for signed-out visitors (login/register). */
     guestOnly?: boolean
     title?: string
+    /** Full-width, full-height layout for the theme studio. */
+    layout?: 'studio'
   }
 }
+
+// Shared by all studio routes so navigating between levels reuses the same page instance.
+const ThemeStudioPage = () => import('@/pages/ThemeStudioPage.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -41,6 +47,38 @@ const router = createRouter({
           component: () => import('@/pages/DashboardPage.vue'),
           meta: { title: 'Dashboard' },
         },
+        // Theme studio: sidebar (Family → Collection → Template) + live preview, one page.
+        // Every level has its own URL; guards redirect aliases to canonical URLs.
+        {
+          path: 'themes',
+          name: 'themes',
+          component: ThemeStudioPage,
+          meta: { title: 'Themes', layout: 'studio' },
+        },
+        {
+          path: 'themes/:familyId',
+          name: 'theme-family',
+          component: ThemeStudioPage,
+          props: true,
+          meta: { title: 'Themes', layout: 'studio' },
+          beforeEnter: canonicalFamily,
+        },
+        {
+          path: 'themes/:familyId/:collectionId',
+          name: 'theme-collection',
+          component: ThemeStudioPage,
+          props: true,
+          meta: { title: 'Themes', layout: 'studio' },
+          beforeEnter: canonicalCollection,
+        },
+        {
+          path: 'themes/:familyId/:collectionId/:templateSlug',
+          name: 'theme-template',
+          component: ThemeStudioPage,
+          props: true,
+          meta: { title: 'Themes', layout: 'studio' },
+          beforeEnter: canonicalTemplate,
+        },
         {
           path: 'account',
           name: 'account',
@@ -48,6 +86,23 @@ const router = createRouter({
           meta: { title: 'Account' },
         },
       ],
+    },
+    {
+      // Full-screen template preview, outside the dashboard chrome. Canonical URL.
+      path: '/themes/:familyId/:collectionId/:templateSlug/preview',
+      name: 'theme-preview',
+      component: () => import('@/pages/ThemePreviewPage.vue'),
+      props: true,
+      meta: { requiresAuth: true, title: 'Template preview' },
+      beforeEnter: canonicalTemplate,
+    },
+    {
+      // Workstream 2 URL (and template aliases) → redirected to the canonical preview URL.
+      path: '/themes/:themeId/preview',
+      name: 'theme-preview-legacy',
+      component: () => import('@/pages/ThemePreviewPage.vue'),
+      meta: { requiresAuth: true },
+      beforeEnter: canonicalTemplate,
     },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/pages/NotFoundPage.vue') },
   ],

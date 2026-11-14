@@ -37,13 +37,13 @@
     @apply bg-canvas text-ink-900 antialiased;
     font-family: var(--font-sans);
   }
-  h1,
-  h2,
-  h3 {
+  /* Dashboard-only base styles. Wedding themes (.wedding-site) are excluded so
+     platform styling never leaks into a couple's website. */
+  :where(h1, h2, h3):not(:where(.wedding-site *)) {
     font-family: var(--font-display);
     @apply tracking-tight text-ink-900;
   }
-  :focus-visible {
+  :focus-visible:not(:where(.wedding-site *)) {
     @apply outline-2 outline-offset-2 outline-rose-500;
   }
 }

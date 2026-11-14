@@ -20,6 +20,9 @@ node_modules/
 dist/
 *.local
 coverage/
+test-results/
+playwright-report/
+frontend/e2e/.auth/
 
 # AI agent definitions (kept local, not versioned)
 .claude/

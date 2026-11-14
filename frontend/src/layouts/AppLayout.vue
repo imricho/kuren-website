@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import BrandMark from '@/components/BrandMark.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const signingOut = ref(false)
 
 const navItems = [
   { name: 'dashboard', label: 'Dashboard' },
+  { name: 'themes', label: 'Themes' },
   { name: 'account', label: 'Account' },
 ] as const
+
+// "Themes" stays highlighted on every theme studio level (/themes/...).
+const isActive = (name: string) =>
+  name === 'themes' ? route.path === '/themes' || route.path.startsWith('/themes/') : route.name === name
 
 const initials = computed(() =>
   (auth.user?.full_name ?? '')
@@ -37,16 +43,20 @@ async function signOut() {
 <template>
   <div class="min-h-dvh">
     <header class="sticky top-0 z-10 border-b border-line bg-canvas/85 backdrop-blur">
-      <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
+      <!-- On phones the nav wraps onto its own row below the brand. -->
+      <div
+        class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-1 px-4 pt-3 pb-2 sm:h-16 sm:flex-nowrap sm:px-6 sm:py-0"
+      >
         <RouterLink :to="{ name: 'dashboard' }" aria-label="Go to dashboard"><BrandMark /></RouterLink>
 
-        <nav class="flex items-center gap-1" aria-label="Main">
+        <nav class="order-last -mx-3 flex w-full items-center gap-1 sm:order-none sm:mx-0 sm:w-auto" aria-label="Main">
           <RouterLink
             v-for="item in navItems"
             :key="item.name"
             :to="{ name: item.name }"
-            class="rounded-md px-3 py-2 text-sm font-medium text-ink-500 transition-colors hover:text-ink-900"
-            active-class="!text-ink-900 bg-rose-50"
+            class="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:text-ink-900"
+            :class="isActive(item.name) ? 'bg-rose-50 text-ink-900' : 'text-ink-500'"
+            :aria-current="isActive(item.name) ? 'page' : undefined"
           >
             {{ item.label }}
           </RouterLink>
@@ -72,7 +82,14 @@ async function signOut() {
       </div>
     </header>
 
-    <main class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <!-- The theme studio uses the full width and (on desktop) the full remaining height. -->
+    <main
+      :class="
+        route.meta.layout === 'studio'
+          ? 'lg:h-[calc(100dvh-4rem)] lg:overflow-hidden'
+          : 'mx-auto max-w-6xl px-4 py-10 sm:px-6'
+      "
+    >
       <RouterView />
     </main>
   </div>

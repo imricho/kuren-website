@@ -5,30 +5,31 @@
 ## Catalog hierarchy
 
 ```
-ThemeFamily         broad visual or cultural category          catalog/families.ts
-└─ ThemeCollection  specific design identity or culture       catalog/collections.ts
+ThemeFamily         broad visual category                      catalog/families.ts
+└─ ThemeCollection  specific design direction                  catalog/collections.ts
    └─ ThemeTemplate the selectable, renderable design         <template folder>/index.ts
                     (planned templates without a renderer)    catalog/planned.ts
 ```
 
 | Family | Collections | Templates (id → name) |
 |---|---|---|
-| Traditional | Nusantara Heritage (general, culturally neutral) + 12 regional: Javanese, Sundanese, Minangkabau (Minang), Batak, Bugis, Betawi, Malay (Melayu), Madura, Balinese (Bali), Dayak, Ambon / Maluku, Papuan (Papua) | `traditional` → Royal Maroon, `ethnic` → Woven Indigo; planned: Yogyakarta Paes Ageng, Solo Basahan, Batak Toba |
+| Traditional | Ceremonial Classic; Artisan Pattern (origin-neutral design directions) | `traditional` → Royal Maroon, `ethnic` → Woven Indigo |
 | International | Editorial | `international` → Editorial Ivory |
 | Conventional / Classic (`classic`, alias `conventional`) | Romantic Floral | `conventional` → Blush Garden |
 | Artistic | Contemporary | `artistic` → Gallery Bold |
-| Modern Minimalist | — (coming soon) | — |
-| Rustic / Nature | — (coming soon) | — |
+| Modern Minimalist | Quiet Form | `still-form` → Still Form |
+| Rustic / Nature | Field Notes | `wildwood-gathering` → Field Notes |
 
 - **Status** (`available` / `coming_soon` / `hidden`) exists at every level. Hidden templates render by
   direct link (QA) but aren't listed.
 - **Template ids are permanent** — they will be stored on weddings. Display names can change freely
   (Workstream 2's ids `international`, `traditional`, `ethnic`, `conventional`, `artistic` are unchanged).
-- **References**: each collection has `reference: { kind, region, notes, review }`. Regional cultural
-  collections are `needs_review`; `validateCatalog()` refuses to let a cultural collection become
-  available until it is `reviewed`.
+- **References**: each collection has `reference: { kind, notes, review }`. The two Traditional
+  collections use original, abstract design directions and make no claim to represent a named
+  region, community, textile, ceremony or cultural practice. A future culturally specific design
+  needs verified research and appropriate community review before it is presented as such.
 - **Config**: a template may carry `config`, passed to its component as a prop. This lets one renderer
-  power several templates (e.g. the Nusantara layout with a Javanese palette and ornament set).
+  power several distinct design directions while keeping the shared content model intact.
 - **Integrity**: `validateCatalog()` checks unique kebab-case ids, reserved ids (`preview`),
   family/collection references, status consistency and renderers. It runs in tests and logs in dev.
 
@@ -62,8 +63,8 @@ scrolls into view.
 - **What the preview shows**: the URL's template; otherwise the last previewed or selected template if it
   belongs to the current family/collection; otherwise that scope's first template. Levels with nothing
   to preview (planned collections/families) keep the last template and say so in a notice.
-- **Summaries agree with statuses**: `familySummary()` (e.g. "2 templates available · 12 regional
-  collections coming soon"), `countLabel()` per collection, `STATUS_LABEL` everywhere.
+- **Summaries agree with statuses**: `familySummary()`, `countLabel()` per collection and
+  `STATUS_LABEL` use the catalog as their source of truth.
 - **Accessibility**: the sidebar is a labelled navigation with step indicator, breadcrumbs and back
   links; device size is a native radio group; items expose one named link with a focus ring; the preview
   frame is a labelled, keyboard-scrollable region; themes get a visible focus outline.

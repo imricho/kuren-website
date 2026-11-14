@@ -48,4 +48,15 @@ describe('theme selection store', () => {
     store.select('gallery-bold')
     expect(store.selectedThemeId).toBe('artistic')
   })
+
+  it('ignores removed theme ids in selection, preview and stored state', () => {
+    const store = useThemeSelectionStore()
+    store.select('removed-theme')
+    expect(store.selectedThemeId).toBeNull()
+    store.preview('removed-theme')
+    expect(store.previewedThemeId).toBeNull()
+    localStorage.setItem('kuren.selectedThemeId', 'removed-theme')
+    setActivePinia(createPinia())
+    expect(useThemeSelectionStore().selectedThemeId).toBeNull()
+  })
 })

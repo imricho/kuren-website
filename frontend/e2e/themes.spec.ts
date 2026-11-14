@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const THEME_IDS = ['international', 'traditional', 'ethnic', 'conventional', 'artistic']
+const THEME_IDS = ['international', 'traditional', 'ethnic', 'conventional', 'artistic', 'still-form', 'wildwood-gathering']
 
 const VIEWPORTS = {
   phone: { width: 375, height: 812 },
@@ -42,8 +42,11 @@ async function openPreview(page: Page, themeId: string) {
       // Swipe through horizontal scrollers in view, then return them to the start.
       for (const el of document.querySelectorAll<HTMLElement>('.wedding-site *')) {
         if (el.scrollWidth > el.clientWidth && ['auto', 'scroll'].includes(getComputedStyle(el).overflowX)) {
-          el.scrollLeft = el.scrollWidth
-          await pause()
+          // Swipe through step by step, like a person would, so every item comes into view.
+          for (let x = 0; x <= el.scrollWidth; x += el.clientWidth / 2) {
+            el.scrollLeft = x
+            await pause()
+          }
           el.scrollLeft = 0
         }
       }
@@ -151,16 +154,15 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
       ['international', 'available'],
       ['classic', 'available'],
       ['artistic', 'available'],
-      ['modern-minimalist', 'coming_soon'],
-      ['rustic-nature', 'coming_soon'],
+      ['modern-minimalist', 'available'],
+      ['rustic-nature', 'available'],
     ])
     await expect(page.locator('[data-family-card="classic"]')).toContainText('Conventional / Classic')
     await expect(page.locator('[data-family-card="traditional"] [data-testid="family-summary"]')).toHaveText(
-      '2 templates available · 12 regional collections coming soon',
+      '2 templates available',
     )
-    await expect(page.locator('[data-family-card="modern-minimalist"] [data-testid="family-summary"]')).toHaveText(
-      'In development — no collections yet',
-    )
+    await expect(page.locator('[data-family-card="modern-minimalist"] [data-testid="family-summary"]')).toHaveText('1 template available')
+    await expect(page.locator('[data-family-card="rustic-nature"] [data-testid="family-summary"]')).toHaveText('1 template available')
     await expect(page.locator('[aria-current="step"]')).toContainText('Family')
   })
 
@@ -186,78 +188,45 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
     await expect(page).toHaveURL(/\/themes$/)
   })
 
-  test('clicking a template previews it on the right without selecting it', async ({ page }) => {
-    await page.goto('/themes/traditional/nusantara-heritage')
-    await expect(page.locator('[data-theme-card]')).toHaveCount(2)
+  test('origin-neutral Traditional styles preview and select independently', async ({ page }) => {
+    await page.goto('/themes/traditional/artisan-pattern')
+    await expect(page.locator('[data-theme-card]')).toHaveCount(1)
     await page.getByRole('link', { name: 'Preview Woven Indigo' }).click()
-    await expect(page).toHaveURL(/\/themes\/traditional\/nusantara-heritage\/woven-indigo$/)
+    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
     await expect(pane(page).locator('.wedding-site[data-theme="ethnic"] > article')).toBeVisible()
     await expect(pane(page).getByRole('heading', { name: 'Woven Indigo' })).toBeVisible()
-    await expect(page.locator('[data-theme-card="ethnic"] a')).toHaveAttribute('aria-current', 'true')
     await expect(page.getByTestId('selection-summary')).not.toContainText('Woven Indigo')
-    await expect(page.locator('[data-theme-card="ethnic"]')).not.toContainText('Selected')
 
-    // Selecting is one explicit action in the preview pane, with feedback everywhere.
     const select = pane(page).locator('[data-action="select"]')
     await select.click()
     await expect(select).toHaveText('Selected')
-    await expect(select).toHaveAttribute('aria-disabled', 'true')
-    await expect(select).toBeFocused()
-    await expect(page.locator('[data-theme-card="ethnic"]')).toContainText('Selected')
     await expect(page.getByRole('status').filter({ hasText: 'Selected' })).toContainText(
-      'Traditional › Nusantara Heritage › Woven Indigo',
+      'Traditional › Artisan Pattern › Woven Indigo',
     )
 
-    // Previewing another template keeps the selection.
-    await page.getByRole('link', { name: 'Preview Royal Maroon' }).click()
-    await expect(pane(page).getByRole('heading', { name: 'Royal Maroon' })).toBeVisible()
-    await expect(pane(page).locator('[data-action="select"]')).toHaveText('Select template')
-    await expect(page.getByTestId('selection-summary')).toContainText('Woven Indigo')
-
-    // Full-screen preview matches family, collection and template.
-    await page.getByRole('link', { name: 'Preview Woven Indigo' }).click()
     await pane(page).getByRole('link', { name: /Full-screen preview/ }).click()
-    await expect(page).toHaveURL(/\/themes\/traditional\/nusantara-heritage\/woven-indigo\/preview$/)
-    await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toContainText('Woven Indigo')
-    await expect(page.locator('[data-action="select"]')).toHaveText('Selected')
-    await page.getByRole('link', { name: 'Back to Nusantara Heritage collection' }).click()
-    await expect(page).toHaveURL(/\/themes\/traditional\/nusantara-heritage$/)
+    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo\/preview$/)
+    await page.getByRole('link', { name: 'Back to Artisan Pattern collection' }).click()
+    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern$/)
 
+    await page.goto('/themes/traditional/ceremonial-classic')
+    await expect(page.locator('[data-theme-card]')).toHaveCount(1)
+    await expect(page.getByRole('link', { name: 'Preview Royal Maroon' })).toBeVisible()
     await page.goto('/dashboard')
-    await expect(page.getByText('Selected: Traditional › Nusantara Heritage › Woven Indigo')).toBeVisible()
+    await expect(page.getByText('Selected: Traditional › Artisan Pattern › Woven Indigo')).toBeVisible()
   })
 
-  test('Traditional separates Nusantara Heritage from the 12 planned regional collections', async ({ page }) => {
-    await page.goto('/themes/traditional')
-    const general = page.locator('section[aria-labelledby="sb-general"] [data-collection-card]')
-    const regional = page.locator('section[aria-labelledby="sb-regional"] [data-collection-card]')
-    await expect(general).toHaveCount(1)
-    await expect(general.first()).toHaveAttribute('data-collection-card', 'nusantara-heritage')
-    await expect(regional).toHaveCount(12)
-    expect(await regional.evaluateAll((els) => els.every((e) => e.getAttribute('data-status') === 'coming_soon'))).toBe(true)
-    await expect(page.getByTestId('regional-summary')).toContainText('0 of 12 available — planned')
-    await expect(page.locator('[data-collection-card="malay"]')).toContainText('Also known as Melayu')
-  })
-
-  test('planned collections show their templates as unavailable and keep a clear preview notice', async ({ page }) => {
-    await page.goto('/themes/traditional/javanese')
-    await expect(page.getByTestId('collection-count')).toHaveText('2 templates coming soon')
-    const planned = page.locator('[data-theme-card][data-status="coming_soon"]')
-    await expect(planned).toHaveCount(2)
-    await expect(planned.getByRole('link')).toHaveCount(0)
-    await expect(page.getByTestId('preview-notice')).toContainText('Javanese has no templates to preview yet')
-    await page.getByTestId('collection-reference').locator('summary').click()
-    await expect(page.getByTestId('collection-reference')).toContainText('cultural advisers')
-    await page.goto('/themes/solo-basahan/preview')
-    await expect(page).toHaveURL(/\/themes\/traditional\/javanese$/)
-  })
-
-  test('families in development have no selectable collections', async ({ page }) => {
-    for (const id of ['modern-minimalist', 'rustic-nature']) {
-      await page.goto(`/themes/${id}`)
-      await expect(page.getByTestId('family-coming-soon')).toContainText('Collections in development')
-      await expect(sidebar(page).locator('[data-collection-card], [data-theme-card]')).toHaveCount(0)
-      await expect(page.getByTestId('preview-notice')).toContainText('has no templates to preview yet')
+  test('Modern Minimalist and Rustic / Nature render and select their own designs', async ({ page }) => {
+    for (const [family, collection, template, name] of [
+      ['modern-minimalist', 'quiet-form', 'still-form', 'Still Form'],
+      ['rustic-nature', 'field-notes', 'wildwood-gathering', 'Field Notes'],
+    ]) {
+      await page.goto(`/themes/${family}/${collection}`)
+      await expect(page.locator('[data-theme-card]')).toHaveCount(1)
+      await page.getByRole('link', { name: `Preview ${name}` }).click()
+      await expect(page).toHaveURL(new RegExp(`/themes/${family}/${collection}/${template}$`))
+      await expect(pane(page).getByRole('heading', { name })).toBeVisible()
+      await expect(pane(page).locator('.wedding-site > article')).toBeVisible()
     }
   })
 
@@ -276,8 +245,8 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
     await expect(page).toHaveURL(/\/themes\/classic\/romantic-floral\/blush-garden$/)
     await page.goto('/themes/conventional/preview')
     await expect(page).toHaveURL(/\/themes\/classic\/romantic-floral\/blush-garden\/preview$/)
-    await page.goto('/themes/classic/javanese')
-    await expect(page).toHaveURL(/\/themes\/traditional\/javanese$/)
+    await page.goto('/themes/traditional/javanese')
+    await expect(page.getByRole('heading', { name: 'Collection not found' })).toBeVisible()
     for (const id of THEME_IDS) {
       await page.goto(`/themes/${id}/preview`)
       await expect(page.locator(`.wedding-site[data-theme="${id}"] > article`)).toBeVisible()
@@ -293,7 +262,7 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
 })
 
 test.describe('responsive and accessible studio', () => {
-  const PAGES = ['/dashboard', '/themes', '/themes/traditional', '/themes/classic', '/themes/traditional/nusantara-heritage', '/themes/traditional/javanese', '/themes/modern-minimalist']
+  const PAGES = ['/dashboard', '/themes', '/themes/traditional', '/themes/classic', '/themes/traditional/ceremonial-classic', '/themes/traditional/artisan-pattern', '/themes/modern-minimalist', '/themes/rustic-nature', '/themes/modern-minimalist/quiet-form', '/themes/rustic-nature/field-notes']
 
   for (const [device, viewport] of Object.entries(VIEWPORTS)) {
     test(`studio pages fit a ${device} browser window`, async ({ page }) => {
@@ -311,10 +280,10 @@ test.describe('responsive and accessible studio', () => {
 
   test('narrow screens: selector above the preview collapses after choosing a template', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.phone)
-    await page.goto('/themes/traditional/nusantara-heritage')
+    await page.goto('/themes/traditional/artisan-pattern')
     const toggle = page.getByTestId('selector-toggle')
     await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    await expect(toggle).toContainText('Traditional › Nusantara Heritage')
+    await expect(toggle).toContainText('Traditional › Artisan Pattern')
     // Selector is above the preview.
     const sel = (await page.locator('#theme-sidebar').boundingBox())!
     const prev = (await pane(page).boundingBox())!

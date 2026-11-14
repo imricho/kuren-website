@@ -8,10 +8,10 @@ site builder: fixed structure, predefined sections, theme-based styling.
 > **Status:** Workstreams 1–2 complete.
 > - **WS1 Platform Foundation:** app skeleton, authentication, database, Docker.
 > - **WS2 Theme & Template System:** shared wedding content model, theme registry
->   and renderer, five templates, theme picker with live device previews.
+>   and renderer, seven templates across six families, theme picker with live device previews.
 > - **WS2 change request:** theme family hierarchy (Family → Collection → Template):
->   six families, 12 regional Traditional collections (coming soon, culturally reviewed
->   before release), step-by-step picker.
+>   six families, two origin-neutral Traditional design collections
+>   and a step-by-step picker.
 >
 > Content editing (CMS), photo uploads, publishing and RSVP processing come next.
 
@@ -101,19 +101,19 @@ site builder: fixed structure, predefined sections, theme-based styling.
   (opening, couple, story, events[], gallery, RSVP, closing). Every theme consumes exactly
   this; themes never define their own schema. `validateWeddingContent()` checks it at runtime.
 - **Catalog & registry** — themes are organised as **Family → Collection → Template**
-  (`features/themes/catalog/` + `core/registry.ts`). Families: Traditional, International,
-  Conventional / Classic, Artistic (available) and Modern Minimalist, Rustic / Nature (coming soon —
-  no templates yet, so they can't be previewed or selected).
-  Traditional holds a general *Nusantara Heritage* collection plus 12 regional collections
-  (Javanese … Papuan) that are coming soon and gated by cultural review. Every level has an
-  availability status; templates carry a description, preview, reference, optional regional
-  variation and `config`, plus a lazily loaded renderer (one bundle chunk each).
+  (`features/themes/catalog/` + `core/registry.ts`). All six families are available: Traditional,
+  International, Conventional / Classic, Artistic, Modern Minimalist and Rustic / Nature.
+  Traditional holds two origin-neutral design collections: *Ceremonial Classic* and
+  *Artisan Pattern*. Modern Minimalist and Rustic / Nature each have a dedicated collection and renderer.
+  Each level has an availability status; templates carry a description,
+  preview, design reference and `config`, plus a lazily loaded renderer (one bundle chunk each).
 - **Renderer** — `<ThemeRenderer :content :theme-id>` picks the theme, loads its web fonts
   on demand, and falls back to the default theme (emitting `fallback`) for unknown ids.
 - **Responsive** — themes use CSS **container queries**, so the dashboard's phone/tablet
   preview frames show the real mobile layout, identical to the published page.
-- **Templates** — Editorial Ivory (International), Royal Maroon and Woven Indigo (Traditional ›
-  Nusantara Heritage), Blush Garden (Conventional / Classic), Gallery Bold (Artistic). Ids from Workstream 2
+- **Templates** — Editorial Ivory (International), Royal Maroon (Traditional › Ceremonial Classic),
+  Woven Indigo (Traditional › Artisan Pattern), Blush Garden (Conventional / Classic), Gallery Bold (Artistic),
+  Still Form (Modern Minimalist › Quiet Form) and Field Notes (Rustic / Nature › Field Notes). Ids from Workstream 2
   (`international`, `traditional`, `ethnic`, `conventional`, `artistic`) are unchanged. All
   decoration is original inline SVG/CSS; sample images are original placeholder illustrations.
 - **Theme studio** — one page with a **sidebar on the left** (Family → Collection → Template, with

@@ -4,13 +4,13 @@ import thumbnail from './assets/thumbnail.svg'
 export const ethnicTheme: RenderableTemplate = {
   id: 'ethnic',
   familyId: 'traditional',
-  collectionId: 'nusantara-heritage',
+  collectionId: 'artisan-pattern',
   name: 'Woven Indigo',
   status: 'available',
   slug: 'woven-indigo',
   tagline: 'Textile-inspired, warm and distinctive',
   description:
-    'A modern take on woven-textile patterns in indigo, terracotta and ochre. Motifs are a modular set, so regional variations can be introduced without changing the layout.',
+    'An original geometric design in indigo, terracotta and ochre, with tactile pattern and confident modern type. The artwork is abstract and is not attributed to a named textile or community.',
   previewImage: thumbnail,
   fonts: {
     href: 'https://fonts.googleapis.com/css2?family=Marcellus&family=Mulish:wght@400;500;600&display=swap',

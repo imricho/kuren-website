@@ -6,6 +6,7 @@ defineProps<{ status: ThemeStatus | 'selected' }>()
 
 const STYLE = {
   available: 'bg-success-50 text-success-600',
+  draft: 'bg-[#fbf1cf] text-[#5b4a12] ring-1 ring-[#ecd98f]',
   coming_soon: 'bg-canvas text-ink-500 ring-1 ring-line',
   hidden: 'bg-canvas text-ink-500',
   selected: 'bg-rose-600 text-white',

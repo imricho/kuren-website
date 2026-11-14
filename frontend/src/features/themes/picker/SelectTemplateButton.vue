@@ -8,6 +8,8 @@ import { computed } from 'vue'
 
 import { useThemeSelectionStore } from '@/stores/themeSelection'
 
+import { getTheme } from '../core/registry'
+import { isSelectable } from '../core/types'
 import { ACTION } from './format'
 
 const props = withDefaults(defineProps<{ templateId: string; templateName: string; size?: 'md' | 'sm' }>(), {
@@ -15,14 +17,26 @@ const props = withDefaults(defineProps<{ templateId: string; templateName: strin
 })
 const selection = useThemeSelectionStore()
 const isSelected = computed(() => selection.selectedThemeId === props.templateId)
+const selectable = computed(() => isSelectable(getTheme(props.templateId)))
 
 function choose() {
-  if (!isSelected.value) selection.select(props.templateId)
+  if (selectable.value && !isSelected.value) selection.select(props.templateId)
 }
 </script>
 
 <template>
+  <!-- Drafts can be previewed but not selected until cultural review is complete. -->
+  <span
+    v-if="!selectable"
+    class="inline-flex items-center gap-1.5 rounded-lg bg-[#fbf1cf] px-3 py-2.5 text-sm font-medium text-[#5b4a12] ring-1 ring-[#ecd98f]"
+    role="note"
+    :aria-label="`${templateName} is a draft pending cultural review and can't be selected yet`"
+    data-action="draft-not-selectable"
+  >
+    {{ ACTION.draftNotSelectable }}
+  </span>
   <button
+    v-else
     type="button"
     class="inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors"
     :class="[

@@ -5,9 +5,9 @@ import type { WeddingContent } from '@/features/wedding/types'
 /**
  * Theme catalog hierarchy:
  *
- *   ThemeFamily      broad visual or cultural category      (e.g. Traditional)
- *   └ ThemeCollection specific design identity / culture    (e.g. Javanese)
- *     └ ThemeTemplate  the selectable wedding website design (e.g. Solo Basahan)
+ *   ThemeFamily      broad visual category                (e.g. Traditional)
+ *   └ ThemeCollection specific design direction           (e.g. Ceremonial Classic)
+ *     └ ThemeTemplate  the selectable wedding website design (e.g. Royal Maroon)
  *
  * Only templates are rendered. Every template — whatever its family — consumes
  * the one shared `WeddingContent` model.
@@ -15,13 +15,14 @@ import type { WeddingContent } from '@/features/wedding/types'
 
 /**
  * - `available`: listed and selectable.
+ * - `draft`: listed and previewable, NOT selectable — a design awaiting review.
  * - `coming_soon`: listed as planned; not selectable (templates have no renderer yet).
  * - `hidden`: renderable by direct id/link (QA, staged rollout) but not listed.
  */
-export type ThemeStatus = 'available' | 'coming_soon' | 'hidden'
+export type ThemeStatus = 'available' | 'draft' | 'coming_soon' | 'hidden'
 
 /** Free-form, template-specific settings passed to the renderer (palette, motif set…). */
-export type ThemeConfig = Readonly<Record<string, unknown>>
+export type ThemeConfig = Readonly<object>
 
 /** Props every theme component receives. Themes consume ONLY the shared content model. */
 export interface ThemeProps {
@@ -56,6 +57,90 @@ export interface ThemeReference {
   review: 'not_required' | 'needs_review' | 'reviewed'
 }
 
+// --- Cultural briefs (regional collections) ----------------------------------------
+//
+// A brief keeps three things visibly apart:
+//   1. SOURCED cultural information  → `sources`, `confirmed` (only with a verified source)
+//   2. OPEN research questions       → `toResearch` (candidate references, NOT verified)
+//   3. CREATIVE art direction        → `artDirection` (design choices, never cultural claims)
+// plus the review state. Nothing in `toResearch` or `artDirection` may be presented as fact.
+
+export type CulturalReviewStatus = 'in_development' | 'awaiting_review' | 'reviewed'
+
+export interface SourceReference {
+  title: string
+  url: string
+  publisher: string
+  /** What the source actually documents (and its geographic/community scope). */
+  covers: string
+  /** True only once the Kuren team has read it and confirmed it supports the cited items. */
+  verified: boolean
+  /** Link problems found when checking (e.g. expired certificate, moved host), with the date checked. */
+  accessNote?: string
+}
+
+export interface LocalityOption {
+  id: string
+  name: string
+  status: ThemeStatus
+}
+
+export interface CulturalItems {
+  garments: string[]
+  textiles: string[]
+  motifs: string[]
+  objects: string[]
+}
+
+export interface ArtDirection {
+  palette: { name: string; hex: string }[]
+  typography: string
+  composition: string
+  imagery: string
+  layout: string
+}
+
+export interface CulturalBrief {
+  /** Whether a specific locality/subtradition must be chosen before any cultural motif is shown. */
+  localityRequired: boolean
+  /** How to call the choice in the UI, e.g. "subtradition", "locality", "island or community". */
+  localityLabel: string
+  localities: LocalityOption[]
+  /** Caveat about the options, e.g. that the list is not exhaustive. */
+  localitiesNote?: string
+  selectedLocality: string | null
+  review: {
+    status: CulturalReviewStatus
+    /** Named practitioners/organisations who reviewed it. Empty until a real review happens. */
+    reviewers: string[]
+    notes: string[]
+  }
+  sources: SourceReference[]
+  /** References confirmed by a verified source (and later by review). Empty until then. */
+  confirmed: CulturalItems
+  /** Candidate references from the design brief — research questions, not facts. */
+  toResearch: CulturalItems
+  /** Things the collection must not do or depict. */
+  avoid: string[]
+  /**
+   * Design status, separate from cultural approval (`review`). A collection can have a
+   * complete draft design while its cultural review is still pending.
+   */
+  designStatus: 'not_started' | 'draft' | 'final'
+  /** What the current draft is based on, and what it deliberately leaves out until review. */
+  draft?: {
+    templateIds: string[]
+    referencesUsed: string[]
+    leftOutPendingReview: string[]
+  }
+  /** Kinds of reviewers to approach (not contacted yet unless listed in `review.reviewers`). */
+  suggestedReviewers: string[]
+  /** Questions the review must answer before release. */
+  openQuestions: string[]
+  /** Creative choices for the eventual design. Not cultural claims. */
+  artDirection: ArtDirection
+}
+
 export interface ThemeCollection {
   id: string
   familyId: string
@@ -65,6 +150,8 @@ export interface ThemeCollection {
   description: string
   coverImage?: string
   reference: ThemeReference
+  /** Required for cultural collections; see CulturalBrief. */
+  brief?: CulturalBrief
   status: ThemeStatus
 }
 
@@ -83,13 +170,15 @@ interface TemplateBase {
   aliases?: string[]
   tagline: string
   description: string
-  /** e.g. "Yogyakarta" vs "Surakarta (Solo)" within the Javanese collection. */
+  /** Optional name for a distinct variation within a collection. */
   regionalVariation?: string
+  /** For cultural collections: the brief's locality/community option this template draws on. */
+  localityId?: string
 }
 
-/** A template with a renderer (available, or hidden for QA). */
+/** A template with a renderer: available, a previewable draft, or hidden for QA. */
 export interface RenderableTemplate extends TemplateBase {
-  status: 'available' | 'hidden'
+  status: 'available' | 'draft' | 'hidden'
   /** Static thumbnail URL for selection cards. */
   previewImage: string
   /** Web fonts the theme needs; loaded only when the theme is shown. */
@@ -115,4 +204,9 @@ export type ThemeDefinition = RenderableTemplate
 
 export function isRenderable(template: ThemeTemplate): template is RenderableTemplate {
   return template.status !== 'coming_soon' && typeof template.component === 'function'
+}
+
+/** Only available templates can be chosen for a wedding. Drafts are preview-only. */
+export function isSelectable(template: ThemeTemplate | undefined): boolean {
+  return template?.status === 'available'
 }

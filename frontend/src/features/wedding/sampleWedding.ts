@@ -1,7 +1,7 @@
 /**
  * Fictional sample content used by the theme preview and tests.
- * All names, places and dates are invented. Images are original placeholder
- * illustrations in /public/sample-wedding (no third-party assets).
+ * All names, places and dates are invented. Preview media is project-owned
+ * sample artwork and generated photography in /public/sample-wedding.
  */
 import { WEDDING_SCHEMA_VERSION, type WeddingContent } from './types'
 
@@ -17,8 +17,8 @@ export const sampleWedding = {
     introduction:
       'With grateful hearts and the blessing of our families, we joyfully invite you to celebrate the day we begin our life together.',
     coverImage: {
-      src: img('cover.svg'),
-      alt: 'Illustration of a couple standing together at golden hour',
+      src: img('cover-photo.jpg'),
+      alt: 'A couple sharing a quiet moment in a sunlit garden',
       focalPoint: { x: 42, y: 70 },
     },
     weddingDate: '2027-06-12',

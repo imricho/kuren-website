@@ -8,7 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } fr
 import { minimalWedding, sampleWedding } from '@/features/wedding/sampleWedding'
 import type { WeddingContent } from '@/features/wedding/types'
 
-import { THEMES } from './core/registry'
+import { TEMPLATES } from './core/registry'
+import { isRenderable } from './core/types'
 import { renderTheme } from './testUtils'
 
 enableAutoUnmount(afterEach)
@@ -27,7 +28,9 @@ afterEach(() => {
 
 const clone = (c: WeddingContent): WeddingContent => structuredClone(c)
 
-describe.each(THEMES.map((t) => [t.id]))('%s theme', (themeId) => {
+// Every renderable template must honour
+// the shared content contract.
+describe.each(TEMPLATES.filter(isRenderable).map((t) => [t.id]))('%s theme', (themeId) => {
   it('renders every section of the shared sample data', async () => {
     const wrapper = await renderTheme(sampleWedding, themeId)
     const text = wrapper.text()

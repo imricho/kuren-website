@@ -75,7 +75,7 @@ const view = useWeddingView(props)
         <li v-for="entry in view.story.timeline" :key="entry.id" v-reveal class="conv-moment">
           <div v-if="entry.image" class="conv-moment__photo"><ThemeImage :image="entry.image" /></div>
           <div class="conv-moment__text">
-            <p v-if="entry.date" class="conv-script conv-moment__date">{{ entry.date }}</p>
+            <p v-if="entry.date" class="conv-moment__date">{{ entry.date }}</p>
             <h3 class="conv-moment__title">{{ entry.title }}</h3>
             <p class="conv-body">{{ entry.description }}</p>
           </div>
@@ -93,7 +93,7 @@ const view = useWeddingView(props)
         <div v-for="event in view.events" :key="event.id" v-reveal class="conv-event">
           <ConvSprig class="conv-event__sprig" />
           <p class="conv-caps">{{ event.typeLabel }}</p>
-          <h3 class="conv-script conv-event__title">{{ event.title }}</h3>
+          <h3 class="conv-event__title">{{ event.title }}</h3>
           <p class="conv-event__when">{{ event.dateText }}</p>
           <p class="conv-event__when">{{ event.timeText }}</p>
           <span class="conv-rule" aria-hidden="true" />
@@ -114,7 +114,7 @@ const view = useWeddingView(props)
       <div class="conv-gallery__grid">
         <figure v-for="image in view.gallery.images" :key="image.id" v-reveal class="conv-photo">
           <div class="conv-photo__img"><ThemeImage :image="image" /></div>
-          <figcaption v-if="image.caption" class="conv-script">{{ image.caption }}</figcaption>
+          <figcaption v-if="image.caption" class="conv-gallery__caption">{{ image.caption }}</figcaption>
         </figure>
       </div>
     </section>

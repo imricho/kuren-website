@@ -14,8 +14,8 @@ import { useRoute } from 'vue-router'
 import {
   DEFAULT_THEME_ID,
   THEMES,
-  availableTemplatesOf,
   getCollection,
+  previewableTemplatesOf,
   getFamily,
   getTheme,
   templatePath,
@@ -43,7 +43,7 @@ const notFound = computed(
 const routeTemplate = computed(() => (props.templateSlug ? getTheme(props.templateSlug) : undefined))
 // Templates the preview should come from at the current level: the collection's, else the family's.
 const scopeTemplates = computed<RenderableTemplate[]>(() => {
-  if (collection.value) return availableTemplatesOf(collection.value.id)
+  if (collection.value) return previewableTemplatesOf(collection.value.id)
   if (family.value) return THEMES.filter((t) => t.familyId === family.value!.id)
   return [...THEMES]
 })
@@ -64,6 +64,7 @@ watch(previewed, (t) => selection.preview(t.id), { immediate: true })
 const notice = computed(() => {
   const missing = route.query.notFound
   if (typeof missing === 'string') return `Template "${missing}" doesn't exist — showing ${previewed.value.name} instead.`
+  if (previewed.value.status === 'draft') return 'This draft is preview-only and cannot be selected yet.'
   const scope = collection.value ?? family.value
   if (scope && scopeTemplates.value.length === 0) {
     const p = templatePath(previewed.value.id)!

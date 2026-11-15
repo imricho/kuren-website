@@ -157,7 +157,7 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
     }
   })
 
-  test('sidebar lists all six families with accurate names and availability', async ({ page }) => {
+  test('sidebar lists all six categories with accurate names and availability', async ({ page }) => {
     await page.goto('/themes')
     const families = sidebar(page).locator('[data-family-card]')
     await expect(families).toHaveCount(6)
@@ -177,22 +177,22 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
     for (const familyId of ['international', 'classic', 'artistic', 'modern-minimalist', 'rustic-nature']) {
       await expect(page.locator(`[data-family-card="${familyId}"] [data-testid="family-summary"]`)).toHaveText('8 templates available')
     }
-    await expect(page.locator('[aria-current="step"]')).toContainText('Family')
+    await expect(page.locator('[aria-current="step"]')).toContainText('Category')
   })
 
-  test('browse Family → Collection → Template with location and back links', async ({ page }) => {
+  test('browse Category → Collection → Template with location and back links', async ({ page }) => {
     await page.goto('/themes')
     await page.getByRole('link', { name: 'Conventional / Classic', exact: true }).click()
     await expect(page).toHaveURL(/\/themes\/classic$/)
     await expect(page.locator('[aria-current="step"]')).toContainText('Collection')
-    await expect(sidebar(page).getByRole('navigation', { name: 'Breadcrumb' })).toHaveText(/Themes\s*\/\s*Conventional \/ Classic/)
-    // Explicit collection step even with a single collection.
-    await expect(page.locator('[data-collection-card]')).toHaveCount(1)
+    await expect(sidebar(page).getByRole('navigation', { name: 'Previewed template location' })).toHaveText(/Themes\s*\/\s*Conventional \/ Classic/)
+    // Category browsing does not select a template; all collections remain available.
+    await expect(page.locator('[data-collection-card]')).toHaveCount(4)
 
     await sidebar(page).getByRole('link', { name: 'Romantic Floral', exact: true }).click()
     await expect(page).toHaveURL(/\/themes\/classic\/romantic-floral$/)
     await expect(page.locator('[aria-current="step"]')).toContainText('Template')
-    await expect(sidebar(page).getByRole('navigation', { name: 'Breadcrumb' })).toHaveText(
+    await expect(sidebar(page).getByRole('navigation', { name: 'Previewed template location' })).toHaveText(
       /Themes\s*\/\s*Conventional \/ Classic\s*\/\s*Romantic Floral/,
     )
 
@@ -202,45 +202,35 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
     await expect(page).toHaveURL(/\/themes$/)
   })
 
-  test('origin-neutral Traditional styles preview and select independently', async ({ page }) => {
+  test('Heritage selection saves and opens Edit; previews remain available', async ({ page }) => {
     await page.goto('/themes/traditional/artisan-pattern')
-    await expect(page.locator('[data-theme-card]')).toHaveCount(1)
-    await page.getByRole('link', { name: 'Preview Woven Indigo' }).click()
-    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
-    await expect(pane(page).locator('.wedding-site[data-theme="ethnic"] > article')).toBeVisible()
+    await expect(page.locator('[data-theme-card]')).toHaveCount(2)
     await expect(pane(page).getByRole('heading', { name: 'Woven Indigo' })).toBeVisible()
-    await expect(page.getByTestId('selection-summary')).not.toContainText('Woven Indigo')
-
-    const select = pane(page).locator('[data-action="select"]')
-    await select.click()
-    await expect(select).toHaveText('Selected')
-    await expect(page.getByRole('status').filter({ hasText: 'Selected' })).toContainText(
-      'Traditional › Artisan Pattern › Woven Indigo',
-    )
-
     await pane(page).getByRole('link', { name: /Full-screen preview/ }).click()
-    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo\/preview$/)
-    await page.getByRole('link', { name: 'Back to Artisan Pattern collection' }).click()
-    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern$/)
-
-    await page.goto('/themes/traditional/ceremonial-classic')
-    await expect(page.locator('[data-theme-card]')).toHaveCount(1)
-    await expect(page.getByRole('link', { name: 'Preview Royal Maroon' })).toBeVisible()
-    await page.goto('/dashboard')
-    await expect(page.getByText('Selected: Traditional › Artisan Pattern › Woven Indigo')).toBeVisible()
+    await expect(page).toHaveURL(/\/woven-indigo\/preview$/)
+    await page.getByRole('link', { name: 'Back Artisan Pattern collection' }).click()
+    await page.locator('[data-theme-card="ethnic"] h4 a').click()
+    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
+    await expect(page.getByTestId('preview-pane').getByRole('heading', { name: 'Woven Indigo' })).toBeVisible()
+    await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
+    await expect(page).toHaveURL(/\/wedding\/(opening|couple|story|events|gallery|rsvp|closing)$/)
+    await page.goBack()
+    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
+    await expect(page.getByTestId('selection-summary')).toContainText('Heritage › Artisan Pattern › Woven Indigo')
   })
 
-  test('Modern Minimalist and Rustic / Nature render and select their own designs', async ({ page }) => {
-    for (const [family, collection, template, name] of [
-      ['modern-minimalist', 'quiet-form', 'still-form', 'Still Form'],
-      ['rustic-nature', 'field-notes', 'wildwood-gathering', 'Field Notes'],
+  test('Modern Minimalist and Rustic / Nature choices open Edit', async ({ page }) => {
+    for (const [family, collection, id] of [
+      ['modern-minimalist', 'quiet-form', 'still-form'],
+      ['rustic-nature', 'field-notes', 'wildwood-gathering'],
     ]) {
       await page.goto(`/themes/${family}/${collection}`)
-      await expect(page.locator('[data-theme-card]')).toHaveCount(1)
-      await page.getByRole('link', { name: `Preview ${name}` }).click()
-      await expect(page).toHaveURL(new RegExp(`/themes/${family}/${collection}/${template}$`))
-      await expect(pane(page).getByRole('heading', { name })).toBeVisible()
+      await expect(page.locator('[data-theme-card]')).toHaveCount(2)
       await expect(pane(page).locator('.wedding-site > article')).toBeVisible()
+      await page.locator(`[data-theme-card="${id}"] h4 a`).click()
+      await expect(page.getByTestId('preview-pane').locator('.wedding-site')).toHaveAttribute('data-theme', id)
+      await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
+      await expect(page).toHaveURL(/\/wedding\/(opening|couple|story|events|gallery|rsvp|closing)$/)
     }
   })
 
@@ -269,7 +259,7 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
 
   test('unknown families and collections show a friendly not-found message', async ({ page }) => {
     await page.goto('/themes/space-opera')
-    await expect(page.getByRole('heading', { name: 'Theme family not found' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Category not found' })).toBeVisible()
     await page.goto('/themes/classic/no-such-collection')
     await expect(page.getByRole('heading', { name: 'Collection not found' })).toBeVisible()
   })
@@ -292,23 +282,26 @@ test.describe('responsive and accessible studio', () => {
     })
   }
 
-  test('narrow screens: selector above the preview collapses after choosing a template', async ({ page }) => {
+  test('narrow screens: sidebar previews and explicit selection opens Edit', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.phone)
     await page.goto('/themes/traditional/artisan-pattern')
     const toggle = page.getByTestId('selector-toggle')
     await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    await expect(toggle).toContainText('Traditional › Artisan Pattern')
+    await expect(toggle).toContainText('Heritage › Artisan Pattern')
     // Selector is above the preview.
     const sel = (await page.locator('#theme-sidebar').boundingBox())!
     const prev = (await pane(page).boundingBox())!
     expect(sel.y).toBeLessThan(prev.y)
 
-    await page.getByRole('link', { name: 'Preview Woven Indigo' }).click()
+    await page.locator('[data-theme-card="ethnic"] h4 a').click()
+    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
+    await expect(page.getByTestId('preview-pane').getByRole('heading', { name: 'Woven Indigo' })).toBeVisible()
+    await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
+    await expect(page).toHaveURL(/\/wedding\/(opening|couple|story|events|gallery|rsvp|closing)$/)
+    await page.goBack()
+    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
     await expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    await expect(page.locator('#theme-sidebar')).toBeHidden()
-    await expect(pane(page).getByRole('heading', { name: 'Woven Indigo' })).toBeInViewport()
-    await toggle.click()
-    await expect(page.locator('#theme-sidebar')).toBeVisible()
+    await expect(page.getByTestId('preview-pane')).toBeVisible()
   })
 
   test('device size is a single-choice radio group operable with arrow keys', async ({ page }) => {
@@ -325,7 +318,7 @@ test.describe('responsive and accessible studio', () => {
 
   test('keyboard users see focus in the sidebar', async ({ page }) => {
     await page.goto('/themes')
-    const link = page.getByRole('link', { name: 'Traditional', exact: true })
+    const link = page.getByRole('link', { name: 'Heritage', exact: true })
     await link.focus()
     await page.keyboard.press('Shift+Tab')
     await page.keyboard.press('Tab')

@@ -298,3 +298,20 @@
 .t-minimal[data-variant='quiet-contrast'] .mf-hero__copy::after { content: ''; position: absolute; top: .2rem; left: .2rem; width: 1.6rem; height: 1.6rem; border-top: 1px solid var(--mf-accent); border-left: 1px solid var(--mf-accent); }
 .t-minimal[data-variant='outline'] .mf-hero__copy::after { content: ''; position: absolute; right: 1rem; bottom: 1rem; width: .55rem; aspect-ratio: 1; border: 1px solid var(--mf-accent); transform: rotate(45deg); }
 .t-minimal[data-variant='atelier'] .mf-hero__copy::after { content: ''; display: block; width: 3.5rem; height: 1rem; margin-top: .5rem; background: linear-gradient(90deg, var(--mf-accent) 0 1px, transparent 1px 10px) 0 0 / 10px 100%; }
+
+/* Modern Minimalist uses typography, paper and precise spacing as its art.
+   No floral/filigree assets are loaded or rendered by this family. */
+.t-minimal { --mf-accent: #59634f; }
+.t-minimal[data-variant='monogram'] { --mf-accent: #71603f; }
+.t-minimal[data-variant='soft-grid'] { --mf-accent: #56644c; }
+.t-minimal[data-variant='paper-light'] { --mf-accent: #716957; }
+.t-minimal[data-variant='outline'] { --mf-accent: #716451; }
+.t-minimal[data-variant='still-form'] .mf-hero__copy { display: grid; align-content: center; gap: 1.75rem; }
+.t-minimal[data-variant='still-form'] .mf-hero__copy .mf-kicker { margin-bottom: 0; }
+.t-minimal[data-variant='still-form'] .mf-hero__names { font-weight: 400; letter-spacing: -.055em; }
+.mf-hero__names > span { overflow-wrap: anywhere; max-width: 100%; }
+.mf-hero__copy { min-width: 0; }
+@container site (max-width: 30rem) {
+  .t-minimal[data-variant='still-form'] .mf-hero { padding: 1.5rem; }
+  .t-minimal[data-variant='still-form'] .mf-hero__copy { padding-block: 2rem; }
+}

@@ -13,6 +13,7 @@ import { vReveal } from '../core/directives/reveal'
 import { useHeroHeading } from '../core/composables/useHeroHeading'
 import type { ThemeProps } from '../core/types'
 import TradCorner from './components/TradCorner.vue'
+import TradCrest from './components/TradCrest.vue'
 import TradDivider from './components/TradDivider.vue'
 import './styles/theme.css'
 
@@ -22,12 +23,13 @@ const view = useWeddingView(props)
 </script>
 
 <template>
-  <article class="t-trad" :data-variant="config?.variant ?? 'royal-maroon'">
+  <article class="t-trad" :data-variant="config?.variant ?? 'royal-maroon'" :data-ornament-density="['royal-maroon', 'loomed-lines'].includes(String(config?.variant ?? 'royal-maroon')) ? 'ornate' : 'balanced'">
     <!-- Opening -->
     <header class="trad-hero">
       <div class="trad-frame">
         <TradCorner v-for="pos in ['tl', 'tr', 'bl', 'br']" :key="pos" :class="`trad-corner--${pos}`" />
         <div class="trad-hero__content">
+          <TradCrest />
           <p class="trad-caps trad-gold">{{ view.t.weddingOf }}</p>
           <div v-if="content.opening.coverImage" class="trad-medallion">
             <ThemeImage :image="content.opening.coverImage" eager />

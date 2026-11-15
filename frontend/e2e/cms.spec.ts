@@ -142,7 +142,7 @@ test.describe('Wedding CMS', () => {
   test('the selected theme is stored on the wedding, not just in the browser', async ({ page, browser, freshUser }) => {
     await page.goto('/themes/classic/romantic-floral')
     await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
-    await expect(page.getByTestId('preview-pane').locator('[data-action="select"]')).toHaveText('Selected')
+    await expect(page).toHaveURL(/\/wedding\/(opening|couple|story|events|gallery|rsvp|closing)$/)
     await expect.poll(async () => (await myWedding(page)).themeId).toBe('conventional')
 
     // A completely separate browser (no localStorage) sees the same selection.
@@ -152,6 +152,28 @@ test.describe('Wedding CMS', () => {
     await otherPage.goto('/dashboard')
     await expect(otherPage.getByText(/Conventional \/ Classic|Blush Garden/).first()).toBeVisible()
     await other.close()
+  })
+
+  test('category and collection browse preserve the draft; sidebar previews and explicit selection saves before Edit and Back does not repeat it', async ({ page, freshUser }) => {
+    void freshUser
+    await fillOpening(page)
+    const before = await savedContent(page)
+    await page.goto('/themes')
+    await page.locator('[data-family-card="traditional"] a').click()
+    await expect(page).toHaveURL(/\/themes\/traditional$/)
+    await page.locator('[data-collection-card="artisan-pattern"] a').click()
+    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern$/)
+    expect((await myWedding(page)).themeId).toBeNull()
+    await page.locator('[data-theme-card="ethnic"] h4 a').click()
+    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
+    await expect(page.getByTestId('preview-pane').getByRole('heading', { name: 'Woven Indigo' })).toBeVisible()
+    await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
+    await expect(page).toHaveURL(/\/wedding\/(opening|couple|story|events|gallery|rsvp|closing)$/)
+    expect((await myWedding(page)).themeId).toBe('ethnic')
+    expect(await savedContent(page)).toEqual(before)
+    await page.goBack()
+    await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
+    await expect(page.getByTestId('selection-summary')).toContainText('Heritage')
   })
 
   test('preview renders the saved content with the selected theme', async ({ page, freshUser }) => {

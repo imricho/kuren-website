@@ -10,7 +10,7 @@ import rusticCover from './assets/rustic-nature.svg'
 export const FAMILIES: readonly ThemeFamily[] = [
   {
     id: 'traditional',
-    name: 'Traditional',
+    name: 'Heritage',
     tagline: 'Formal, ornate and timeless wedding styles',
     description:
       'Origin-neutral design styles, from formal ceremony framing to original abstract ornament.',

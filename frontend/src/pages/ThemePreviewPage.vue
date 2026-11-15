@@ -69,7 +69,7 @@ function switchTo(id: string) {
           <select
             id="fs-template"
             :value="template.id"
-            class="max-w-[9rem] rounded-lg border border-line bg-surface px-2 py-2 text-sm sm:max-w-none"
+            class="min-w-0 max-w-[7rem] rounded-lg border border-line bg-surface px-2 py-2 text-sm sm:max-w-none"
             @change="switchTo(($event.target as HTMLSelectElement).value)"
           >
             <option v-for="t in siblings" :key="t.id" :value="t.id">{{ t.name }}</option>

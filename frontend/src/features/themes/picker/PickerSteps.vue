@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** Family → Collection → Template progress indicator shown on every picker page. */
+/** Category → Collection → Template progress indicator shown on every picker page. */
 import { useAppLocale } from '@/composables/useAppLocale'
 
 defineProps<{ current: 1 | 2 | 3 }>()
@@ -8,11 +8,11 @@ const steps = ['family', 'collection', 'template'] as const
 </script>
 
 <template>
-  <ol class="flex w-full flex-nowrap items-center gap-x-1.5 overflow-x-auto text-[0.6875rem] font-medium tracking-[0.06em] uppercase" :aria-label="t('chooseWeddingTheme')">
+  <ol class="grid w-full grid-cols-3 items-start gap-1 text-[0.6875rem] font-medium tracking-[0.06em] uppercase" :aria-label="t('chooseWeddingTheme')">
     <li
       v-for="(step, i) in steps"
       :key="step"
-      class="flex shrink-0 items-center gap-1.5 whitespace-nowrap"
+      class="flex min-w-0 flex-col items-center gap-1.5"
       :class="i + 1 === current ? 'text-rose-600' : i + 1 < current ? 'text-ink-700' : 'text-ink-500'"
       :aria-current="i + 1 === current ? 'step' : undefined"
     >
@@ -24,7 +24,6 @@ const steps = ['family', 'collection', 'template'] as const
         {{ i + 1 }}
       </span>
       <span>{{ t(step) }}</span>
-      <span v-if="i < steps.length - 1" class="text-ink-500" aria-hidden="true">—</span>
     </li>
   </ol>
 </template>

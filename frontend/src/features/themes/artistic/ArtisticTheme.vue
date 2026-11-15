@@ -9,10 +9,12 @@ import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
 import { vReveal } from '../core/directives/reveal'
+import { useHeroHeading } from '../core/composables/useHeroHeading'
 import type { ThemeProps } from '../core/types'
 import './styles/theme.css'
 
 const props = defineProps<ThemeProps>()
+const heroHeading = useHeroHeading()
 const view = useWeddingView(props)
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -23,7 +25,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
     <!-- Opening -->
     <header class="art-hero">
       <p class="art-hero__vertical" aria-hidden="true">{{ view.date.short }}</p>
-      <h1 class="art-hero__names">
+      <h1 v-bind="heroHeading" class="art-hero__names">
         <span class="art-hero__first">{{ content.couple.groom.name.split(' ')[0] }}</span>
         <span class="art-hero__amp">&amp;</span>
         <span class="art-hero__second">{{ content.couple.bride.name.split(' ')[0] }}</span>
@@ -65,6 +67,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
         <figcaption class="art-person__caption">
           <p class="art-mono">{{ i === 0 ? view.t.groom : view.t.bride }}</p>
           <h3 class="art-person__name">{{ person.name }}</h3>
+          <p v-if="person.parents" class="art-body" data-role="parents" style="font-style: italic">{{ person.parents }}</p>
           <p v-if="person.description" class="art-body">{{ person.description }}</p>
         </figcaption>
       </figure>

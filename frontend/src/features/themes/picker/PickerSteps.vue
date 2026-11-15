@@ -13,7 +13,7 @@ const steps = ['family', 'collection', 'template'] as const
       v-for="(step, i) in steps"
       :key="step"
       class="flex shrink-0 items-center gap-1.5 whitespace-nowrap"
-      :class="i + 1 === current ? 'text-rose-600' : i + 1 < current ? 'text-ink-700' : 'text-ink-300'"
+      :class="i + 1 === current ? 'text-rose-600' : i + 1 < current ? 'text-ink-700' : 'text-ink-500'"
       :aria-current="i + 1 === current ? 'step' : undefined"
     >
       <span
@@ -24,7 +24,7 @@ const steps = ['family', 'collection', 'template'] as const
         {{ i + 1 }}
       </span>
       <span>{{ t(step) }}</span>
-      <span v-if="i < steps.length - 1" class="text-ink-300" aria-hidden="true">—</span>
+      <span v-if="i < steps.length - 1" class="text-ink-500" aria-hidden="true">—</span>
     </li>
   </ol>
 </template>

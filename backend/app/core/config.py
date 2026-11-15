@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     session_ttl_hours: int = Field(default=168, ge=1, le=24 * 90)
     session_cookie_secure: bool = False
 
+    # Requests with a larger body are rejected with 413 before being parsed.
+    max_request_body_bytes: int = Field(default=1_048_576, ge=1024)
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:

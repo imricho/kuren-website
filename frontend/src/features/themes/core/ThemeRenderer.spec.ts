@@ -35,6 +35,35 @@ describe('ThemeRenderer', () => {
     },
   )
 
+  it.each(['international', 'traditional', 'ethnic', 'conventional', 'artistic', 'minimalist', 'rustic'])(
+    'announces the %s hero heading as level 2 only when embedded in another page',
+    async (id) => {
+      const full = await renderTheme(sampleWedding, id)
+      expect(full.findAll('h1')).toHaveLength(1)
+      expect(full.find('h1').attributes('aria-level')).toBeUndefined()
+      full.unmount()
+
+      const embedded = await renderTheme(sampleWedding, id, { embedded: true })
+      expect(embedded.find('h1').attributes()).toMatchObject({ role: 'heading', 'aria-level': '2' })
+    },
+  )
+
+  it('renders the parents line under each partner when provided', async () => {
+    const content = {
+      ...sampleWedding,
+      couple: {
+        groom: { ...sampleWedding.couple.groom, parents: 'Putra dari Bapak Hadi & Ibu Sri' },
+        bride: { ...sampleWedding.couple.bride, parents: 'Putri dari Bapak Joko & Ibu Rina' },
+      },
+    }
+    for (const id of ['international', 'traditional', 'ethnic', 'conventional', 'artistic', 'minimalist', 'rustic']) {
+      const wrapper = await renderTheme(content, id)
+      const lines = wrapper.findAll('[data-role="parents"]').map((p) => p.text())
+      expect(lines, id).toEqual(['Putra dari Bapak Hadi & Ibu Sri', 'Putri dari Bapak Joko & Ibu Rina'])
+      wrapper.unmount()
+    }
+  })
+
   it('switches theme when the id changes', async () => {
     const wrapper = await renderTheme(sampleWedding, 'international')
     await wrapper.setProps({ themeId: 'artistic' })

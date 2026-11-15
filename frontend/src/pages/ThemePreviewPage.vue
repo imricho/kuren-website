@@ -4,7 +4,7 @@
  * The control bar sits ABOVE the invitation (sticky, not overlaid on it), and
  * the invitation's "one screen" height excludes the bar, so no content is hidden.
  */
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { previewableTemplatesOf, templatePath } from '@/features/themes/core/registry'
@@ -16,6 +16,7 @@ import { sampleWedding } from '@/features/wedding/sampleWedding'
 import AppLanguageSwitch from '@/components/AppLanguageSwitch.vue'
 import { localizedActions } from '@/features/themes/picker/format'
 import { localizedCatalogText, useAppLocale } from '@/composables/useAppLocale'
+import { useWeddingStore } from '@/stores/wedding'
 
 // Route params are canonical here (see picker/guards.ts).
 const props = defineProps<{ familyId?: string; collectionId?: string; templateSlug?: string }>()
@@ -23,6 +24,9 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useAppLocale()
 const action = computed(() => localizedActions())
+const wedding = useWeddingStore()
+// The selected theme lives on the wedding record (this page is outside AppLayout).
+onMounted(() => void wedding.ensureLoaded())
 
 const path = computed(() => templatePath(props.templateSlug))
 const template = computed(() => path.value?.template as RenderableTemplate | undefined)
@@ -72,7 +76,8 @@ function switchTo(id: string) {
           </select>
         </template>
 
-        <AppLanguageSwitch />
+        <!-- Hidden on phones so the bar fits; the language switch stays in the main app header. -->
+        <span class="hidden sm:inline-flex"><AppLanguageSwitch /></span>
         <SelectTemplateButton :template-id="template.id" :template-name="template.name" size="sm" class="shrink-0" />
       </div>
       <p

@@ -1,40 +1,52 @@
 /**
  * The customer's chosen theme.
  *
- * TEMPORARY (Workstream 2): kept in this browser's localStorage only. The CMS
- * workstream will persist it on the wedding record and load it from the API.
+ * `selectedThemeId` comes from the wedding record (PATCH /weddings/{id}); the
+ * Workstream 2 localStorage value is migrated once by the wedding store (see
+ * `migrateLegacyTheme`). Previewing a template is session-only.
  */
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
-import { getTheme, isThemeId } from '@/features/themes/core/registry'
+import { ApiError } from '@/api/http'
+import { getTheme } from '@/features/themes/core/registry'
 import { isSelectable } from '@/features/themes/core/types'
 
-const STORAGE_KEY = 'kuren.selectedThemeId'
-
-function readStored(): string | null {
-  try {
-    const value = localStorage.getItem(STORAGE_KEY)
-    return isThemeId(value) ? getTheme(value)!.id : null
-  } catch {
-    return null
-  }
-}
+import { StaleError, useWeddingStore } from './wedding'
 
 export const useThemeSelectionStore = defineStore('themeSelection', () => {
-  const selectedThemeId = ref<string | null>(readStored())
+  const wedding = useWeddingStore()
+
+  const selectedThemeId = computed<string | null>(() => wedding.themeId)
   const selectedTheme = computed(() => getTheme(selectedThemeId.value))
 
-  function select(idOrAlias: string) {
+  /** Template id whose selection is being saved, if any. */
+  const pendingThemeId = ref<string | null>(null)
+  /** The last failed selection (cleared on the next attempt). */
+  const error = ref<{ themeId: string; message: string } | null>(null)
+
+  /**
+   * Select a template (pessimistic: `selectedThemeId` changes only once the server
+   * has saved it). Resolves true on success. Drafts and unknown ids are ignored.
+   */
+  async function select(idOrAlias: string): Promise<boolean> {
     // Always store the canonical id, even if an alias was passed. Drafts are preview-only.
     const theme = getTheme(idOrAlias)
-    if (!theme || !isSelectable(theme)) return
+    if (!theme || !isSelectable(theme)) return false
     const id = theme.id
-    selectedThemeId.value = id
+    pendingThemeId.value = id
+    error.value = null
     try {
-      localStorage.setItem(STORAGE_KEY, id)
-    } catch {
-      // Storage unavailable (private mode); selection still works for this visit.
+      await wedding.ensureLoaded()
+      if (wedding.loadState !== 'ready') throw new Error(wedding.loadError ?? 'Your website could not be loaded.')
+      if (wedding.themeId !== id) await wedding.setTheme(id)
+      return true
+    } catch (err) {
+      if (err instanceof StaleError) return false
+      error.value = { themeId: id, message: err instanceof ApiError || err instanceof Error ? err.message : String(err) }
+      return false
+    } finally {
+      if (pendingThemeId.value === id) pendingThemeId.value = null
     }
   }
 
@@ -48,5 +60,5 @@ export const useThemeSelectionStore = defineStore('themeSelection', () => {
     if (id) previewedThemeId.value = id
   }
 
-  return { selectedThemeId, selectedTheme, select, previewedThemeId, preview }
+  return { selectedThemeId, selectedTheme, pendingThemeId, error, select, previewedThemeId, preview }
 })

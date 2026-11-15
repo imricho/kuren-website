@@ -34,8 +34,14 @@ export interface ImageAsset {
 
 export interface PersonProfile {
   name: string
+  /** Short name used in greetings and derived couple names, e.g. "Alex". */
+  nickname?: string
   image?: ImageAsset
   description?: string
+  /** Parents line shown under the name, e.g. "Putra dari Bapak Hadi & Ibu Sri". */
+  parents?: string
+  /** https URL on instagram.com. Themes may ignore it. */
+  instagramUrl?: string
 }
 
 // --- Sections -----------------------------------------------------------------
@@ -109,6 +115,10 @@ export interface RsvpSection {
   introduction?: string
   enabled: boolean
   deadline?: ISODate
+  /** Shown to a guest after they reply (when online RSVP exists). */
+  confirmationMessage?: string
+  /** Whole number 1–20. */
+  maxGuestsPerResponse?: number
 }
 
 export interface ClosingSection {

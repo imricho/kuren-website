@@ -201,7 +201,7 @@ describe('wedding store', () => {
       { kind: 'names', groom: 'Dimas', bride: '' },
       { kind: 'locale', locale: 'id' },
     ])
-    expect(store.livePreviewContent!.story).toBeUndefined()
+    expect(store.livePreviewContent!.story?.enabled).toBe(false)
     expect(store.livePreviewContent!.opening.weddingTitle).toBe('Live title')
     expect(store.livePreviewContent!.couple.groom.name).toBe('Dimas')
     expect(store.livePreviewMissing).toContainEqual({ section: 'couple', field: 'bride.name' })

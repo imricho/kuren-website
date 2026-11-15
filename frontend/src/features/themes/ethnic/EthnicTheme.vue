@@ -4,7 +4,7 @@
  * Patterns and palette come from the active motif set (motifs/), so alternate
  * original pattern systems can be added without touching this layout.
  */
-import CountdownTimer from '../core/components/CountdownTimer.vue'
+import UniversalSection from '../core/components/UniversalSection.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -41,19 +41,21 @@ const view = useWeddingView(props)
       </div>
     </header>
 
-    <section class="eth-section eth-intro">
+    <UniversalSection section="holyRecite1" :content="content" class="eth-section" />
+
+    <section v-if="view.greeting" data-section="greeting" class="eth-section eth-intro">
       <div v-reveal class="eth-col">
         <p class="eth-label eth-label--dark">{{ content.opening.weddingTitle }}</p>
-        <h2 v-if="content.opening.headline" class="eth-title">{{ content.opening.headline }}</h2>
-        <p v-if="content.opening.introduction" class="eth-lead">{{ content.opening.introduction }}</p>
-        <CountdownTimer :content="content" />
+        <h2 v-if="view.greeting?.title" class="eth-title">{{ view.greeting?.title }}</h2>
+        <p v-if="view.greeting?.message" class="eth-lead">{{ view.greeting?.message }}</p>
       </div>
     </section>
 
-    <div class="eth-band" aria-hidden="true" />
+    <div v-if="view.greeting" class="eth-band" aria-hidden="true" />
 
     <!-- Couple -->
     <section data-section="couple" class="eth-section eth-couple" aria-label="The couple">
+      <h2 class="universal-visually-hidden">{{ view.t.couple }}</h2>
       <div class="eth-couple__grid">
         <figure
           v-for="(person, i) in [content.couple.groom, content.couple.bride]"
@@ -74,28 +76,9 @@ const view = useWeddingView(props)
 
     <div class="eth-edge eth-edge--cream" aria-hidden="true" />
 
-    <!-- Story -->
-    <section data-section="story" v-if="view.story" class="eth-section eth-story">
-      <header v-reveal class="eth-col">
-        <h2 class="eth-title">{{ view.story.title }}</h2>
-        <p v-if="view.story.introduction" class="eth-body">{{ view.story.introduction }}</p>
-      </header>
-      <ol class="eth-story__track" aria-label="Timeline">
-        <li v-for="(entry, i) in view.story.timeline" :key="entry.id" class="eth-chapter">
-          <div v-if="entry.image" class="eth-chapter__photo"><ThemeImage :image="entry.image" /></div>
-          <div class="eth-chapter__text">
-            <p class="eth-chapter__meta">
-              <span class="eth-chapter__num">{{ String(i + 1).padStart(2, '0') }}</span>
-              <span v-if="entry.date">{{ entry.date }}</span>
-            </p>
-            <h3 class="eth-chapter__title">{{ entry.title }}</h3>
-            <p class="eth-body">{{ entry.description }}</p>
-          </div>
-        </li>
-      </ol>
-    </section>
-
     <!-- Events -->
+    <UniversalSection section="date" :content="content" class="eth-section" />
+
     <section data-section="events" class="eth-section eth-events">
       <header v-reveal class="eth-col">
         <p class="eth-label eth-label--dark">{{ view.t.saveTheDate }}</p>
@@ -121,7 +104,27 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <div class="eth-edge eth-edge--indigo" aria-hidden="true" />
+    <section data-section="story" v-if="view.story" class="eth-section eth-story">
+      <header v-reveal class="eth-col">
+        <h2 class="eth-title">{{ view.story.title }}</h2>
+        <p v-if="view.story.introduction" class="eth-body">{{ view.story.introduction }}</p>
+      </header>
+      <ol class="eth-story__track" aria-label="Timeline">
+        <li v-for="(entry, i) in view.story.timeline" :key="entry.id" class="eth-chapter">
+          <div v-if="entry.image" class="eth-chapter__photo"><ThemeImage :image="entry.image" /></div>
+          <div class="eth-chapter__text">
+            <p class="eth-chapter__meta">
+              <span class="eth-chapter__num">{{ String(i + 1).padStart(2, '0') }}</span>
+              <span v-if="entry.date">{{ entry.date }}</span>
+            </p>
+            <h3 class="eth-chapter__title">{{ entry.title }}</h3>
+            <p class="eth-body">{{ entry.description }}</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <div v-if="view.gallery" class="eth-edge eth-edge--indigo" aria-hidden="true" />
 
     <!-- Gallery -->
     <section data-section="gallery" v-if="view.gallery" class="eth-section eth-gallery">
@@ -137,10 +140,10 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <div class="eth-band" aria-hidden="true" />
+    <div v-if="view.gallery" class="eth-band" aria-hidden="true" />
 
     <!-- RSVP -->
-    <section data-section="rsvp" class="eth-section eth-rsvp">
+    <section v-if="content.rsvp.enabled" data-section="rsvp" class="eth-section eth-rsvp">
       <div v-reveal class="eth-col">
         <h2 class="eth-title">{{ content.rsvp.title }}</h2>
         <p v-if="content.rsvp.introduction" class="eth-lead">{{ content.rsvp.introduction }}</p>
@@ -150,6 +153,10 @@ const view = useWeddingView(props)
 
     <!-- Closing -->
     <div class="eth-edge eth-edge--indigo" aria-hidden="true" />
+    <UniversalSection section="wishes" :content="content" class="eth-section" />
+    <UniversalSection section="amplopDigital" :content="content" class="eth-section" />
+    <UniversalSection section="holyRecite2" :content="content" class="eth-section" />
+
     <footer data-section="closing" class="eth-closing">
       <div v-if="content.closing.image" class="eth-closing__photo"><ThemeImage :image="content.closing.image" /></div>
       <div v-reveal class="eth-col">

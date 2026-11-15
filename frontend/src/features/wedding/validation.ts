@@ -28,6 +28,37 @@ export function validateWeddingContent(content: WeddingContent): string[] {
 
   if (content.schemaVersion !== WEDDING_SCHEMA_VERSION) problems.push('schemaVersion is not supported')
 
+  if (content.contentVersion !== undefined && content.contentVersion !== '1.1') problems.push('contentVersion is not supported')
+  const toggle = (value: unknown, path: string) => {
+    if (value !== undefined && typeof value !== 'boolean') problems.push(`${path} must be true or false`)
+  }
+  for (const key of ['holyRecite1', 'holyRecite2', 'greeting', 'countdown', 'wishes', 'amplopDigital'] as const) {
+    const section = content[key]
+    if (section) {
+      if (typeof section.enabled !== 'boolean') problems.push(`${key}.enabled must be true or false`)
+    }
+  }
+  toggle(content.story?.enabled, 'story.enabled')
+  toggle(content.gallery?.enabled, 'gallery.enabled')
+  for (const key of ['holyRecite1', 'holyRecite2'] as const) {
+    const section = content[key]
+    if (!section) continue
+    for (const field of ['passage', 'reference', 'originalScript', 'translation'] as const) {
+      if (section[field] !== undefined && typeof section[field] !== 'string') problems.push(`${key}.${field} must be text`)
+    }
+  }
+  const gifts = content.amplopDigital
+  if (gifts) {
+    toggle(gifts.bankAccountsEnabled, 'amplopDigital.bankAccountsEnabled')
+    toggle(gifts.qrisEnabled, 'amplopDigital.qrisEnabled')
+    toggle(gifts.physicalGifts?.enabled, 'amplopDigital.physicalGifts.enabled')
+    if (!Array.isArray(gifts.bankAccounts)) problems.push('amplopDigital.bankAccounts must be a list')
+    else gifts.bankAccounts.forEach((account, i) => {
+      if (typeof account.accountNumber !== 'string') problems.push(`amplopDigital.bankAccounts[${i}].accountNumber must be text`)
+    })
+    image(gifts.qrisImage, 'amplopDigital.qrisImage')
+  }
+
   required(content.opening?.weddingTitle, 'opening.weddingTitle')
   required(content.opening?.coupleNames, 'opening.coupleNames')
   date(content.opening?.weddingDate, 'opening.weddingDate')

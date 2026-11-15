@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import CountdownTimer from '../core/components/CountdownTimer.vue'
+import UniversalSection from '../core/components/UniversalSection.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -42,20 +42,24 @@ const people = computed(() => [
       </div>
     </header>
 
-    <section class="rm2-section rm2-intro">
+    <UniversalSection section="holyRecite1" :content="content" class="rm2-section">
+      <template #decoration><BotanicalOrnament kind="rosette" /></template>
+    </UniversalSection>
+
+    <section v-if="view.greeting" data-section="greeting" class="rm2-section rm2-intro">
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--br" />
       <div class="rm2-heading">
         <BotanicalOrnament kind="rosette" />
         <p class="rm2-eyebrow">{{ content.opening.weddingTitle }}</p>
-        <h2 v-if="content.opening.headline">{{ content.opening.headline }}</h2>
-        <p v-if="content.opening.introduction" class="rm2-lead">{{ content.opening.introduction }}</p>
-        <CountdownTimer :content="content" />
+        <h2 v-if="view.greeting?.title">{{ view.greeting?.title }}</h2>
+        <p v-if="view.greeting?.message" class="rm2-lead">{{ view.greeting?.message }}</p>
         <BotanicalOrnament class="rm2-intro__tail" />
       </div>
     </section>
 
     <section data-section="couple" class="rm2-section rm2-couple" :aria-label="view.locale === 'id' ? 'Mempelai' : 'The couple'">
+      <h2 class="universal-visually-hidden">{{ view.t.couple }}</h2>
       <div class="rm2-section-divider" aria-hidden="true"><span /><BotanicalOrnament kind="rosette" /><span /></div>
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tr" />
@@ -72,18 +76,9 @@ const people = computed(() => [
       <BotanicalOrnament class="rm2-section-tail" />
     </section>
 
-    <section data-section="story" v-if="view.story" class="rm2-section rm2-story">
-      <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
-      <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--br" />
-      <header class="rm2-heading"><BotanicalOrnament kind="rosette" /><h2>{{ view.story.title }}</h2><p v-if="view.story.introduction">{{ view.story.introduction }}</p></header>
-      <ol class="rm2-timeline">
-        <li v-for="entry in view.story.timeline" :key="entry.id" class="rm2-moment">
-          <BotanicalOrnament kind="vine" class="rm2-moment__vine" />
-          <div v-if="entry.image" class="rm2-moment__photo"><ThemeImage :image="entry.image" /><BotanicalOrnament kind="corner" class="rm2-photo-corner" /></div>
-          <div class="rm2-moment__text"><p v-if="entry.date" class="rm2-eyebrow">{{ entry.date }}</p><h3>{{ entry.title }}</h3><p>{{ entry.description }}</p><BotanicalOrnament kind="rosette" class="rm2-moment__seal" /></div>
-        </li>
-      </ol>
-    </section>
+    <UniversalSection section="date" :content="content" class="rm2-section">
+      <template #decoration><BotanicalOrnament kind="rosette" /></template>
+    </UniversalSection>
 
     <section data-section="events" class="rm2-section rm2-events">
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
@@ -104,6 +99,19 @@ const people = computed(() => [
       <div class="rm2-section-divider rm2-events__tail" aria-hidden="true"><span /><BotanicalOrnament kind="rosette" /><span /></div>
     </section>
 
+    <section data-section="story" v-if="view.story" class="rm2-section rm2-story">
+      <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
+      <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--br" />
+      <header class="rm2-heading"><BotanicalOrnament kind="rosette" /><h2>{{ view.story.title }}</h2><p v-if="view.story.introduction">{{ view.story.introduction }}</p></header>
+      <ol class="rm2-timeline">
+        <li v-for="entry in view.story.timeline" :key="entry.id" class="rm2-moment">
+          <BotanicalOrnament kind="vine" class="rm2-moment__vine" />
+          <div v-if="entry.image" class="rm2-moment__photo"><ThemeImage :image="entry.image" /><BotanicalOrnament kind="corner" class="rm2-photo-corner" /></div>
+          <div class="rm2-moment__text"><p v-if="entry.date" class="rm2-eyebrow">{{ entry.date }}</p><h3>{{ entry.title }}</h3><p>{{ entry.description }}</p><BotanicalOrnament kind="rosette" class="rm2-moment__seal" /></div>
+        </li>
+      </ol>
+    </section>
+
     <section data-section="gallery" v-if="view.gallery" class="rm2-section rm2-gallery">
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--br" />
@@ -114,7 +122,7 @@ const people = computed(() => [
       <div class="rm2-section-divider" aria-hidden="true"><span /><BotanicalOrnament kind="rosette" /><span /></div>
     </section>
 
-    <section data-section="rsvp" class="rm2-section rm2-rsvp">
+    <section v-if="content.rsvp.enabled" data-section="rsvp" class="rm2-section rm2-rsvp">
       <div class="rm2-panel">
         <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
         <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tr" />
@@ -127,6 +135,16 @@ const people = computed(() => [
         <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--br" />
       </div>
     </section>
+
+    <UniversalSection section="wishes" :content="content" class="rm2-section">
+      <template #decoration><BotanicalOrnament kind="rosette" /></template>
+    </UniversalSection>
+    <UniversalSection section="amplopDigital" :content="content" class="rm2-section">
+      <template #decoration><BotanicalOrnament kind="rosette" /></template>
+    </UniversalSection>
+    <UniversalSection section="holyRecite2" :content="content" class="rm2-section">
+      <template #decoration><BotanicalOrnament kind="rosette" /></template>
+    </UniversalSection>
 
     <footer data-section="closing" class="rm2-closing rm2-section">
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />

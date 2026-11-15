@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** Field Notes: a garden-led invitation with organic pacing and original botanical linework. */
-import CountdownTimer from '../core/components/CountdownTimer.vue'
+import UniversalSection from '../core/components/UniversalSection.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -33,16 +33,18 @@ const view = useWeddingView(props)
       <div class="rn-hero__bottomline"><span>{{ content.opening.coupleNames }}</span><span>TOGETHER, IN EVERY SEASON</span></div>
     </header>
 
-    <section class="rn-section rn-intro">
+    <UniversalSection section="holyRecite1" :content="content" class="rn-section" />
+
+    <section v-if="view.greeting" data-section="greeting" class="rn-section rn-intro">
       <div v-reveal class="rn-intro__copy">
         <p class="rn-kicker">{{ content.opening.weddingTitle }}</p>
-        <h2 v-if="content.opening.headline">{{ content.opening.headline }}</h2>
-        <p v-if="content.opening.introduction" class="rn-body">{{ content.opening.introduction }}</p>
+        <h2 v-if="view.greeting?.title">{{ view.greeting?.title }}</h2>
+        <p v-if="view.greeting?.message" class="rn-body">{{ view.greeting?.message }}</p>
       </div>
-      <CountdownTimer :content="content" />
     </section>
 
     <section data-section="couple" class="rn-section rn-couple" aria-label="The couple">
+      <h2 class="universal-visually-hidden">{{ view.t.couple }}</h2>
       <div class="rn-section-heading" v-reveal>
         <p class="rn-kicker">THE PEOPLE WE CELEBRATE</p>
         <h2>A gathering of two stories</h2>
@@ -60,24 +62,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section data-section="story" v-if="view.story" class="rn-section rn-story">
-      <header v-reveal class="rn-section-heading rn-section-heading--center">
-        <p class="rn-kicker">CHAPTERS ALONG THE WAY</p>
-        <h2>{{ view.story.title }}</h2>
-        <p v-if="view.story.introduction" class="rn-body">{{ view.story.introduction }}</p>
-      </header>
-      <ol class="rn-story__list">
-        <li v-for="(entry, i) in view.story.timeline" :key="entry.id" v-reveal class="rn-story__entry">
-          <span class="rn-story__marker" aria-hidden="true"><span>{{ String(i + 1).padStart(2, '0') }}</span></span>
-          <div v-if="entry.image" class="rn-story__photo"><ThemeImage :image="entry.image" /></div>
-          <div class="rn-story__copy">
-            <p v-if="entry.date" class="rn-kicker">{{ entry.date }}</p>
-            <h3>{{ entry.title }}</h3>
-            <p class="rn-body">{{ entry.description }}</p>
-          </div>
-        </li>
-      </ol>
-    </section>
+    <UniversalSection section="date" :content="content" class="rn-section" />
 
     <section data-section="events" class="rn-section rn-events">
       <header v-reveal class="rn-section-heading">
@@ -101,6 +86,25 @@ const view = useWeddingView(props)
       </div>
     </section>
 
+    <section data-section="story" v-if="view.story" class="rn-section rn-story">
+      <header v-reveal class="rn-section-heading rn-section-heading--center">
+        <p class="rn-kicker">CHAPTERS ALONG THE WAY</p>
+        <h2>{{ view.story.title }}</h2>
+        <p v-if="view.story.introduction" class="rn-body">{{ view.story.introduction }}</p>
+      </header>
+      <ol class="rn-story__list">
+        <li v-for="(entry, i) in view.story.timeline" :key="entry.id" v-reveal class="rn-story__entry">
+          <span class="rn-story__marker" aria-hidden="true"><span>{{ String(i + 1).padStart(2, '0') }}</span></span>
+          <div v-if="entry.image" class="rn-story__photo"><ThemeImage :image="entry.image" /></div>
+          <div class="rn-story__copy">
+            <p v-if="entry.date" class="rn-kicker">{{ entry.date }}</p>
+            <h3>{{ entry.title }}</h3>
+            <p class="rn-body">{{ entry.description }}</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
     <section data-section="gallery" v-if="view.gallery" class="rn-section rn-gallery">
       <header v-reveal class="rn-section-heading">
         <p class="rn-kicker">LITTLE THINGS, KEPT CLOSE</p>
@@ -115,7 +119,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section data-section="rsvp" class="rn-section rn-rsvp">
+    <section v-if="content.rsvp.enabled" data-section="rsvp" class="rn-section rn-rsvp">
       <div class="rn-rsvp__ornament" aria-hidden="true">
         <svg viewBox="0 0 200 200" focusable="false"><path d="M20 180 C70 144 71 87 120 28 M61 132 C38 124 32 103 45 91 C63 103 68 116 61 132ZM85 96 C65 83 66 61 82 52 C99 65 98 83 85 96ZM113 58 C103 37 116 20 135 18 C143 36 133 53 113 58ZM78 111 C99 115 110 132 101 148 C82 145 73 128 78 111Z" fill="none" stroke="currentColor" stroke-width="1.3" /></svg>
       </div>
@@ -126,6 +130,10 @@ const view = useWeddingView(props)
         <RsvpPreview :content="content" />
       </div>
     </section>
+
+    <UniversalSection section="wishes" :content="content" class="rn-section" />
+    <UniversalSection section="amplopDigital" :content="content" class="rn-section" />
+    <UniversalSection section="holyRecite2" :content="content" class="rn-section" />
 
     <footer data-section="closing" class="rn-closing">
       <div v-if="content.closing.image" class="rn-closing__photo"><ThemeImage :image="content.closing.image" /></div>

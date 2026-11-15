@@ -3,7 +3,7 @@
  * Conventional — romantic, familiar invitation aesthetic.
  * Blush & sage pastels, original SVG florals, arched photo frames, script names.
  */
-import CountdownTimer from '../core/components/CountdownTimer.vue'
+import UniversalSection from '../core/components/UniversalSection.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -35,17 +35,19 @@ const view = useWeddingView(props)
       </div>
     </header>
 
-    <section class="conv-section conv-intro">
+    <UniversalSection section="holyRecite1" :content="content" class="conv-section" />
+
+    <section v-if="view.greeting" data-section="greeting" class="conv-section conv-intro">
       <div v-reveal class="conv-col">
         <ConvSprig class="conv-sprig--small" />
-        <h2 v-if="content.opening.headline" class="conv-title">{{ content.opening.headline }}</h2>
-        <p v-if="content.opening.introduction" class="conv-lead">{{ content.opening.introduction }}</p>
-        <CountdownTimer :content="content" />
+        <h2 v-if="view.greeting?.title" class="conv-title">{{ view.greeting?.title }}</h2>
+        <p v-if="view.greeting?.message" class="conv-lead">{{ view.greeting?.message }}</p>
       </div>
     </section>
 
     <!-- Couple -->
     <section data-section="couple" class="conv-section conv-couple" aria-label="The couple">
+      <h2 class="universal-visually-hidden">{{ view.t.couple }}</h2>
       <div class="conv-couple__grid">
         <figure v-reveal class="conv-person">
           <div v-if="content.couple.groom.image" class="conv-arch"><ThemeImage :image="content.couple.groom.image" /></div>
@@ -69,25 +71,9 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <!-- Story -->
-    <section data-section="story" v-if="view.story" class="conv-section conv-story">
-      <header v-reveal class="conv-col">
-        <h2 class="conv-title">{{ view.story.title }}</h2>
-        <p v-if="view.story.introduction" class="conv-body">{{ view.story.introduction }}</p>
-      </header>
-      <ol class="conv-timeline">
-        <li v-for="entry in view.story.timeline" :key="entry.id" v-reveal class="conv-moment">
-          <div v-if="entry.image" class="conv-moment__photo"><ThemeImage :image="entry.image" /></div>
-          <div class="conv-moment__text">
-            <p v-if="entry.date" class="conv-moment__date">{{ entry.date }}</p>
-            <h3 class="conv-moment__title">{{ entry.title }}</h3>
-            <p class="conv-body">{{ entry.description }}</p>
-          </div>
-        </li>
-      </ol>
-    </section>
-
     <!-- Events -->
+    <UniversalSection section="date" :content="content" class="conv-section" />
+
     <section data-section="events" class="conv-section conv-events">
       <header v-reveal class="conv-col">
         <p class="conv-caps">{{ view.t.saveTheDate }}</p>
@@ -109,6 +95,23 @@ const view = useWeddingView(props)
       </div>
     </section>
 
+    <section data-section="story" v-if="view.story" class="conv-section conv-story">
+      <header v-reveal class="conv-col">
+        <h2 class="conv-title">{{ view.story.title }}</h2>
+        <p v-if="view.story.introduction" class="conv-body">{{ view.story.introduction }}</p>
+      </header>
+      <ol class="conv-timeline">
+        <li v-for="entry in view.story.timeline" :key="entry.id" v-reveal class="conv-moment">
+          <div v-if="entry.image" class="conv-moment__photo"><ThemeImage :image="entry.image" /></div>
+          <div class="conv-moment__text">
+            <p v-if="entry.date" class="conv-moment__date">{{ entry.date }}</p>
+            <h3 class="conv-moment__title">{{ entry.title }}</h3>
+            <p class="conv-body">{{ entry.description }}</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
     <!-- Gallery -->
     <section data-section="gallery" v-if="view.gallery" class="conv-section conv-gallery">
       <header v-reveal class="conv-col">
@@ -124,7 +127,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- RSVP -->
-    <section data-section="rsvp" class="conv-section conv-rsvp">
+    <section v-if="content.rsvp.enabled" data-section="rsvp" class="conv-section conv-rsvp">
       <div v-reveal class="conv-card">
         <div class="conv-col">
           <h2 class="conv-title">{{ content.rsvp.title }}</h2>
@@ -135,6 +138,10 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Closing -->
+    <UniversalSection section="wishes" :content="content" class="conv-section" />
+    <UniversalSection section="amplopDigital" :content="content" class="conv-section" />
+    <UniversalSection section="holyRecite2" :content="content" class="conv-section" />
+
     <footer data-section="closing" class="conv-closing">
       <ConvBouquet class="conv-bouquet--tl" />
       <ConvBouquet class="conv-bouquet--br" />

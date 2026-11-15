@@ -8,10 +8,11 @@ docs/api/weddings.md, omitting keys that are not set.
 from typing import Any, Literal
 
 from sqlalchemy.orm import Session
+from pydantic.alias_generators import to_camel
 
 from app.core.errors import NotFoundError
 from app.models import Wedding
-from app.schemas.wedding import SECTION_MODELS, RequestModel, WeddingDraftIn
+from app.schemas.wedding import SECTION_MODELS, UNIVERSAL_FIELDS, RequestModel, WeddingDraftIn
 from app.services import wedding_service
 from app.services.wedding_collection_service import (
     check_replacement,
@@ -31,8 +32,8 @@ _SECTIONS: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
         ("coverImage",),
     ),
     "couple": ("couple", (), ()),
-    "story": ("story_meta", ("title", "introduction"), ()),
-    "gallery": ("gallery_meta", ("title", "description"), ()),
+    "story": ("story_meta", ("title", "introduction", "enabled"), ()),
+    "gallery": ("gallery_meta", ("title", "description", "enabled"), ()),
     "rsvp": (
         "rsvp",
         ("title", "introduction", "deadline", "confirmationMessage", "maxGuestsPerResponse"),
@@ -90,7 +91,12 @@ def put_section(db: Session, wedding: Wedding, section: SectionName, payload: Re
     if section not in _SECTIONS or not isinstance(payload, SECTION_MODELS[section]):
         raise NotFoundError("Section not found.")
     wedding_service.lock_wedding(db, wedding)
-    setattr(wedding, _SECTIONS[section][0], dump_section(payload))
+    stored = dump_section(payload)
+    if section in ("story", "gallery") and "enabled" not in payload.model_fields_set:
+        previous = getattr(wedding, _SECTIONS[section][0]) or {}
+        if "enabled" in previous:
+            stored["enabled"] = previous["enabled"]
+    setattr(wedding, _SECTIONS[section][0], stored)
     wedding_service.touch(wedding)
     db.commit()
     return section_out(wedding, section)
@@ -98,6 +104,7 @@ def put_section(db: Session, wedding: Wedding, section: SectionName, payload: Re
 
 def assemble_draft(db: Session, wedding: Wedding) -> dict[str, Any]:
     return {
+        **(wedding.universal_content or {}),
         "schemaVersion": wedding.schema_version,
         "locale": wedding.locale,
         "opening": section_out(wedding, "opening"),
@@ -114,6 +121,16 @@ def build_preview(db: Session, wedding: Wedding) -> dict[str, Any]:
     return {"themeId": wedding.theme_id, "content": assemble_draft(db, wedding)}
 
 
+def _merge_supplied(previous: Any, supplied: Any) -> Any:
+    """Merge explicit object fields; null resets and arrays replace atomically."""
+    if not isinstance(supplied, dict):
+        return supplied
+    merged = dict(previous) if isinstance(previous, dict) else {}
+    for key, value in supplied.items():
+        merged[key] = _merge_supplied(merged.get(key), value)
+    return merged
+
+
 def replace_content(db: Session, wedding: Wedding, draft: WeddingDraftIn) -> dict[str, Any]:
     """Replace every section and collection in one transaction."""
     check_replacement("stories", draft.story.timeline, field="story.timeline")
@@ -123,10 +140,24 @@ def replace_content(db: Session, wedding: Wedding, draft: WeddingDraftIn) -> dic
     wedding_service.lock_wedding(db, wedding)
     if draft.locale is not None:
         wedding.locale = draft.locale
+    # Legacy clients do not know extension fields. Preserve them on their PUTs;
+    # explicit null is retained as a reset and disabled sections keep their data.
+    extensions = dict(wedding.universal_content or {})
+    supplied = draft.model_dump(mode="json", by_alias=True, exclude_unset=True)
+    for field in UNIVERSAL_FIELDS:
+        alias = to_camel(field)
+        if field in draft.model_fields_set:
+            extensions[alias] = _merge_supplied(extensions.get(alias), supplied[alias])
+    wedding.universal_content = extensions
     wedding.opening = dump_section(draft.opening)
     wedding.couple = dump_section(draft.couple)
-    wedding.story_meta = dump_section(draft.story, exclude={"timeline"})
-    wedding.gallery_meta = dump_section(draft.gallery, exclude={"images"})
+    for section, column, collection_key in (("story", "story_meta", "timeline"), ("gallery", "gallery_meta", "images")):
+        payload = getattr(draft, section)
+        stored = dump_section(payload, exclude={collection_key})
+        previous = getattr(wedding, column) or {}
+        if "enabled" not in payload.model_fields_set and "enabled" in previous:
+            stored["enabled"] = previous["enabled"]
+        setattr(wedding, column, stored)
     wedding.rsvp = dump_section(draft.rsvp)
     wedding.closing = dump_section(draft.closing)
     replace_items(db, wedding, "stories", draft.story.timeline)

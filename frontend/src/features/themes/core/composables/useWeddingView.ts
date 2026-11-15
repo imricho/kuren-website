@@ -15,6 +15,9 @@ export function useWeddingView(props: { content: WeddingContent }) {
     const c = props.content
     const locale = c.locale ?? 'en'
     return {
+      greeting: c.greeting ? (c.greeting.enabled ? c.greeting : undefined) : {
+        enabled: true, title: c.opening.headline, message: c.opening.introduction,
+      },
       locale,
       t: labels(locale),
       date: {
@@ -31,8 +34,8 @@ export function useWeddingView(props: { content: WeddingContent }) {
         timeText: formatTimeRange(event.startTime, event.endTime, locale),
         mapHref: mapsLink(event),
       })),
-      story: c.story && c.story.timeline.length > 0 ? c.story : undefined,
-      gallery: c.gallery && c.gallery.images.length > 0 ? c.gallery : undefined,
+      story: c.story && c.story.enabled !== false && c.story.timeline.length > 0 ? c.story : undefined,
+      gallery: c.gallery && c.gallery.enabled !== false && c.gallery.images.length > 0 ? c.gallery : undefined,
     }
   })
 }

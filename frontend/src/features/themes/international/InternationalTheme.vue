@@ -3,7 +3,7 @@
  * International — modern editorial minimalism.
  * Neutral palette, large refined serif, generous whitespace, full-bleed photos.
  */
-import CountdownTimer from '../core/components/CountdownTimer.vue'
+import UniversalSection from '../core/components/UniversalSection.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -35,19 +35,21 @@ const view = useWeddingView(props)
       </div>
     </header>
 
-    <section class="intl-section intl-intro">
+    <UniversalSection section="holyRecite1" :content="content" class="intl-section" />
+
+    <section v-if="view.greeting" data-section="greeting" class="intl-section intl-intro">
       <div v-reveal class="intl-narrow">
         <p class="intl-eyebrow">{{ content.opening.weddingTitle }}</p>
-        <h2 v-if="content.opening.headline" class="intl-display">{{ content.opening.headline }}</h2>
+        <h2 v-if="view.greeting?.title" class="intl-display">{{ view.greeting?.title }}</h2>
         <!-- Keeps the heading order (h1 → h2 → h3) when there is no headline. -->
         <h2 v-else class="sr-only">{{ view.t.couple }}</h2>
-        <p v-if="content.opening.introduction" class="intl-lead">{{ content.opening.introduction }}</p>
-        <CountdownTimer :content="content" />
+        <p v-if="view.greeting?.message" class="intl-lead">{{ view.greeting?.message }}</p>
       </div>
     </section>
 
     <!-- Couple -->
     <section data-section="couple" class="intl-section intl-couple" aria-label="The couple">
+      <h2 class="universal-visually-hidden">{{ view.t.couple }}</h2>
       <div class="intl-couple__grid">
         <figure v-for="(person, i) in [content.couple.groom, content.couple.bride]" :key="i" v-reveal class="intl-person">
           <div v-if="person.image" class="intl-person__photo"><ThemeImage :image="person.image" /></div>
@@ -61,27 +63,9 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <!-- Our story -->
-    <section data-section="story" v-if="view.story" class="intl-section intl-story">
-      <div class="intl-wide">
-        <header v-reveal class="intl-heading">
-          <h2 class="intl-display">{{ view.story.title }}</h2>
-          <p v-if="view.story.introduction" class="intl-body">{{ view.story.introduction }}</p>
-        </header>
-        <ol class="intl-timeline">
-          <li v-for="entry in view.story.timeline" :key="entry.id" v-reveal class="intl-chapter">
-            <p class="intl-chapter__date">{{ entry.date }}</p>
-            <div class="intl-chapter__body">
-              <h3 class="intl-chapter__title">{{ entry.title }}</h3>
-              <p class="intl-body">{{ entry.description }}</p>
-            </div>
-            <div v-if="entry.image" class="intl-chapter__photo"><ThemeImage :image="entry.image" /></div>
-          </li>
-        </ol>
-      </div>
-    </section>
-
     <!-- Events -->
+    <UniversalSection section="date" :content="content" class="intl-section" />
+
     <section data-section="events" class="intl-section intl-events">
       <div class="intl-wide">
         <header v-reveal class="intl-heading">
@@ -108,6 +92,25 @@ const view = useWeddingView(props)
       </div>
     </section>
 
+    <section data-section="story" v-if="view.story" class="intl-section intl-story">
+      <div class="intl-wide">
+        <header v-reveal class="intl-heading">
+          <h2 class="intl-display">{{ view.story.title }}</h2>
+          <p v-if="view.story.introduction" class="intl-body">{{ view.story.introduction }}</p>
+        </header>
+        <ol class="intl-timeline">
+          <li v-for="entry in view.story.timeline" :key="entry.id" v-reveal class="intl-chapter">
+            <p class="intl-chapter__date">{{ entry.date }}</p>
+            <div class="intl-chapter__body">
+              <h3 class="intl-chapter__title">{{ entry.title }}</h3>
+              <p class="intl-body">{{ entry.description }}</p>
+            </div>
+            <div v-if="entry.image" class="intl-chapter__photo"><ThemeImage :image="entry.image" /></div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
     <!-- Gallery -->
     <section data-section="gallery" v-if="view.gallery" class="intl-section intl-gallery">
       <div class="intl-wide">
@@ -125,7 +128,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- RSVP -->
-    <section data-section="rsvp" class="intl-section intl-rsvp">
+    <section v-if="content.rsvp.enabled" data-section="rsvp" class="intl-section intl-rsvp">
       <div v-reveal class="intl-narrow">
         <h2 class="intl-display">{{ content.rsvp.title }}</h2>
         <p v-if="content.rsvp.introduction" class="intl-lead">{{ content.rsvp.introduction }}</p>
@@ -134,6 +137,10 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Closing -->
+    <UniversalSection section="wishes" :content="content" class="intl-section" />
+    <UniversalSection section="amplopDigital" :content="content" class="intl-section" />
+    <UniversalSection section="holyRecite2" :content="content" class="intl-section" />
+
     <footer data-section="closing" class="intl-closing">
       <div v-if="content.closing.image" class="intl-closing__media"><ThemeImage :image="content.closing.image" /></div>
       <div v-reveal class="intl-narrow intl-closing__text">

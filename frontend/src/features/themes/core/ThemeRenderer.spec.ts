@@ -53,7 +53,7 @@ describe('ThemeRenderer', () => {
     async (id) => {
       const wrapper = await renderTheme(sampleWedding, id)
       const keys = wrapper.findAll('[data-section]').map((el) => el.attributes('data-section'))
-      expect(keys).toEqual(['opening', 'couple', 'story', 'events', 'gallery', 'rsvp', 'closing'])
+      expect(keys).toEqual(['opening', 'greeting', 'couple', 'weddingDate', 'events', 'story', 'gallery', 'rsvp', 'closing'])
     },
   )
 
@@ -65,8 +65,8 @@ describe('ThemeRenderer', () => {
       gallery: { ...sampleWedding.gallery, enabled: false },
     } as never)
     const content = toPreviewContent(draft, 'en').content
-    expect(content.story).toBeUndefined()
-    expect(content.gallery).toBeUndefined()
+    expect(content.story?.enabled).toBe(false)
+    expect(content.gallery?.enabled).toBe(false)
     const wrapper = await renderTheme(content, 'royal-maroon-v2')
     expect(wrapper.find('[data-section="story"]').exists()).toBe(false)
     expect(wrapper.find('[data-section="gallery"]').exists()).toBe(false)

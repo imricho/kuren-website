@@ -5,7 +5,7 @@
  * Deliberately generic: no single regional tradition. Regional variants can
  * swap the ornament components and palette without touching the layout.
  */
-import CountdownTimer from '../core/components/CountdownTimer.vue'
+import UniversalSection from '../core/components/UniversalSection.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -44,20 +44,22 @@ const view = useWeddingView(props)
       </div>
     </header>
 
-    <div class="trad-band" aria-hidden="true" />
+    <div v-if="view.greeting || content.holyRecite1?.enabled" class="trad-band" aria-hidden="true" />
 
-    <section class="trad-section trad-intro">
+    <UniversalSection section="holyRecite1" :content="content" class="trad-section" />
+
+    <section v-if="view.greeting" data-section="greeting" class="trad-section trad-intro">
       <div v-reveal class="trad-col">
         <p class="trad-caps trad-maroon">{{ content.opening.weddingTitle }}</p>
-        <h2 v-if="content.opening.headline" class="trad-title">{{ content.opening.headline }}</h2>
+        <h2 v-if="view.greeting?.title" class="trad-title">{{ view.greeting?.title }}</h2>
         <TradDivider />
-        <p v-if="content.opening.introduction" class="trad-lead">{{ content.opening.introduction }}</p>
-        <CountdownTimer :content="content" />
+        <p v-if="view.greeting?.message" class="trad-lead">{{ view.greeting?.message }}</p>
       </div>
     </section>
 
     <!-- Couple -->
     <section data-section="couple" class="trad-section trad-couple" aria-label="The couple">
+      <h2 class="universal-visually-hidden">{{ view.t.couple }}</h2>
       <div class="trad-couple__grid">
         <figure v-reveal class="trad-person">
           <div v-if="content.couple.groom.image" class="trad-portrait"><ThemeImage :image="content.couple.groom.image" /></div>
@@ -81,28 +83,10 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <!-- Story -->
-    <section data-section="story" v-if="view.story" class="trad-section trad-story">
-      <header v-reveal class="trad-col">
-        <h2 class="trad-title">{{ view.story.title }}</h2>
-        <TradDivider />
-        <p v-if="view.story.introduction" class="trad-body">{{ view.story.introduction }}</p>
-      </header>
-      <ol class="trad-timeline">
-        <li v-for="entry in view.story.timeline" :key="entry.id" v-reveal class="trad-moment">
-          <span class="trad-moment__node" aria-hidden="true" />
-          <div class="trad-moment__card">
-            <div v-if="entry.image" class="trad-moment__photo"><ThemeImage :image="entry.image" /></div>
-            <p v-if="entry.date" class="trad-caps trad-maroon">{{ entry.date }}</p>
-            <h3 class="trad-moment__title">{{ entry.title }}</h3>
-            <p class="trad-body">{{ entry.description }}</p>
-          </div>
-        </li>
-      </ol>
-    </section>
-
     <!-- Events -->
     <div class="trad-band" aria-hidden="true" />
+    <UniversalSection section="date" :content="content" class="trad-section" />
+
     <section data-section="events" class="trad-section trad-events">
       <header v-reveal class="trad-col">
         <p class="trad-caps trad-gold">{{ view.t.saveTheDate }}</p>
@@ -123,7 +107,26 @@ const view = useWeddingView(props)
         </article>
       </div>
     </section>
-    <div class="trad-band" aria-hidden="true" />
+
+    <section data-section="story" v-if="view.story" class="trad-section trad-story">
+      <header v-reveal class="trad-col">
+        <h2 class="trad-title">{{ view.story.title }}</h2>
+        <TradDivider />
+        <p v-if="view.story.introduction" class="trad-body">{{ view.story.introduction }}</p>
+      </header>
+      <ol class="trad-timeline">
+        <li v-for="entry in view.story.timeline" :key="entry.id" v-reveal class="trad-moment">
+          <span class="trad-moment__node" aria-hidden="true" />
+          <div class="trad-moment__card">
+            <div v-if="entry.image" class="trad-moment__photo"><ThemeImage :image="entry.image" /></div>
+            <p v-if="entry.date" class="trad-caps trad-maroon">{{ entry.date }}</p>
+            <h3 class="trad-moment__title">{{ entry.title }}</h3>
+            <p class="trad-body">{{ entry.description }}</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+    <div v-if="view.story" class="trad-band" aria-hidden="true" />
 
     <!-- Gallery -->
     <section data-section="gallery" v-if="view.gallery" class="trad-section trad-gallery">
@@ -141,7 +144,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- RSVP -->
-    <section data-section="rsvp" class="trad-section trad-rsvp">
+    <section v-if="content.rsvp.enabled" data-section="rsvp" class="trad-section trad-rsvp">
       <div v-reveal class="trad-panel">
         <TradCorner v-for="pos in ['tl', 'tr', 'bl', 'br']" :key="pos" :class="`trad-corner--${pos}`" />
         <div class="trad-col">
@@ -154,6 +157,10 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Closing -->
+    <UniversalSection section="wishes" :content="content" class="trad-section" />
+    <UniversalSection section="amplopDigital" :content="content" class="trad-section" />
+    <UniversalSection section="holyRecite2" :content="content" class="trad-section" />
+
     <footer data-section="closing" class="trad-closing">
       <div class="trad-band" aria-hidden="true" />
       <div v-reveal class="trad-col trad-closing__inner">

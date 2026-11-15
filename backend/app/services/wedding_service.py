@@ -20,10 +20,17 @@ def get_owned_wedding(db: Session, *, owner_id: uuid.UUID, wedding_id: uuid.UUID
 
 
 def lock_wedding(db: Session, wedding: Wedding) -> Wedding:
-    """Take a row lock on the wedding to serialise content/collection writes."""
-    db.execute(
-        select(Wedding.id).where(Wedding.id == wedding.id).with_for_update()
+    """Lock and refresh before reading JSON used by a read-modify-write.
+
+    Ownership lookup may have loaded this instance before a concurrent writer
+    committed. A lock on just its id does not refresh that stale ORM state.
+    """
+    locked = db.scalar(
+        select(Wedding).where(Wedding.id == wedding.id).with_for_update()
+        .execution_options(populate_existing=True)
     )
+    if locked is None:
+        raise NotFoundError("Wedding not found.")
     return wedding
 
 

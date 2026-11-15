@@ -12,7 +12,7 @@ import ThemeRenderer from '@/features/themes/core/ThemeRenderer.vue'
 import type { RenderableTemplate } from '@/features/themes/core/types'
 import { collectionRoute, previewRoute } from '@/features/themes/picker/routes'
 import SelectTemplateButton from '@/features/themes/picker/SelectTemplateButton.vue'
-import { sampleWedding } from '@/features/wedding/sampleWedding'
+import { universalDemo } from '@/features/wedding/universalDemo'
 import AppLanguageSwitch from '@/components/AppLanguageSwitch.vue'
 import { localizedActions } from '@/features/themes/picker/format'
 import { localizedCatalogText, useAppLocale } from '@/composables/useAppLocale'
@@ -91,7 +91,7 @@ function switchTo(id: string) {
     </header>
 
     <main :aria-label="`${template.name} ${action.preview.toLowerCase()} · ${t('sampleWedding')}`">
-      <ThemeRenderer :content="sampleWedding" :theme-id="template.id" viewport-height="calc(100svh - var(--toolbar-h))" />
+      <ThemeRenderer :content="universalDemo" :theme-id="template.id" viewport-height="calc(100svh - var(--toolbar-h))" />
     </main>
   </div>
 </template>

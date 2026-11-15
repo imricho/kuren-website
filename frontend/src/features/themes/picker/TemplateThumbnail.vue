@@ -3,7 +3,7 @@
  * A live, clipped rendering of the template's actual hero. This keeps picker
  * thumbnails in sync with its renderer, visual preset and current styles.
  */
-import { sampleWedding } from '@/features/wedding/sampleWedding'
+import { universalDemo } from '@/features/wedding/universalDemo'
 
 import ThemeRenderer from '../core/ThemeRenderer.vue'
 import type { RenderableTemplate } from '../core/types'
@@ -15,7 +15,7 @@ defineProps<{ template: RenderableTemplate }>()
   <div class="template-thumbnail" aria-hidden="true" inert>
     <img class="template-thumbnail__fallback" :src="template.previewImage" alt="" loading="lazy" />
     <div class="template-thumbnail__viewport">
-      <ThemeRenderer :content="sampleWedding" :theme-id="template.id" viewport-height="500px" />
+      <ThemeRenderer :content="universalDemo" :theme-id="template.id" viewport-height="500px" />
     </div>
   </div>
 </template>

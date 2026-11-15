@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** Warm, sans-led minimalism: precise alignment, tactile neutrals and restrained detail. */
-import CountdownTimer from '../core/components/CountdownTimer.vue'
+import UniversalSection from '../core/components/UniversalSection.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -50,16 +50,18 @@ const view = useWeddingView(props)
       </div>
     </header>
 
-    <section class="mf-section mf-intro">
+    <UniversalSection section="holyRecite1" :content="content" class="mf-section" />
+
+    <section v-if="view.greeting" data-section="greeting" class="mf-section mf-intro">
       <div v-reveal class="mf-intro__copy">
         <p class="mf-kicker">{{ content.opening.weddingTitle }}</p>
-        <h2 v-if="content.opening.headline">{{ content.opening.headline }}</h2>
-        <p v-if="content.opening.introduction" class="mf-body">{{ content.opening.introduction }}</p>
+        <h2 v-if="view.greeting?.title">{{ view.greeting?.title }}</h2>
+        <p v-if="view.greeting?.message" class="mf-body">{{ view.greeting?.message }}</p>
       </div>
-      <CountdownTimer :content="content" />
     </section>
 
     <section data-section="couple" class="mf-section mf-couple" aria-label="The couple">
+      <h2 class="universal-visually-hidden">{{ view.t.couple }}</h2>
       <div class="mf-section-label"><span>01</span><span>THE PEOPLE</span></div>
       <div class="mf-couple__grid">
         <figure v-for="(person, i) in [content.couple.groom, content.couple.bride]" :key="i" v-reveal class="mf-person">
@@ -74,24 +76,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section data-section="story" v-if="view.story" class="mf-section mf-story">
-      <header v-reveal class="mf-section-heading">
-        <div class="mf-section-label"><span>02</span><span>THE STORY</span></div>
-        <h2>{{ view.story.title }}</h2>
-        <p v-if="view.story.introduction" class="mf-body">{{ view.story.introduction }}</p>
-      </header>
-      <ol class="mf-story__list">
-        <li v-for="(entry, i) in view.story.timeline" :key="entry.id" v-reveal class="mf-story__entry">
-          <span class="mf-story__number">{{ String(i + 1).padStart(2, '0') }}</span>
-          <div v-if="entry.image" class="mf-story__photo"><ThemeImage :image="entry.image" /></div>
-          <div class="mf-story__copy">
-            <p v-if="entry.date" class="mf-kicker">{{ entry.date }}</p>
-            <h3>{{ entry.title }}</h3>
-            <p class="mf-body">{{ entry.description }}</p>
-          </div>
-        </li>
-      </ol>
-    </section>
+    <UniversalSection section="date" :content="content" class="mf-section" />
 
     <section data-section="events" class="mf-section mf-events">
       <header v-reveal class="mf-section-heading">
@@ -117,6 +102,25 @@ const view = useWeddingView(props)
       </div>
     </section>
 
+    <section data-section="story" v-if="view.story" class="mf-section mf-story">
+      <header v-reveal class="mf-section-heading">
+        <div class="mf-section-label"><span>02</span><span>THE STORY</span></div>
+        <h2>{{ view.story.title }}</h2>
+        <p v-if="view.story.introduction" class="mf-body">{{ view.story.introduction }}</p>
+      </header>
+      <ol class="mf-story__list">
+        <li v-for="(entry, i) in view.story.timeline" :key="entry.id" v-reveal class="mf-story__entry">
+          <span class="mf-story__number">{{ String(i + 1).padStart(2, '0') }}</span>
+          <div v-if="entry.image" class="mf-story__photo"><ThemeImage :image="entry.image" /></div>
+          <div class="mf-story__copy">
+            <p v-if="entry.date" class="mf-kicker">{{ entry.date }}</p>
+            <h3>{{ entry.title }}</h3>
+            <p class="mf-body">{{ entry.description }}</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
     <section data-section="gallery" v-if="view.gallery" class="mf-section mf-gallery">
       <header v-reveal class="mf-section-heading">
         <div class="mf-section-label"><span>04</span><span>IN FRAMES</span></div>
@@ -131,7 +135,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section data-section="rsvp" class="mf-section mf-rsvp">
+    <section v-if="content.rsvp.enabled" data-section="rsvp" class="mf-section mf-rsvp">
       <div v-reveal class="mf-rsvp__intro">
         <p class="mf-kicker">A NOTE BACK</p>
         <h2>{{ content.rsvp.title }}</h2>
@@ -139,6 +143,10 @@ const view = useWeddingView(props)
       </div>
       <RsvpPreview :content="content" />
     </section>
+
+    <UniversalSection section="wishes" :content="content" class="mf-section" />
+    <UniversalSection section="amplopDigital" :content="content" class="mf-section" />
+    <UniversalSection section="holyRecite2" :content="content" class="mf-section" />
 
     <footer data-section="closing" class="mf-closing">
       <div v-if="content.closing.image" class="mf-closing__photo"><ThemeImage :image="content.closing.image" /></div>

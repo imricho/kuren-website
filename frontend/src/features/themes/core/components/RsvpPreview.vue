@@ -20,6 +20,7 @@ const deadline = computed(() =>
 
 <template>
   <div class="rsvp" :data-state="state">
+    <p class="rsvp-status" role="status">{{ content.locale === 'id' ? 'Konfirmasi kehadiran online belum tersedia.' : 'Online RSVP is not available yet.' }}</p>
     <p v-if="state === 'open' && deadline" class="rsvp-status">{{ t.rsvpBy }} {{ deadline }}</p>
     <p v-else-if="state === 'closed'" class="rsvp-status">{{ t.rsvpClosed }}</p>
     <p v-else-if="state === 'disabled'" class="rsvp-status">{{ t.rsvpDisabled }}</p>

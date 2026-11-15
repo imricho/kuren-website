@@ -54,10 +54,9 @@ export interface StoryEntryDraft {
 }
 
 export interface StoryMetaDraft {
+  enabled?: boolean
   title?: string
   introduction?: string
-  /** "Show on website" — false hides the section but keeps its content. Default true. */
-  enabled?: boolean
 }
 
 export interface StoryDraft extends StoryMetaDraft {
@@ -86,10 +85,9 @@ export interface GalleryItemDraft {
 }
 
 export interface GalleryMetaDraft {
+  enabled?: boolean
   title?: string
   description?: string
-  /** "Show on website" — false hides the section but keeps its content. Default true. */
-  enabled?: boolean
 }
 
 export interface GalleryDraft extends GalleryMetaDraft {
@@ -111,7 +109,9 @@ export interface ClosingDraft {
   image?: ImageAsset
 }
 
-export interface WeddingDraft {
+export type UniversalContent = Pick<WeddingContent, 'contentVersion' | 'holyRecite1' | 'holyRecite2' | 'greeting' | 'countdown' | 'wishes' | 'amplopDigital'>
+
+export interface WeddingDraft extends UniversalContent {
   schemaVersion: typeof WEDDING_SCHEMA_VERSION
   locale: WeddingLocale
   opening: OpeningDraft
@@ -166,6 +166,7 @@ export function normalizeDraft(raw: Partial<WeddingDraft> | null | undefined): W
   if (!raw) return base
   return {
     ...base,
+    ...universalContent(raw),
     opening: { ...raw.opening },
     couple: { groom: { ...raw.couple?.groom }, bride: { ...raw.couple?.bride } },
     story: { ...raw.story, timeline: [...(raw.story?.timeline ?? [])] },
@@ -174,6 +175,12 @@ export function normalizeDraft(raw: Partial<WeddingDraft> | null | undefined): W
     rsvp: { ...raw.rsvp, enabled: raw.rsvp?.enabled ?? true },
     closing: { ...raw.closing },
   }
+}
+
+/** Copy the shared optional content without dropping disabled stored values. */
+export function universalContent(value: UniversalContent): UniversalContent {
+  const keys = ['contentVersion', 'holyRecite1', 'holyRecite2', 'greeting', 'countdown', 'wishes', 'amplopDigital'] as const
+  return Object.fromEntries(keys.filter((key) => value[key] !== undefined).map((key) => [key, JSON.parse(JSON.stringify(value[key]))])) as UniversalContent
 }
 
 // --- Preview -----------------------------------------------------------------
@@ -390,6 +397,7 @@ export function toPreviewContent(
   }
 
   const content: WeddingContent = {
+    ...universalContent(draft),
     schemaVersion: WEDDING_SCHEMA_VERSION,
     locale,
     opening: compact({
@@ -401,9 +409,9 @@ export function toPreviewContent(
       weddingDate,
     }),
     couple: { groom, bride },
-    story: draft.story?.enabled === false ? undefined : compact({ title: text(draft.story?.title) ?? (locale === 'id' ? 'Kisah Kami' : 'Our Story'), introduction: text(draft.story?.introduction), timeline }),
+    story: compact({ enabled: draft.story?.enabled, title: text(draft.story?.title) ?? (locale === 'id' ? 'Kisah Kami' : 'Our Story'), introduction: text(draft.story?.introduction), timeline }),
     events,
-    gallery: draft.gallery?.enabled === false ? undefined : compact({ title: text(draft.gallery?.title) ?? (locale === 'id' ? 'Galeri' : 'Gallery'), description: text(draft.gallery?.description), images: gallery }),
+    gallery: compact({ enabled: draft.gallery?.enabled, title: text(draft.gallery?.title) ?? (locale === 'id' ? 'Galeri' : 'Gallery'), description: text(draft.gallery?.description), images: gallery }),
     rsvp: compact({
       title: rsvpTitle,
       introduction: text(r.introduction),

@@ -380,7 +380,64 @@ class GalleryContentIn(GalleryMeta):
     images: list[GalleryItemWithId] = Field(max_length=200)
 
 
+class OptionalSection(RequestModel):
+    enabled: bool = Field(default=False, strict=True)
+
+
+class HolyReciteSection(OptionalSection):
+    title: Str120
+    passage: Str2000
+    reference: Str200
+    original_script: Str2000
+    translation: Str2000
+
+
+class MessageSection(OptionalSection):
+    title: Str120
+    message: Str2000
+
+
+class WishesSection(OptionalSection):
+    title: Str120
+    introduction: Str2000
+
+
+class BankAccount(RequestModel):
+    id: Annotated[str | None, StringConstraints(min_length=1, max_length=64)] = None
+    bank_name: Annotated[str, StringConstraints(min_length=1, max_length=120)]
+    account_holder: Annotated[str, StringConstraints(min_length=1, max_length=120)]
+    # Never coerce numbers: leading zeroes are meaningful account data.
+    account_number: Annotated[str, StringConstraints(min_length=1, max_length=100, strict=True)]
+
+
+class PhysicalGifts(OptionalSection):
+    recipient: Str120
+    address: Str500
+    note: Str500
+    phone: Str60
+
+
+class AmplopDigitalSection(MessageSection):
+    bank_accounts_enabled: bool = Field(default=False, strict=True)
+    bank_accounts: list[BankAccount] = Field(default_factory=list, max_length=20)
+    qris_enabled: bool = Field(default=False, strict=True)
+    qris_image: ImageAsset | None = None
+    physical_gifts: PhysicalGifts | None = None
+
+
+UNIVERSAL_FIELDS = (
+    "content_version", "holy_recite1", "holy_recite2", "greeting", "countdown", "wishes", "amplop_digital",
+)
+
+
 class WeddingDraftIn(RequestModel):
+    content_version: Literal["1.1"] | None = None
+    holy_recite1: HolyReciteSection | None = None
+    holy_recite2: HolyReciteSection | None = None
+    greeting: MessageSection | None = None
+    countdown: OptionalSection | None = None
+    wishes: WishesSection | None = None
+    amplop_digital: AmplopDigitalSection | None = None
     schema_version: Literal[1] | None = None
     locale: Locale | None = None
     opening: OpeningSection
@@ -494,6 +551,13 @@ class GalleryOut(GalleryMetaOut):
 
 
 class WeddingDraftOut(ResponseModel):
+    content_version: Literal["1.1"] | None = None
+    holy_recite1: HolyReciteSection | None = None
+    holy_recite2: HolyReciteSection | None = None
+    greeting: MessageSection | None = None
+    countdown: OptionalSection | None = None
+    wishes: WishesSection | None = None
+    amplop_digital: AmplopDigitalSection | None = None
     schema_version: Literal[1]
     locale: Locale
     opening: OpeningOut

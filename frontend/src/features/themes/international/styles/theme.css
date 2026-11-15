@@ -188,25 +188,25 @@
 }
 
 /* --- Intro / countdown -------------------------------------------------------- */
-.intl-intro .countdown {
+:is(.intl-intro, .intl-section[data-section="weddingDate"]) .countdown {
   display: flex;
   margin-top: 1rem;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
-.intl-intro .countdown__unit {
+:is(.intl-intro, .intl-section[data-section="weddingDate"]) .countdown__unit {
   display: grid;
   padding: 1rem clamp(0.75rem, 4cqi, 2rem);
 }
-.intl-intro .countdown__unit + .countdown__unit {
+:is(.intl-intro, .intl-section[data-section="weddingDate"]) .countdown__unit + .countdown__unit {
   border-left: 1px solid var(--line);
 }
-.intl-intro .countdown__value {
+:is(.intl-intro, .intl-section[data-section="weddingDate"]) .countdown__value {
   font-family: var(--serif);
   font-size: clamp(1.6rem, 6cqi, 2.4rem);
   line-height: 1.1;
 }
-.intl-intro .countdown__label {
+:is(.intl-intro, .intl-section[data-section="weddingDate"]) .countdown__label {
   font-size: 0.6rem;
   letter-spacing: 0.25em;
   text-transform: uppercase;

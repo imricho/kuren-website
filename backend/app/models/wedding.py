@@ -64,6 +64,7 @@ class Wedding(TimestampMixin, Base):
     schema_version: Mapped[int] = mapped_column(
         SmallInteger, nullable=False, default=SCHEMA_VERSION, server_default=str(SCHEMA_VERSION)
     )
+    universal_content: Mapped[dict[str, Any]] = _json_section()
     opening: Mapped[dict[str, Any]] = _json_section()
     couple: Mapped[dict[str, Any]] = _json_section()
     story_meta: Mapped[dict[str, Any]] = _json_section()

@@ -13,6 +13,14 @@
  */
 
 export const WEDDING_SCHEMA_VERSION = 1 as const
+export const WEDDING_CONTENT_VERSION = '1.1' as const
+/** Fixed rendering order shared by themes, previews, and future editor controls. */
+export const WEDDING_SECTION_ORDER = [
+  'opening', 'holyRecite1', 'greeting', 'couple', 'weddingDate', 'events',
+  'story', 'gallery', 'rsvp', 'wishes', 'amplopDigital', 'holyRecite2', 'closing',
+] as const
+export type WeddingSectionId = (typeof WEDDING_SECTION_ORDER)[number]
+export const MANDATORY_WEDDING_SECTIONS: readonly WeddingSectionId[] = ['opening', 'couple', 'weddingDate', 'events', 'closing']
 
 /** ISO calendar date, e.g. "2027-06-12". */
 export type ISODate = string
@@ -71,6 +79,7 @@ export interface StoryEntry {
 }
 
 export interface StorySection {
+  enabled?: boolean
   title: string
   introduction?: string
   timeline: StoryEntry[]
@@ -105,6 +114,7 @@ export interface GalleryImage extends ImageAsset {
 }
 
 export interface GallerySection {
+  enabled?: boolean
   title: string
   description?: string
   images: GalleryImage[]
@@ -127,9 +137,36 @@ export interface ClosingSection {
   image?: ImageAsset
 }
 
+export interface HolyReciteSection {
+  enabled: boolean
+  passage?: string
+  reference?: string
+  originalScript?: string
+  translation?: string
+}
+export interface GreetingSection { enabled: boolean; title?: string; message?: string }
+export interface WishesSection { enabled: boolean; title?: string; introduction?: string }
+export interface AmplopDigitalSection {
+  enabled: boolean
+  title?: string
+  message?: string
+  bankAccountsEnabled: boolean
+  bankAccounts: { id?: string; bankName: string; accountHolder: string; accountNumber: string }[]
+  qrisEnabled: boolean
+  qrisImage?: ImageAsset
+  physicalGifts?: { enabled: boolean; recipient?: string; address?: string; phone?: string }
+}
+
 // --- Root ---------------------------------------------------------------------
 
 export interface WeddingContent {
+  contentVersion?: '1.1'
+  holyRecite1?: HolyReciteSection
+  holyRecite2?: HolyReciteSection
+  greeting?: GreetingSection
+  countdown?: { enabled: boolean }
+  wishes?: WishesSection
+  amplopDigital?: AmplopDigitalSection
   schemaVersion: typeof WEDDING_SCHEMA_VERSION
   /** Language for dates and built-in labels. Defaults to English. */
   locale?: WeddingLocale

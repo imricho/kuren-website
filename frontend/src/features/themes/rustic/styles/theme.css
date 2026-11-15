@@ -76,11 +76,11 @@
 
 .rn-intro { display: grid; gap: 2rem; background: var(--rn-oat); }
 .rn-intro__copy { display: grid; gap: 1rem; max-width: 44rem; }
-.rn-intro .countdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid #c7c8bb; }
-.rn-intro .countdown__unit { display: grid; gap: 0.35rem; padding: 0.9rem 0.35rem; }
-.rn-intro .countdown__unit + .countdown__unit { border-left: 1px solid #c7c8bb; padding-left: 0.6rem; }
-.rn-intro .countdown__value { color: var(--rn-forest); font-family: var(--rn-display); font-size: clamp(1.35rem, 6cqi, 2.4rem); line-height: 1; }
-.rn-intro .countdown__label { color: var(--rn-muted); font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; }
+:is(.rn-intro, .rn-section[data-section="weddingDate"]) .countdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid #c7c8bb; }
+:is(.rn-intro, .rn-section[data-section="weddingDate"]) .countdown__unit { display: grid; gap: 0.35rem; padding: 0.9rem 0.35rem; }
+:is(.rn-intro, .rn-section[data-section="weddingDate"]) .countdown__unit + .countdown__unit { border-left: 1px solid #c7c8bb; padding-left: 0.6rem; }
+:is(.rn-intro, .rn-section[data-section="weddingDate"]) .countdown__value { color: var(--rn-forest); font-family: var(--rn-display); font-size: clamp(1.35rem, 6cqi, 2.4rem); line-height: 1; }
+:is(.rn-intro, .rn-section[data-section="weddingDate"]) .countdown__label { color: var(--rn-muted); font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; }
 
 .rn-couple { background: var(--rn-paper); }
 .rn-couple__grid { display: grid; gap: 2.5rem; }

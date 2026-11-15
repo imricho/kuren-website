@@ -201,7 +201,7 @@
 }
 
 /* --- Intro / countdown --------------------------------------------------------------- */
-.trad-intro .countdown {
+:is(.trad-intro, .trad-section[data-section="weddingDate"]) .countdown {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.5rem;
@@ -209,7 +209,7 @@
   max-width: 26rem;
   margin-top: 0.5rem;
 }
-.trad-intro .countdown__unit {
+:is(.trad-intro, .trad-section[data-section="weddingDate"]) .countdown__unit {
   display: grid;
   padding: 0.75rem 0.25rem;
   border: 1px solid var(--gold);
@@ -217,12 +217,12 @@
   outline-offset: -4px;
   background: var(--parchment-deep);
 }
-.trad-intro .countdown__value {
+:is(.trad-intro, .trad-section[data-section="weddingDate"]) .countdown__value {
   font-family: var(--display);
   font-size: clamp(1.4rem, 5.5cqi, 2rem);
   color: var(--maroon);
 }
-.trad-intro .countdown__label {
+:is(.trad-intro, .trad-section[data-section="weddingDate"]) .countdown__label {
   font-family: var(--display);
   font-size: 0.55rem;
   letter-spacing: 0.2em;

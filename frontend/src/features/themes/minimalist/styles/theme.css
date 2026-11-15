@@ -96,11 +96,11 @@
 
 .mf-intro { display: grid; gap: 2.5rem; border-top: 1px solid var(--mf-line); }
 .mf-intro__copy { display: grid; gap: 1rem; max-width: 42rem; }
-.mf-intro .countdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--mf-line); border-bottom: 1px solid var(--mf-line); }
-.mf-intro .countdown__unit { display: grid; gap: 0.35rem; padding: 0.85rem 0.35rem; }
-.mf-intro .countdown__unit + .countdown__unit { border-left: 1px solid var(--mf-line); padding-left: 0.65rem; }
-.mf-intro .countdown__value { font-family: var(--mf-display); font-size: clamp(1.35rem, 6cqi, 2.5rem); line-height: 1; }
-.mf-intro .countdown__label { color: var(--mf-muted); font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; }
+:is(.mf-intro, .mf-section[data-section="weddingDate"]) .countdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--mf-line); border-bottom: 1px solid var(--mf-line); }
+:is(.mf-intro, .mf-section[data-section="weddingDate"]) .countdown__unit { display: grid; gap: 0.35rem; padding: 0.85rem 0.35rem; }
+:is(.mf-intro, .mf-section[data-section="weddingDate"]) .countdown__unit + .countdown__unit { border-left: 1px solid var(--mf-line); padding-left: 0.65rem; }
+:is(.mf-intro, .mf-section[data-section="weddingDate"]) .countdown__value { font-family: var(--mf-display); font-size: clamp(1.35rem, 6cqi, 2.5rem); line-height: 1; }
+:is(.mf-intro, .mf-section[data-section="weddingDate"]) .countdown__label { color: var(--mf-muted); font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; }
 
 .mf-couple { background: var(--mf-paper-deep); }
 .mf-couple__grid { display: grid; gap: 2.5rem; }

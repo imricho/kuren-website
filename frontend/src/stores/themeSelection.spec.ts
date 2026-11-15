@@ -5,6 +5,7 @@ import { installFakeWeddingApi } from '@/test/fakeWeddingApi'
 
 import { useThemeSelectionStore } from './themeSelection'
 import { useWeddingStore } from './wedding'
+import { useAuthStore } from './auth'
 
 const KEY = 'kuren.selectedThemeId'
 
@@ -50,6 +51,33 @@ describe('theme selection store', () => {
     await done
     expect(store.pendingThemeId).toBeNull()
     expect(store.selectedThemeId).toBe('international')
+  })
+
+  it('ignores competing selections until the first save settles', async () => {
+    const api = installFakeWeddingApi()
+    await useWeddingStore().ensureLoaded()
+    const store = useThemeSelectionStore()
+    api.holdResponses()
+    const first = store.select('ethnic')
+    await vi.waitFor(() => expect(api.callsTo('PATCH', '/weddings/w1')).toHaveLength(1))
+    await expect(store.select('international')).resolves.toBe(false)
+    api.release()
+    await expect(first).resolves.toBe(true)
+    expect(store.selectedThemeId).toBe('ethnic')
+    expect(api.callsTo('PATCH', '/weddings/w1')).toHaveLength(1)
+  })
+
+  it('does not report success or apply a selection after the user changes', async () => {
+    const api = installFakeWeddingApi()
+    await useWeddingStore().ensureLoaded()
+    const store = useThemeSelectionStore()
+    api.holdResponses()
+    const first = store.select('ethnic')
+    await vi.waitFor(() => expect(api.callsTo('PATCH', '/weddings/w1')).toHaveLength(1))
+    useAuthStore().user = { id: 'other', email: 'other@example.com', full_name: 'Other' } as never
+    api.release()
+    await expect(first).resolves.toBe(false)
+    expect(store.selectedThemeId).toBeNull()
   })
 
   it('records an error and keeps the old selection when saving fails', async () => {

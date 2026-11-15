@@ -15,7 +15,7 @@ const view = useWeddingView(props)
 </script>
 
 <template>
-  <article class="t-minimal" :data-variant="config?.variant ?? 'still-form'">
+  <article class="t-minimal" :data-variant="config?.variant ?? 'still-form'" data-ornament-density="minimal">
     <header class="mf-hero" :class="{ 'mf-hero--photo': content.opening.coverImage }">
       <div class="mf-hero__topline">
         <span>{{ view.t.weddingOf }}</span>

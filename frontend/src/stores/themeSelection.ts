@@ -13,9 +13,11 @@ import { getTheme } from '@/features/themes/core/registry'
 import { isSelectable } from '@/features/themes/core/types'
 
 import { StaleError, useWeddingStore } from './wedding'
+import { useAuthStore } from './auth'
 
 export const useThemeSelectionStore = defineStore('themeSelection', () => {
   const wedding = useWeddingStore()
+  const auth = useAuthStore()
 
   const selectedThemeId = computed<string | null>(() => wedding.themeId)
   const selectedTheme = computed(() => getTheme(selectedThemeId.value))
@@ -31,6 +33,8 @@ export const useThemeSelectionStore = defineStore('themeSelection', () => {
    */
   async function select(idOrAlias: string): Promise<boolean> {
     // Always store the canonical id, even if an alias was passed. Drafts are preview-only.
+    if (pendingThemeId.value !== null) return false
+    const ownerId = auth.user?.id ?? null
     const theme = getTheme(idOrAlias)
     if (!theme || !isSelectable(theme)) return false
     const id = theme.id
@@ -38,9 +42,10 @@ export const useThemeSelectionStore = defineStore('themeSelection', () => {
     error.value = null
     try {
       await wedding.ensureLoaded()
+      if ((auth.user?.id ?? null) !== ownerId) return false
       if (wedding.loadState !== 'ready') throw new Error(wedding.loadError ?? 'Your website could not be loaded.')
       if (wedding.themeId !== id) await wedding.setTheme(id)
-      return true
+      return (auth.user?.id ?? null) === ownerId
     } catch (err) {
       if (err instanceof StaleError) return false
       error.value = { themeId: id, message: err instanceof ApiError || err instanceof Error ? err.message : String(err) }

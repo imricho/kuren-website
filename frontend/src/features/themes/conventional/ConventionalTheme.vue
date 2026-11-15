@@ -20,7 +20,7 @@ const view = useWeddingView(props)
 </script>
 
 <template>
-  <article class="t-conv" :data-variant="config?.variant ?? 'blush-garden'">
+  <article class="t-conv" :data-variant="config?.variant ?? 'blush-garden'" data-ornament-density="balanced">
     <!-- Opening -->
     <header class="conv-hero">
       <ConvBouquet class="conv-bouquet--tl" />

@@ -30,16 +30,18 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
  * <main> itself). Pages are lazy-loaded, so retry briefly until the heading
  * exists; give up if the user has moved focus meanwhile.
  */
-export async function focusMainHeading(attempts = 10, interval = 50): Promise<HTMLElement | null> {
+export async function focusMainHeading(attempts = 10, interval = 50, signal?: AbortSignal): Promise<HTMLElement | null> {
   if (typeof document === 'undefined') return null
   const initial = document.activeElement
   for (let i = 0; i < attempts; i++) {
     await wait(i === 0 ? 0 : interval)
+    if (signal?.aborted) return null
     const active = document.activeElement
     if (active && active !== initial && active !== document.body) return null // the user moved on
     const heading = document.querySelector<HTMLElement>('main h1') ?? document.querySelector<HTMLElement>('h1')
     if (heading) return focusElement(heading)
   }
+  if (signal?.aborted) return null
   const main = document.querySelector<HTMLElement>('main')
   return main ? focusElement(main) : null
 }
@@ -64,10 +66,16 @@ export function useRouteA11y() {
     { immediate: true },
   )
 
+  let focusRequest: AbortController | undefined
   const stop = router.afterEach((to, from, failure) => {
     if (failure || from === START_LOCATION || from.matched.length === 0) return
     if (to.hash || isSameView(to, from)) return
-    void focusMainHeading()
+    focusRequest?.abort()
+    focusRequest = new AbortController()
+    void focusMainHeading(10, 50, focusRequest.signal)
   })
-  onBeforeUnmount(stop)
+  onBeforeUnmount(() => {
+    stop()
+    focusRequest?.abort()
+  })
 }

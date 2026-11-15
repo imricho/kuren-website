@@ -2,8 +2,7 @@
 /**
  * Left sidebar: browse Family → Collection → Template, one level at a time.
  * The current level, a back link and breadcrumbs always show where the user is.
- * Clicking a template PREVIEWS it (URL + preview pane); selecting is a separate
- * action in the preview pane.
+ * Choosing a template updates the preview. The preview selection action saves and opens Edit.
  */
 import { computed } from 'vue'
 

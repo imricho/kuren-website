@@ -691,3 +691,28 @@
 .t-trad[data-variant='candlelit-hall'] .trad-hero__content::after { content: ''; position: absolute; top: -1rem; right: 0; width: 1.5rem; height: 2.7rem; border-radius: 50% 50% 35% 35%; background: radial-gradient(ellipse at 50% 18%, #f8d7a5 0 20%, transparent 52%); box-shadow: 0 0 1rem rgb(248 215 165 / .35); }
 .t-trad[data-variant='pressed-filigree'] .trad-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2rem; aspect-ratio: 1; border: 1px solid var(--gold); border-radius: 50% 0; transform: rotate(45deg); }
 .t-trad[data-variant='loomed-lines'] .trad-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2.1rem; height: 2.1rem; background: repeating-linear-gradient(45deg, transparent 0 4px, var(--gold) 4px 5px), repeating-linear-gradient(-45deg, transparent 0 4px, var(--gold) 4px 5px); opacity: .8; }
+
+/* Ornament density is a composition choice, not a blanket decoration layer.
+   Royal Maroon receives a full crest and engraved corners; quieter papers use
+   a smaller crest. All vector work is static and stays outside the text area. */
+.trad-crest { display: block; width: min(19rem, 72cqi); height: auto; color: var(--gold-light); pointer-events: none; }
+.t-trad[data-ornament-density='balanced'] .trad-crest { width: min(13rem, 54cqi); }
+.t-trad[data-variant='royal-maroon'] .trad-hero {
+  background: radial-gradient(ellipse at 50% 30%, #773833, transparent 68%), #381413;
+}
+.t-trad[data-variant='royal-maroon'] .trad-frame { border-color: #c4a36d; outline-offset: -12px; }
+.t-trad[data-variant='royal-maroon'] .trad-hero .trad-frame::before {
+  content: ''; position: absolute; inset: 19px; border: 1px solid rgb(226 200 145 / .2); pointer-events: none;
+}
+.t-trad[data-variant='royal-maroon'] .trad-corner { width: clamp(64px, 20cqi, 144px); }
+.t-trad[data-variant='royal-maroon'] .trad-hero__content { gap: 1.65rem; max-width: 100%; }
+.t-trad[data-variant='royal-maroon'] .trad-hero__content::after { display: none; }
+.t-trad[data-variant='royal-maroon'] .trad-medallion { border-radius: 48% 48% 8px 8px; aspect-ratio: 4 / 5; width: clamp(140px, 39cqi, 224px); }
+.t-trad[data-variant='royal-maroon'] .trad-band { height: 28px; border-block: 1px solid var(--gold); }
+.t-trad[data-variant='royal-maroon'] .trad-hero__names { font-size: clamp(1.8rem, 8cqi, 3.5rem); letter-spacing: .045em; overflow-wrap: anywhere; }
+.t-trad:is([data-variant='pressed-filigree'], [data-variant='terracotta-geometry'], [data-variant='loomed-lines']) .trad-crest { color: var(--maroon-deep); }
+@container site (max-width: 30rem) {
+  .t-trad[data-variant='royal-maroon'] .trad-hero .trad-frame { padding: 5rem 1.5rem; }
+  .t-trad[data-variant='royal-maroon'] .trad-hero__content { gap: 1.25rem; }
+  .t-trad[data-variant='royal-maroon'] .trad-hero .trad-corner { width: 64px; }
+}

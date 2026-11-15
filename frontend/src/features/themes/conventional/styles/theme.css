@@ -604,3 +604,22 @@
 .t-conv[data-variant='peony-season'] .conv-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2.7rem; aspect-ratio: 1; border-radius: 70% 0 70% 0; border: 1px solid var(--conv-rose); transform: rotate(22deg); }
 .t-conv[data-variant='bluebell-manor'] .conv-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2rem; aspect-ratio: 1; border: 1px solid var(--conv-rose-deep); border-radius: 50%; box-shadow: inset 0 0 0 .35rem var(--conv-cream), inset 0 0 0 .42rem var(--conv-rose); }
 .t-conv[data-variant='garden-at-dusk'] .conv-hero__content::after { content: ''; position: absolute; top: .2rem; right: .2rem; width: 2.4rem; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 68% 32%, transparent 0 42%, var(--conv-gold) 45% 48%, transparent 51%); }
+
+/* Botanical Romance: asymmetric botanical studies frame the invitation.
+   Density stays balanced; flowers never become a repeating wallpaper. */
+.t-conv { --conv-ornament-opacity: .88; }
+.conv-bouquet { width: clamp(150px, 37cqi, 320px); opacity: var(--conv-ornament-opacity); }
+.conv-bouquet--tl { top: -26px; left: -38px; transform: rotate(168deg); }
+.conv-bouquet--br { bottom: -35px; right: -30px; transform: rotate(-12deg); }
+.t-conv[data-variant='blush-garden'] .conv-hero { background: radial-gradient(ellipse at 50% 42%, #fffaf7 0 30%, transparent 67%), var(--conv-blush); }
+.t-conv[data-variant='blush-garden'] .conv-hero::after { inset: 1.5rem; border-radius: 48% 48% 2px 2px; }
+.t-conv[data-variant='blush-garden'] .conv-arch--hero { border-width: 8px; border-radius: 48% 48% 2px 2px; }
+.t-conv[data-variant='blush-garden'] .conv-hero__names { max-width: 100%; overflow-wrap: anywhere; }
+.t-conv:is([data-variant='pearl-keepsake'], [data-variant='lily-and-lace']) { --conv-ornament-opacity: .55; }
+.t-conv[data-variant='peony-season'] { --conv-ornament-opacity: 1; }
+@container site (max-width: 30rem) {
+  .conv-bouquet { width: 155px; }
+  .conv-bouquet--tl { top: -28px; left: -44px; }
+  .conv-bouquet--br { bottom: -22px; right: -40px; }
+  .t-conv[data-variant='blush-garden'] .conv-hero { padding-block: 6rem; }
+}

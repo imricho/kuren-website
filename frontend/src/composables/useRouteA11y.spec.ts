@@ -59,6 +59,16 @@ describe('useRouteA11y', () => {
     expect(document.activeElement?.getAttribute('tabindex')).toBe('-1')
   })
 
+  it('cancels pending focus when the page layout unmounts', async () => {
+    const { wrapper, router } = await setup()
+    await router.push('/account')
+    wrapper.unmount()
+    document.body.innerHTML = '<main><h1>New layout</h1></main>'
+    await tick()
+    expect(document.activeElement).toBe(document.body)
+    document.body.innerHTML = ''
+  })
+
   it('leaves focus alone if the user moved it meanwhile', async () => {
     document.body.innerHTML = '<main><button id="b">b</button></main>'
     const pending = focusMainHeading(3, 5)

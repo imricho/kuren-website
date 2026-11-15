@@ -52,6 +52,7 @@ SAMPLE_WEDDING: dict[str, Any] = {
         },
     },
     "story": {
+        "enabled": True,
         "title": "Our Story",
         "introduction": (
             "Every love story is beautiful, but ours is our favourite. Here are a few chapters so far."
@@ -124,6 +125,7 @@ SAMPLE_WEDDING: dict[str, Any] = {
         },
     ],
     "gallery": {
+        "enabled": True,
         "title": "Moments",
         "description": "A few of our favourite moments together.",
         "images": [
@@ -169,9 +171,9 @@ EMPTY_DRAFT: dict[str, Any] = {
     "locale": "en",
     "opening": {},
     "couple": {"groom": {}, "bride": {}},
-    "story": {"timeline": []},
+    "story": {"enabled": True, "timeline": []},
     "events": [],
-    "gallery": {"images": []},
+    "gallery": {"enabled": True, "images": []},
     "rsvp": {"enabled": True},
     "closing": {},
 }

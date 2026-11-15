@@ -4,6 +4,10 @@ import { cmsEn } from '@/locales/en/cms'
 import { cmsId } from '@/locales/id/cms'
 import { editorEn } from '@/locales/en/editor'
 import { editorId } from '@/locales/id/editor'
+import { autosaveEn } from '@/locales/en/autosave'
+import { autosaveId } from '@/locales/id/autosave'
+import { previewEn } from '@/locales/en/preview'
+import { previewId } from '@/locales/id/preview'
 import { shellEn } from '@/locales/en/shell'
 import { shellId } from '@/locales/id/shell'
 
@@ -41,6 +45,8 @@ const messages = {
     ...cmsEn,
     ...shellEn,
     ...editorEn,
+    ...previewEn,
+    ...autosaveEn,
   },
   id: {
     language: 'Bahasa', english: 'English', bahasa: 'Bahasa Indonesia', mainNav: 'Navigasi utama', dashboard: 'Dasbor', themes: 'Tema', account: 'Akun', signOut: 'Keluar',
@@ -71,6 +77,8 @@ const messages = {
     ...cmsId,
     ...shellId,
     ...editorId,
+    ...previewId,
+    ...autosaveId,
   },
 } as const
 

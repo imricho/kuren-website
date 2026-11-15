@@ -165,4 +165,108 @@ describe('wedding store', () => {
     store.setDirty('events:e1', false)
     expect(store.anyDirty).toBe(false)
   })
+
+  it('livePreviewContent overlays live drafts on the saved content with structural sharing', async () => {
+    installFakeWeddingApi({
+      content: {
+        opening: { weddingTitle: 'Saved title' },
+        events: [{ id: 'a', type: 'akad', title: 'Akad' }, { id: 'b', type: 'reception', title: 'Resepsi' }],
+      },
+    })
+    const store = useWeddingStore()
+    await store.ensureLoaded()
+    expect(store.liveDraft).toBe(store.content) // nothing live: the saved object itself
+
+    store.setLiveDraft('closing', { kind: 'section', section: 'closing', value: { message: 'Live words' } })
+    store.setLiveDraft('events:b', { kind: 'item', collection: 'events', itemId: 'b', value: { type: 'reception', title: 'Resepsi', date: '2027-05-01' } })
+    const live = store.liveDraft!
+    expect(live.closing).toEqual({ message: 'Live words' })
+    expect(live.opening).toBe(store.content!.opening) // untouched sections are shared, not cloned
+    expect(live.events[0]).toBe(store.content!.events[0])
+    expect(live.events[1]).toEqual({ id: 'b', type: 'reception', title: 'Resepsi', date: '2027-05-01' })
+    expect(store.livePreviewContent!.closing.message).toBe('Live words')
+    expect(store.livePreviewContent!.events[1]!.date).toBe('2027-05-01')
+    expect(store.content!.closing).toEqual({}) // saved copy untouched
+
+    // A new item is appended only once it has something to show.
+    store.setLiveDraft('events:new', { kind: 'item', collection: 'events', itemId: null, value: { type: 'other' } })
+    expect(store.livePreviewContent!.events).toHaveLength(2)
+    store.setLiveDraft('events:new', { kind: 'item', collection: 'events', itemId: null, value: { type: 'other', title: 'Ngunduh' } })
+    expect(store.livePreviewContent!.events.map((e) => e.title)).toEqual(['Akad', 'Resepsi', 'Ngunduh'])
+
+    // Hiding a section; names and language from the Opening page.
+    store.setLiveDraft('story', { kind: 'section', section: 'story', value: { enabled: false } })
+    store.setLiveDraft('opening', [
+      { kind: 'section', section: 'opening', value: { weddingTitle: 'Live title' } },
+      { kind: 'names', groom: 'Dimas', bride: '' },
+      { kind: 'locale', locale: 'id' },
+    ])
+    expect(store.livePreviewContent!.story).toBeUndefined()
+    expect(store.livePreviewContent!.opening.weddingTitle).toBe('Live title')
+    expect(store.livePreviewContent!.couple.groom.name).toBe('Dimas')
+    expect(store.livePreviewMissing).toContainEqual({ section: 'couple', field: 'bride.name' })
+    expect(store.livePreviewContent!.locale).toBe('id')
+
+    for (const key of ['closing', 'events:b', 'events:new', 'story', 'opening']) store.setLiveDraft(key, null)
+    expect(store.liveDraft).toBe(store.content)
+  })
+
+  it('tracks the content revision: ETag on load and writes, If-Match on every content write, not on theme/locale', async () => {
+    const api = installFakeWeddingApi({ revision: 5 })
+    const store = useWeddingStore()
+    await store.ensureLoaded()
+    expect(store.revision).toBe(5)
+    await store.saveSection('closing', { message: 'x' })
+    expect(store.revision).toBe(6)
+    await store.setTheme('international')
+    await store.setLocale('id')
+    expect(store.revision).toBe(6) // theme/locale are not content
+    expect(api.callsTo('PATCH', '/weddings/w1').every((c) => c.ifMatch === undefined)).toBe(true)
+    const a = await store.createItem('events', { type: 'akad' })
+    await store.updateItem('events', a.id, { type: 'akad', title: 'Akad' })
+    await store.reorder('events', [a.id])
+    await store.deleteItem('events', a.id)
+    expect(api.writes().map((c) => c.ifMatch)).toEqual(['"5"', '"6"', '"7"', '"8"', '"9"'])
+    expect(store.revision).toBe(10)
+  })
+
+  it('serialises concurrent content writes so each carries the newest revision', async () => {
+    const api = installFakeWeddingApi()
+    const store = useWeddingStore()
+    await store.ensureLoaded()
+    await Promise.all([
+      store.saveSection('closing', { message: 'a' }),
+      store.saveSection('rsvp', { enabled: true, title: 'RSVP' }),
+      store.createItem('events', { type: 'akad' }),
+    ])
+    expect(api.writes().map((c) => c.ifMatch)).toEqual(['"1"', '"2"', '"3"'])
+    expect(store.conflict).toBeNull()
+  })
+
+  it('a 409 edit_conflict sets the conflict; other 409s (limit_reached) do not', async () => {
+    const api = installFakeWeddingApi()
+    const store = useWeddingStore()
+    await store.ensureLoaded()
+    api.failNext('POST /weddings/w1/events', { status: 409, code: 'limit_reached' })
+    await expect(store.createItem('events', { type: 'akad' })).rejects.toMatchObject({ code: 'limit_reached' })
+    expect(store.conflict).toBeNull()
+    api.editElsewhere()
+    await expect(store.deleteItem('events', 'nope')).rejects.toMatchObject({ status: 409, code: 'edit_conflict' })
+    expect(store.conflict).toEqual({ currentRevision: 2 })
+    expect(store.saveState).toBe('conflict')
+  })
+
+  it('reset() forgets the revision, conflict and live drafts', async () => {
+    const api = installFakeWeddingApi()
+    const store = useWeddingStore()
+    await store.ensureLoaded()
+    api.editElsewhere()
+    await store.saveSection('closing', { message: 'x' }).catch(() => undefined)
+    store.setLiveDraft('closing', { kind: 'section', section: 'closing', value: { message: 'y' } })
+    store.reset()
+    expect(store.revision).toBeNull()
+    expect(store.conflict).toBeNull()
+    expect(store.livePreviewContent).toBeNull()
+    expect(store.saveState).toBe('saved')
+  })
 })

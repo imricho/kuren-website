@@ -11,7 +11,7 @@ const API = '/api/v1'
 async function myWedding(page: Page) {
   const res = await page.request.get(`${API}/weddings/me`)
   expect(res.ok()).toBe(true)
-  return (await res.json()) as { id: string; themeId: string | null; status: string }
+  return (await res.json()) as { id: string; themeId: string | null; status: string; revision: number }
 }
 
 async function savedContent(page: Page) {
@@ -21,7 +21,11 @@ async function savedContent(page: Page) {
   return res.json()
 }
 
-const saveButton = (page: Page) => page.getByTestId('save-bar').getByRole('button', { name: /Save changes/ })
+/** The live editor autosaves (no Save button): wait until the save status settles on Saved. */
+async function expectAllSaved(page: Page) {
+  await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'saved', { timeout: 15_000 })
+  await expect(page.getByTestId('save-status-text')).toHaveText('All changes saved')
+}
 
 async function fillOpening(page: Page) {
   await page.goto('/wedding/opening')
@@ -30,8 +34,11 @@ async function fillOpening(page: Page) {
   await form.getByLabel('Bride’s name').fill('Ayu Lestari')
   await form.getByLabel('Website title').fill('The Wedding of Dimas & Ayu')
   await form.getByLabel('Wedding date').fill('2027-09-04')
-  await saveButton(page).click()
-  await expect(page.getByTestId('toast-status')).toContainText('Opening saved')
+  // Autosave (1 s after the last change) writes everything; no "saved" toast any more.
+  await expect
+    .poll(async () => (await savedContent(page)).opening.weddingTitle, { timeout: 15_000 })
+    .toBe('The Wedding of Dimas & Ayu')
+  await expectAllSaved(page)
 }
 
 test.describe('Wedding CMS', () => {
@@ -59,33 +66,47 @@ test.describe('Wedding CMS', () => {
     await page.reload()
     await expect(page.getByTestId('opening-form').getByLabel('Website title')).toHaveValue('The Wedding of Dimas & Ayu')
 
-    // Edit and save again.
+    // Edit again: autosaved, no button.
     await page.getByTestId('opening-form').getByLabel('Website title').fill('Dimas & Ayu')
-    await saveButton(page).click()
-    await expect(page.getByTestId('toast-status')).toContainText('Opening saved')
+    await expect(page.getByTestId('save-status')).not.toHaveAttribute('data-state', 'saved')
+    await expectAllSaved(page)
     expect((await savedContent(page)).opening.weddingTitle).toBe('Dimas & Ayu')
 
     await page.goto('/wedding/couple')
     await expect(page.getByTestId('couple-form').getByLabel(/full name/i).first()).toHaveValue('Dimas Pratama')
   })
 
-  test('unsaved changes are flagged and guarded when leaving', async ({ page, freshUser }) => {
+  test('leaving saves pending edits first and only asks when something cannot be saved', async ({ page, freshUser }) => {
     void freshUser
     await page.goto('/wedding/opening')
-    await page.getByTestId('opening-form').getByLabel('Website title').fill('Draft title')
-    await expect(page.getByTestId('save-bar')).toContainText('Unsaved changes')
+    const title = page.getByTestId('opening-form').getByLabel('Website title')
+    const nav = page.getByTestId('section-nav')
 
-    await page.getByTestId('section-nav').getByRole('link', { name: /Events/ }).click()
+    // A quick edit followed straight away by a section change is flushed, not questioned.
+    await title.fill('Draft title')
+    await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'unsaved')
+    await expect(nav.locator('a[data-section="opening"] [data-testid="unsaved-badge"]')).toHaveCount(1)
+    await nav.getByRole('link', { name: /Events/ }).click()
+    await expect(page).toHaveURL(/\/wedding\/events$/)
+    await expect(page.getByTestId('confirm-dialog').filter({ visible: true })).toHaveCount(0)
+    expect((await savedContent(page)).opening.weddingTitle).toBe('Draft title')
+
+    // An invalid value (title > 120 characters) can't be saved, so leaving asks.
+    await nav.getByRole('link', { name: /Opening/ }).click()
+    await expect(title).toHaveValue('Draft title')
+    const tooLong = 'x'.repeat(121)
+    await title.fill(tooLong)
+    await nav.getByRole('link', { name: /Events/ }).click()
     const dialog = page.getByTestId('confirm-dialog')
     await expect(dialog).toBeVisible()
     await dialog.getByRole('button', { name: 'Keep editing' }).click()
     await expect(page).toHaveURL(/\/wedding\/opening$/)
-    await expect(page.getByTestId('opening-form').getByLabel('Website title')).toHaveValue('Draft title')
+    await expect(title).toHaveValue(tooLong)
 
-    await page.getByTestId('section-nav').getByRole('link', { name: /Events/ }).click()
+    await nav.getByRole('link', { name: /Events/ }).click()
     await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Discard changes' }).click()
     await expect(page).toHaveURL(/\/wedding\/events$/)
-    expect((await savedContent(page)).opening.weddingTitle).toBeUndefined()
+    expect((await savedContent(page)).opening.weddingTitle).toBe('Draft title')
   })
 
   test('events: add, validate, reorder by keyboard and delete with confirmation', async ({ page, freshUser }) => {
@@ -212,6 +233,18 @@ test.describe('Wedding CMS', () => {
     expect(
       (await intruder.request.put(`${API}/weddings/${mine.id}/sections/opening`, { data: { weddingTitle: 'Hacked' } })).status(),
     ).toBe(404)
+    // Also with a matching If-Match revision (the ownership check comes first), and for other writes.
+    expect(
+      (
+        await intruder.request.put(`${API}/weddings/${mine.id}/sections/opening`, {
+          data: { weddingTitle: 'Hacked' },
+          headers: { 'If-Match': `"${mine.revision}"` },
+        })
+      ).status(),
+    ).toBe(404)
+    expect((await intruder.request.put(`${API}/weddings/${mine.id}/content`, { data: { opening: { weddingTitle: 'Hacked' } } })).status()).toBe(404)
+    expect((await intruder.request.post(`${API}/weddings/${mine.id}/events`, { data: { title: 'Hacked' } })).status()).toBe(404)
+    expect((await intruder.request.patch(`${API}/weddings/${mine.id}`, { data: { themeId: 'conventional' } })).status()).toBe(404)
     await other.close()
     expect((await savedContent(page)).opening.weddingTitle).toBe('The Wedding of Dimas & Ayu')
   })

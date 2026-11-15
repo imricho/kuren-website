@@ -38,7 +38,10 @@ export async function focusMainHeading(attempts = 10, interval = 50, signal?: Ab
     if (signal?.aborted) return null
     const active = document.activeElement
     if (active && active !== initial && active !== document.body) return null // the user moved on
-    const heading = document.querySelector<HTMLElement>('main h1') ?? document.querySelector<HTMLElement>('h1')
+    // Skip theme previews embedded in a page (their hero h1 is announced as level 2).
+    const PAGE_H1 = 'h1:not([aria-level]):not(.wedding-site h1):not([inert] h1)'
+    const heading =
+      document.querySelector<HTMLElement>(`main ${PAGE_H1}`) ?? document.querySelector<HTMLElement>(PAGE_H1)
     if (heading) return focusElement(heading)
   }
   if (signal?.aborted) return null

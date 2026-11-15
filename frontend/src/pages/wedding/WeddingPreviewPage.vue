@@ -1,8 +1,10 @@
 <script setup lang="ts">
 /**
- * The couple's own website, with their SAVED content and selected theme.
- * Missing required values show as labelled placeholders (see toPreviewContent),
- * and the toolbar explains what is being shown.
+ * The couple's own website, full screen, with their LIVE content (the same
+ * `store.livePreviewContent` the editor's preview renders: saved content plus
+ * in-progress edits) and selected theme. Missing required values show as
+ * labelled placeholders (see toPreviewContent), and the notices explain what
+ * is being shown. Opened from the editor's "Full screen" button (?from=).
  */
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
@@ -77,11 +79,11 @@ onBeforeUnmount(() => media?.removeEventListener?.('change', onMedia))
 
     <!-- On phones the full-page theme's hero heading is this page's h1; the framed (embedded)
          preview on larger screens announces it as level 2, so the page keeps its own h1. -->
-    <h1 v-if="!(store.loadState === 'ready' && store.previewContent)" class="sr-only">{{ t('websitePreview') }}</h1>
+    <h1 v-if="!(store.loadState === 'ready' && store.livePreviewContent)" class="sr-only">{{ t('websitePreview') }}</h1>
 
-    <div v-if="store.loadState === 'ready' && store.previewContent">
+    <div v-if="store.loadState === 'ready' && store.livePreviewContent">
       <section class="mx-auto max-w-6xl space-y-2 px-3 py-3 text-sm sm:px-4" :aria-label="t('previewNotices')" data-testid="preview-notices">
-        <p class="text-ink-700" data-testid="notice-saved">{{ t('showsSavedContent') }}</p>
+        <p class="text-ink-700" data-testid="notice-saved">{{ t('previewShowsLatest') }}</p>
         <p v-if="!hasTheme" class="rounded-lg bg-amber-50 px-3 py-2 text-amber-800" role="note" data-testid="notice-no-theme">
           {{ t('noThemeNotice', { name: theme.name }) }}
           <RouterLink :to="{ name: 'themes' }" class="font-medium underline">{{ t('chooseTheme') }}</RouterLink>
@@ -103,11 +105,11 @@ onBeforeUnmount(() => media?.removeEventListener?.('change', onMedia))
       </section>
 
       <main v-if="isPhone" :aria-label="t('websitePreview')">
-        <ThemeRenderer :content="store.previewContent" :theme-id="themeId" viewport-height="calc(100svh - var(--toolbar-h))" />
+        <ThemeRenderer :content="store.livePreviewContent" :theme-id="themeId" viewport-height="calc(100svh - var(--toolbar-h))" />
       </main>
       <main v-else class="h-[calc(100dvh-var(--toolbar-h)-6rem)] min-h-[32rem] px-3 pb-4 sm:px-4" :aria-label="t('websitePreview')">
         <h1 class="sr-only">{{ t('websitePreview') }}</h1>
-        <DevicePreview :content="store.previewContent" :theme-id="themeId" :device="device" :label="t('websitePreview')" />
+        <DevicePreview :content="store.livePreviewContent" :theme-id="themeId" :device="device" :label="t('websitePreview')" />
       </main>
     </div>
 

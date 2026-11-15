@@ -16,7 +16,7 @@ const view = useWeddingView(props)
 
 <template>
   <article class="t-minimal" :data-variant="config?.variant ?? 'still-form'" data-ornament-density="minimal">
-    <header class="mf-hero" :class="{ 'mf-hero--photo': content.opening.coverImage }">
+    <header data-section="opening" class="mf-hero" :class="{ 'mf-hero--photo': content.opening.coverImage }">
       <div class="mf-hero__topline">
         <span>{{ view.t.weddingOf }}</span>
         <span>{{ view.date.short }}</span>
@@ -59,7 +59,7 @@ const view = useWeddingView(props)
       <CountdownTimer :content="content" />
     </section>
 
-    <section class="mf-section mf-couple" aria-label="The couple">
+    <section data-section="couple" class="mf-section mf-couple" aria-label="The couple">
       <div class="mf-section-label"><span>01</span><span>THE PEOPLE</span></div>
       <div class="mf-couple__grid">
         <figure v-for="(person, i) in [content.couple.groom, content.couple.bride]" :key="i" v-reveal class="mf-person">
@@ -74,7 +74,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section v-if="view.story" class="mf-section mf-story">
+    <section data-section="story" v-if="view.story" class="mf-section mf-story">
       <header v-reveal class="mf-section-heading">
         <div class="mf-section-label"><span>02</span><span>THE STORY</span></div>
         <h2>{{ view.story.title }}</h2>
@@ -93,7 +93,7 @@ const view = useWeddingView(props)
       </ol>
     </section>
 
-    <section class="mf-section mf-events">
+    <section data-section="events" class="mf-section mf-events">
       <header v-reveal class="mf-section-heading">
         <div class="mf-section-label"><span>03</span><span>THE GATHERING</span></div>
         <p class="mf-kicker">{{ view.t.saveTheDate }}</p>
@@ -117,7 +117,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section v-if="view.gallery" class="mf-section mf-gallery">
+    <section data-section="gallery" v-if="view.gallery" class="mf-section mf-gallery">
       <header v-reveal class="mf-section-heading">
         <div class="mf-section-label"><span>04</span><span>IN FRAMES</span></div>
         <h2>{{ view.gallery.title }}</h2>
@@ -131,7 +131,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section class="mf-section mf-rsvp">
+    <section data-section="rsvp" class="mf-section mf-rsvp">
       <div v-reveal class="mf-rsvp__intro">
         <p class="mf-kicker">A NOTE BACK</p>
         <h2>{{ content.rsvp.title }}</h2>
@@ -140,7 +140,7 @@ const view = useWeddingView(props)
       <RsvpPreview :content="content" />
     </section>
 
-    <footer class="mf-closing">
+    <footer data-section="closing" class="mf-closing">
       <div v-if="content.closing.image" class="mf-closing__photo"><ThemeImage :image="content.closing.image" /></div>
       <div v-reveal class="mf-closing__copy">
         <p class="mf-kicker">{{ view.date.short }}</p>

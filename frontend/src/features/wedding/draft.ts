@@ -56,6 +56,8 @@ export interface StoryEntryDraft {
 export interface StoryMetaDraft {
   title?: string
   introduction?: string
+  /** "Show on website" — false hides the section but keeps its content. Default true. */
+  enabled?: boolean
 }
 
 export interface StoryDraft extends StoryMetaDraft {
@@ -86,6 +88,8 @@ export interface GalleryItemDraft {
 export interface GalleryMetaDraft {
   title?: string
   description?: string
+  /** "Show on website" — false hides the section but keeps its content. Default true. */
+  enabled?: boolean
 }
 
 export interface GalleryDraft extends GalleryMetaDraft {
@@ -397,9 +401,9 @@ export function toPreviewContent(
       weddingDate,
     }),
     couple: { groom, bride },
-    story: compact({ title: text(draft.story?.title) ?? (locale === 'id' ? 'Kisah Kami' : 'Our Story'), introduction: text(draft.story?.introduction), timeline }),
+    story: draft.story?.enabled === false ? undefined : compact({ title: text(draft.story?.title) ?? (locale === 'id' ? 'Kisah Kami' : 'Our Story'), introduction: text(draft.story?.introduction), timeline }),
     events,
-    gallery: compact({ title: text(draft.gallery?.title) ?? (locale === 'id' ? 'Galeri' : 'Gallery'), description: text(draft.gallery?.description), images: gallery }),
+    gallery: draft.gallery?.enabled === false ? undefined : compact({ title: text(draft.gallery?.title) ?? (locale === 'id' ? 'Galeri' : 'Gallery'), description: text(draft.gallery?.description), images: gallery }),
     rsvp: compact({
       title: rsvpTitle,
       introduction: text(r.introduction),

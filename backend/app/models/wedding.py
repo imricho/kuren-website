@@ -58,6 +58,9 @@ class Wedding(TimestampMixin, Base):
         String(16), nullable=False, default="draft", server_default="draft"
     )
     locale: Mapped[str] = mapped_column(String(5), nullable=False, default="en", server_default="en")
+    # Content revision for optimistic concurrency: bumped by every content write
+    # (sections, collections, whole-content replace), not by theme/locale changes.
+    revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     schema_version: Mapped[int] = mapped_column(
         SmallInteger, nullable=False, default=SCHEMA_VERSION, server_default=str(SCHEMA_VERSION)
     )

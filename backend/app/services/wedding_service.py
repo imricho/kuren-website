@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.errors import NotFoundError, WeddingExistsError
+from app.core.errors import EditConflictError, NotFoundError, WeddingExistsError
 from app.models import User, Wedding
 from app.schemas.wedding import WeddingUpdate
 
@@ -27,9 +27,26 @@ def lock_wedding(db: Session, wedding: Wedding) -> Wedding:
     return wedding
 
 
-def touch(wedding: Wedding) -> None:
-    """Bump `updated_at` whenever any of the wedding's content changes."""
+def touch(wedding: Wedding, *, content: bool = True) -> None:
+    """Bump `updated_at` on any change, and the content `revision` on content changes.
+
+    The increment is a SQL expression (`revision + 1`), so concurrent writers that
+    loaded the same row still produce distinct revisions under the row lock.
+    """
     wedding.updated_at = func.now()
+    if content:
+        wedding.revision = Wedding.revision + 1
+
+
+def lock_for_write(db: Session, wedding: Wedding, expected_revision: int | None) -> None:
+    """Lock the wedding row and enforce `If-Match` (optimistic concurrency).
+
+    Reads the revision under the lock, so the comparison cannot race with
+    another writer. `None` means the client sent no precondition.
+    """
+    current = db.scalar(select(Wedding.revision).where(Wedding.id == wedding.id).with_for_update())
+    if expected_revision is not None and current != expected_revision:
+        raise EditConflictError(current_revision=int(current or 0))
 
 
 def get_my_wedding(db: Session, owner: User) -> Wedding:
@@ -60,7 +77,7 @@ def update_wedding(db: Session, wedding: Wedding, changes: WeddingUpdate) -> Wed
     if "locale" in provided and changes.locale is not None:
         wedding.locale = changes.locale
     if provided:
-        touch(wedding)
+        touch(wedding, content=False)
     db.commit()
     db.refresh(wedding)
     return wedding

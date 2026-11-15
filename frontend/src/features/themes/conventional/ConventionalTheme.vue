@@ -22,7 +22,7 @@ const view = useWeddingView(props)
 <template>
   <article class="t-conv" :data-variant="config?.variant ?? 'blush-garden'" data-ornament-density="balanced">
     <!-- Opening -->
-    <header class="conv-hero">
+    <header data-section="opening" class="conv-hero">
       <ConvBouquet class="conv-bouquet--tl" />
       <ConvBouquet class="conv-bouquet--br" />
       <div class="conv-hero__content">
@@ -45,7 +45,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Couple -->
-    <section class="conv-section conv-couple" aria-label="The couple">
+    <section data-section="couple" class="conv-section conv-couple" aria-label="The couple">
       <div class="conv-couple__grid">
         <figure v-reveal class="conv-person">
           <div v-if="content.couple.groom.image" class="conv-arch"><ThemeImage :image="content.couple.groom.image" /></div>
@@ -70,7 +70,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Story -->
-    <section v-if="view.story" class="conv-section conv-story">
+    <section data-section="story" v-if="view.story" class="conv-section conv-story">
       <header v-reveal class="conv-col">
         <h2 class="conv-title">{{ view.story.title }}</h2>
         <p v-if="view.story.introduction" class="conv-body">{{ view.story.introduction }}</p>
@@ -88,7 +88,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Events -->
-    <section class="conv-section conv-events">
+    <section data-section="events" class="conv-section conv-events">
       <header v-reveal class="conv-col">
         <p class="conv-caps">{{ view.t.saveTheDate }}</p>
         <h2 class="conv-title">{{ view.date.long }}</h2>
@@ -110,7 +110,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Gallery -->
-    <section v-if="view.gallery" class="conv-section conv-gallery">
+    <section data-section="gallery" v-if="view.gallery" class="conv-section conv-gallery">
       <header v-reveal class="conv-col">
         <h2 class="conv-title">{{ view.gallery.title }}</h2>
         <p v-if="view.gallery.description" class="conv-body">{{ view.gallery.description }}</p>
@@ -124,7 +124,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- RSVP -->
-    <section class="conv-section conv-rsvp">
+    <section data-section="rsvp" class="conv-section conv-rsvp">
       <div v-reveal class="conv-card">
         <div class="conv-col">
           <h2 class="conv-title">{{ content.rsvp.title }}</h2>
@@ -135,7 +135,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Closing -->
-    <footer class="conv-closing">
+    <footer data-section="closing" class="conv-closing">
       <ConvBouquet class="conv-bouquet--tl" />
       <ConvBouquet class="conv-bouquet--br" />
       <div v-reveal class="conv-col conv-closing__inner">

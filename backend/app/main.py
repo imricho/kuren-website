@@ -28,7 +28,8 @@ def create_app() -> FastAPI:
             allow_origins=settings.cors_origins,
             allow_credentials=True,
             allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"],
-            allow_headers=["Content-Type"],
+            allow_headers=["Content-Type", "If-Match"],
+            expose_headers=["ETag"],
         )
 
     # Added last, so it runs first (outermost user middleware).

@@ -16,7 +16,7 @@ const view = useWeddingView(props)
 
 <template>
   <article class="t-rustic" :data-variant="config?.variant ?? 'field-notes'">
-    <header class="rn-hero" :class="{ 'rn-hero--photo': content.opening.coverImage }">
+    <header data-section="opening" class="rn-hero" :class="{ 'rn-hero--photo': content.opening.coverImage }">
       <div v-if="content.opening.coverImage" class="rn-hero__photo"><ThemeImage :image="content.opening.coverImage" eager /></div>
       <div v-else class="rn-hero__landscape" aria-hidden="true"><span /><span /><span /></div>
       <div class="rn-hero__veil" aria-hidden="true" />
@@ -42,7 +42,7 @@ const view = useWeddingView(props)
       <CountdownTimer :content="content" />
     </section>
 
-    <section class="rn-section rn-couple" aria-label="The couple">
+    <section data-section="couple" class="rn-section rn-couple" aria-label="The couple">
       <div class="rn-section-heading" v-reveal>
         <p class="rn-kicker">THE PEOPLE WE CELEBRATE</p>
         <h2>A gathering of two stories</h2>
@@ -60,7 +60,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section v-if="view.story" class="rn-section rn-story">
+    <section data-section="story" v-if="view.story" class="rn-section rn-story">
       <header v-reveal class="rn-section-heading rn-section-heading--center">
         <p class="rn-kicker">CHAPTERS ALONG THE WAY</p>
         <h2>{{ view.story.title }}</h2>
@@ -79,7 +79,7 @@ const view = useWeddingView(props)
       </ol>
     </section>
 
-    <section class="rn-section rn-events">
+    <section data-section="events" class="rn-section rn-events">
       <header v-reveal class="rn-section-heading">
         <p class="rn-kicker">{{ view.t.saveTheDate }}</p>
         <h2>{{ view.date.long }}</h2>
@@ -101,7 +101,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section v-if="view.gallery" class="rn-section rn-gallery">
+    <section data-section="gallery" v-if="view.gallery" class="rn-section rn-gallery">
       <header v-reveal class="rn-section-heading">
         <p class="rn-kicker">LITTLE THINGS, KEPT CLOSE</p>
         <h2>{{ view.gallery.title }}</h2>
@@ -115,7 +115,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section class="rn-section rn-rsvp">
+    <section data-section="rsvp" class="rn-section rn-rsvp">
       <div class="rn-rsvp__ornament" aria-hidden="true">
         <svg viewBox="0 0 200 200" focusable="false"><path d="M20 180 C70 144 71 87 120 28 M61 132 C38 124 32 103 45 91 C63 103 68 116 61 132ZM85 96 C65 83 66 61 82 52 C99 65 98 83 85 96ZM113 58 C103 37 116 20 135 18 C143 36 133 53 113 58ZM78 111 C99 115 110 132 101 148 C82 145 73 128 78 111Z" fill="none" stroke="currentColor" stroke-width="1.3" /></svg>
       </div>
@@ -127,7 +127,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <footer class="rn-closing">
+    <footer data-section="closing" class="rn-closing">
       <div v-if="content.closing.image" class="rn-closing__photo"><ThemeImage :image="content.closing.image" /></div>
       <div v-reveal class="rn-closing__copy">
         <p class="rn-kicker">{{ view.date.short }}</p>

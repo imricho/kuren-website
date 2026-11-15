@@ -25,12 +25,6 @@ export const cmsEn = {
   tryAgain: 'Try again',
 
   // Saving
-  saved: 'Saved',
-  unsavedChanges: 'Unsaved changes',
-  discard: 'Discard',
-  sectionSaved: '{section} saved',
-  sectionSaveFailed: '{section} couldn’t be saved.',
-  itemSaved: '“{name}” saved',
   itemAdded: '“{name}” added',
   itemSaveFailed: 'This item couldn’t be saved.',
   unsavedTitle: 'Discard unsaved changes?',
@@ -43,12 +37,7 @@ export const cmsEn = {
   optional: 'Optional',
   errorSummaryTitle: 'Please fix {count} problem(s) before saving:',
   closeNotification: 'Close notification',
-  sessionExpired: 'Your session has expired. Sign in again in another tab, then press Save again — your changes are still here.',
-  partSaveFailed: '{saved} saved, but {failed} couldn’t be saved. Press Save again to retry.',
-  partOpeningDetails: 'Opening details',
-  partNames: 'your names',
-  partLanguage: 'the website language',
-  partNamesSaved: 'Your names',
+  sessionExpired: 'Your session has expired. Sign in again in another tab, then press Retry — your changes are still here.',
   signOutUnsavedTitle: 'Sign out with unsaved changes?',
   signOutUnsavedBody: 'You have changes that haven’t been saved. If you sign out now, they’ll be lost.',
 

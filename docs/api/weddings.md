@@ -14,6 +14,15 @@ Source of truth for the `/api/v1/weddings` API. Backend (`backend/app/...`) and 
   - 404 `not_found`: wedding/item missing **or owned by another user** (never 403, to avoid revealing ids).
   - 409 `wedding_exists`: POST /weddings when the user already has one.
   - 409 `limit_reached`: adding beyond a collection limit.
+  - 409 `edit_conflict`: a content write whose `If-Match` is not the current revision;
+    `details = { "currentRevision": number }`. Nothing is written.
+  - 400 `bad_request`: malformed `If-Match`.
+- **Optimistic concurrency (autosave).** Every content write (sections, collection create/update/
+  delete/reorder, PUT /content) increments the wedding's content `revision`. Every content GET and
+  write response carries it as `ETag: "<revision>"`. Clients send the revision they last saw as
+  `If-Match: "<revision>"` (weak `W/"n"` and bare `n` accepted; absent or `*` = unconditional).
+  The check runs under the wedding row lock, after the ownership check (foreign ids stay 404).
+  Theme/locale changes (PATCH /weddings/{id}) do **not** change the content revision.
 - Strings are trimmed; an empty string means "not set" (stored as null, omitted from responses).
 - Drafts may be incomplete: required-for-publishing fields may be missing. Values that ARE sent must be valid.
 - Dates `YYYY-MM-DD`; times `HH:mm` (24h); venue-local, no timezone.
@@ -39,6 +48,7 @@ interface WeddingRead {
   locale: Locale          // language guests see
   status: 'draft'         // 'published' reserved for a later workstream
   publishedAt: null
+  revision: number        // content revision (see Optimistic concurrency); 0 for a new wedding
   createdAt: string; updatedAt: string // ISO datetimes
 }
 ```
@@ -67,9 +77,9 @@ interface WeddingDraft {
   locale: Locale
   opening: { weddingTitle?; coupleNames?; headline?; introduction?; coverImage?: ImageAsset; weddingDate? }
   couple:  { groom: PersonDraft; bride: PersonDraft }            // always present (may be {})
-  story:   { title?; introduction?; timeline: StoryEntry[] }       // timeline always present
+  story:   { title?; introduction?; enabled: boolean; timeline: StoryEntry[] } // timeline always present; enabled default true ("Show on website")
   events:  EventItem[]                                             // always present
-  gallery: { title?; description?; images: GalleryItem[] }        // images always present
+  gallery: { title?; description?; enabled: boolean; images: GalleryItem[] } // images always present; enabled default true
   rsvp:    { title?; introduction?; enabled: boolean; deadline?; confirmationMessage?; maxGuestsPerResponse? } // enabled default true
   closing: { message?; thankYou?; image?: ImageAsset }
 }

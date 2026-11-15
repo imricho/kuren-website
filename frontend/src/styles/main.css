@@ -46,4 +46,17 @@
   :focus-visible:not(:where(.wedding-site *)) {
     @apply outline-2 outline-offset-2 outline-rose-500;
   }
+
+  /* Phones/tablets: the app header (3.5–4rem) and the editor's sticky Edit/Preview bar
+     (3rem) cover the top of the page; keep focused fields clear of them (WCAG 2.4.11). */
+  @media (max-width: 1023.98px) {
+    html {
+      scroll-padding-top: 7rem;
+    }
+  }
+  @media (min-width: 640px) and (max-width: 1023.98px) {
+    html {
+      scroll-padding-top: 7.5rem;
+    }
+  }
 }

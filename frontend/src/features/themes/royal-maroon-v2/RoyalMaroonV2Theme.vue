@@ -21,7 +21,7 @@ const people = computed(() => [
 
 <template>
   <article class="rm2" data-variant="royal-maroon-v2" data-ornament-density="ornate">
-    <header class="rm2-hero">
+    <header data-section="opening" class="rm2-hero">
       <div class="rm2-hero__frame">
         <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
         <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tr" />
@@ -55,7 +55,7 @@ const people = computed(() => [
       </div>
     </section>
 
-    <section class="rm2-section rm2-couple" :aria-label="view.locale === 'id' ? 'Mempelai' : 'The couple'">
+    <section data-section="couple" class="rm2-section rm2-couple" :aria-label="view.locale === 'id' ? 'Mempelai' : 'The couple'">
       <div class="rm2-section-divider" aria-hidden="true"><span /><BotanicalOrnament kind="rosette" /><span /></div>
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tr" />
@@ -72,7 +72,7 @@ const people = computed(() => [
       <BotanicalOrnament class="rm2-section-tail" />
     </section>
 
-    <section v-if="view.story" class="rm2-section rm2-story">
+    <section data-section="story" v-if="view.story" class="rm2-section rm2-story">
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--br" />
       <header class="rm2-heading"><BotanicalOrnament kind="rosette" /><h2>{{ view.story.title }}</h2><p v-if="view.story.introduction">{{ view.story.introduction }}</p></header>
@@ -85,7 +85,7 @@ const people = computed(() => [
       </ol>
     </section>
 
-    <section class="rm2-section rm2-events">
+    <section data-section="events" class="rm2-section rm2-events">
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tr" />
       <header class="rm2-heading"><BotanicalOrnament /><p class="rm2-eyebrow">{{ view.t.saveTheDate }}</p><h2>{{ view.date.long }}</h2></header>
@@ -104,7 +104,7 @@ const people = computed(() => [
       <div class="rm2-section-divider rm2-events__tail" aria-hidden="true"><span /><BotanicalOrnament kind="rosette" /><span /></div>
     </section>
 
-    <section v-if="view.gallery" class="rm2-section rm2-gallery">
+    <section data-section="gallery" v-if="view.gallery" class="rm2-section rm2-gallery">
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--br" />
       <header class="rm2-heading"><BotanicalOrnament /><h2>{{ view.gallery.title }}</h2><p v-if="view.gallery.description">{{ view.gallery.description }}</p></header>
@@ -114,7 +114,7 @@ const people = computed(() => [
       <div class="rm2-section-divider" aria-hidden="true"><span /><BotanicalOrnament kind="rosette" /><span /></div>
     </section>
 
-    <section class="rm2-section rm2-rsvp">
+    <section data-section="rsvp" class="rm2-section rm2-rsvp">
       <div class="rm2-panel">
         <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
         <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tr" />
@@ -128,7 +128,7 @@ const people = computed(() => [
       </div>
     </section>
 
-    <footer class="rm2-closing rm2-section">
+    <footer data-section="closing" class="rm2-closing rm2-section">
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tr" />
       <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--bl" />

@@ -234,6 +234,8 @@ class WeddingRead(ResponseModel):
     locale: Locale
     status: Literal["draft", "published"]
     published_at: datetime | None
+    #: Content revision; send it back as `If-Match: "<revision>"` on content writes.
+    revision: int
     created_at: datetime
     updated_at: datetime
 
@@ -271,14 +273,20 @@ class CoupleSection(RequestModel):
     bride: PersonField = Field(default_factory=PersonDraft)
 
 
+_ShowFlag = Annotated[bool, BeforeValidator(lambda v: True if v is None else v), Field(strict=True)]
+
+
 class StoryMeta(RequestModel):
     title: Str120
     introduction: Str2000
+    #: "Show on website". Optional sections can be hidden without losing their content.
+    enabled: _ShowFlag = True
 
 
 class GalleryMeta(RequestModel):
     title: Str120
     description: Str2000
+    enabled: _ShowFlag = True
 
 
 class RsvpSection(RequestModel):
@@ -424,11 +432,13 @@ class CoupleOut(ResponseModel):
 class StoryMetaOut(ResponseModel):
     title: str | None = None
     introduction: str | None = None
+    enabled: bool = True
 
 
 class GalleryMetaOut(ResponseModel):
     title: str | None = None
     description: str | None = None
+    enabled: bool = True
 
 
 class RsvpOut(ResponseModel):

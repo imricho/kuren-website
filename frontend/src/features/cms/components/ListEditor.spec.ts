@@ -17,6 +17,7 @@ interface Item {
 function setup(
   initial: Item[] = [{ id: 'a', title: 'Akad' }, { id: 'b', title: 'Resepsi' }, { id: 'c', title: 'Ngunduh' }],
   max?: number,
+  beforeClose?: (item: Item) => Promise<boolean>,
 ) {
   const items = ref<Item[]>(initial)
   const reorder = vi.fn(async (ids: string[]) => {
@@ -39,6 +40,7 @@ function setup(
             reorder,
             remove,
             max,
+            beforeClose,
           },
           {
             summary: ({ item }: { item: Item }) => h('h3', item.title),
@@ -263,5 +265,28 @@ describe('ListEditor on phones (overflow menu)', () => {
     await flushPromises()
     expect(remove).not.toHaveBeenCalled()
     expect(document.activeElement).toBe(more.element)
+  })
+})
+
+describe('ListEditor beforeClose (autosaving item editors)', () => {
+  it('lets the open editor save before it closes, and keeps it open if that fails', async () => {
+    let allow = false
+    const beforeClose = vi.fn(async () => allow)
+    const { wrapper } = setup(undefined, undefined, beforeClose)
+    await wrapper.findAll('[data-action="edit"]')[0]!.trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-item-editor="a"]').exists()).toBe(true)
+    expect(beforeClose).not.toHaveBeenCalled() // nothing was open yet
+
+    await wrapper.findAll('[data-action="edit"]')[0]!.trigger('click') // close attempt
+    await flushPromises()
+    expect(beforeClose).toHaveBeenCalledWith({ id: 'a', title: 'Akad' })
+    expect(wrapper.find('[data-item-editor="a"]').exists()).toBe(true)
+
+    allow = true
+    await wrapper.findAll('[data-action="edit"]')[1]!.trigger('click') // switch to another item
+    await flushPromises()
+    expect(wrapper.find('[data-item-editor="a"]').exists()).toBe(false)
+    expect(wrapper.find('[data-item-editor="b"]').exists()).toBe(true)
   })
 })

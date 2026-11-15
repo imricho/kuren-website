@@ -17,7 +17,7 @@ const status = computed(() => store.completeness.sections[props.section].status)
 <template>
   <header class="space-y-2">
     <div class="flex flex-wrap items-center gap-3">
-      <h1 class="text-3xl font-semibold sm:text-4xl">{{ t(sectionByKey(section).label) }}</h1>
+      <h1 class="text-2xl font-semibold">{{ t(sectionByKey(section).label) }}</h1>
       <SectionStatusBadge :status="status" />
     </div>
     <p v-if="description" class="max-w-2xl text-sm text-ink-500">{{ description }}</p>

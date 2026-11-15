@@ -117,9 +117,16 @@ export const couplePayload = (c: CoupleForm): CoupleDraft => ({ groom: personPay
 export interface StoryMetaForm {
   title: string
   introduction: string
+  /** "Show on website" (default on). */
+  enabled: boolean
 }
-export const storyMetaForm = (m: StoryMetaDraft): StoryMetaForm => ({ title: s(m.title), introduction: s(m.introduction) })
-export const storyMetaPayload = (m: StoryMetaForm): StoryMetaDraft => clean({ title: opt(m.title), introduction: opt(m.introduction) })
+export const storyMetaForm = (m: StoryMetaDraft): StoryMetaForm => ({
+  title: s(m.title),
+  introduction: s(m.introduction),
+  enabled: m.enabled !== false,
+})
+export const storyMetaPayload = (m: StoryMetaForm): StoryMetaDraft =>
+  clean({ title: opt(m.title), introduction: opt(m.introduction), enabled: m.enabled })
 
 export interface StoryEntryForm {
   title: string
@@ -178,10 +185,16 @@ export const eventPayload = (e: EventForm): NewItem<'events'> =>
 export interface GalleryMetaForm {
   title: string
   description: string
+  /** "Show on website" (default on). */
+  enabled: boolean
 }
-export const galleryMetaForm = (m: GalleryMetaDraft): GalleryMetaForm => ({ title: s(m.title), description: s(m.description) })
+export const galleryMetaForm = (m: GalleryMetaDraft): GalleryMetaForm => ({
+  title: s(m.title),
+  description: s(m.description),
+  enabled: m.enabled !== false,
+})
 export const galleryMetaPayload = (m: GalleryMetaForm): GalleryMetaDraft =>
-  clean({ title: opt(m.title), description: opt(m.description) })
+  clean({ title: opt(m.title), description: opt(m.description), enabled: m.enabled })
 
 export interface GalleryItemForm {
   image: ImageForm

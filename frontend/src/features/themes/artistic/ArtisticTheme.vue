@@ -23,7 +23,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
 <template>
   <article class="t-art" :data-variant="config?.variant ?? 'gallery-bold'">
     <!-- Opening -->
-    <header class="art-hero">
+    <header data-section="opening" class="art-hero">
       <p class="art-hero__vertical" aria-hidden="true">{{ view.date.short }}</p>
       <h1 v-bind="heroHeading" class="art-hero__names">
         <span class="art-hero__first">{{ content.couple.groom.name.split(' ')[0] }}</span>
@@ -55,7 +55,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
     </section>
 
     <!-- Couple -->
-    <section class="art-section art-couple" aria-label="The couple">
+    <section data-section="couple" class="art-section art-couple" aria-label="The couple">
       <figure
         v-for="(person, i) in [content.couple.groom, content.couple.bride]"
         :key="i"
@@ -74,7 +74,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
     </section>
 
     <!-- Story -->
-    <section v-if="view.story" class="art-section art-story">
+    <section data-section="story" v-if="view.story" class="art-section art-story">
       <header v-reveal class="art-heading">
         <h2 class="art-title">{{ view.story.title }}</h2>
         <p v-if="view.story.introduction" class="art-body">{{ view.story.introduction }}</p>
@@ -93,7 +93,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
     </section>
 
     <!-- Events -->
-    <section class="art-section art-events">
+    <section data-section="events" class="art-section art-events">
       <header v-reveal class="art-heading">
         <p class="art-mono">{{ view.t.saveTheDate }}</p>
         <h2 class="art-title">{{ view.date.long }}</h2>
@@ -124,7 +124,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
     </section>
 
     <!-- Gallery -->
-    <section v-if="view.gallery" class="art-section art-gallery">
+    <section data-section="gallery" v-if="view.gallery" class="art-section art-gallery">
       <header v-reveal class="art-heading">
         <h2 class="art-title">{{ view.gallery.title }}</h2>
         <p v-if="view.gallery.description" class="art-body">{{ view.gallery.description }}</p>
@@ -141,7 +141,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
     </section>
 
     <!-- RSVP -->
-    <section class="art-section art-rsvp">
+    <section data-section="rsvp" class="art-section art-rsvp">
       <div class="art-rsvp__grid">
         <h2 v-reveal class="art-rsvp__big">{{ content.rsvp.title }}</h2>
         <div v-reveal class="art-rsvp__form">
@@ -152,7 +152,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
     </section>
 
     <!-- Closing -->
-    <footer class="art-section art-closing">
+    <footer data-section="closing" class="art-section art-closing">
       <div v-if="content.closing.image" class="art-closing__photo"><ThemeImage :image="content.closing.image" /></div>
       <div v-reveal class="art-closing__text">
         <p class="art-statement art-statement--small">{{ content.closing.message }}</p>

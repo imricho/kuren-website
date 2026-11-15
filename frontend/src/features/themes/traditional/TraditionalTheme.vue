@@ -25,7 +25,7 @@ const view = useWeddingView(props)
 <template>
   <article class="t-trad" :data-variant="config?.variant ?? 'royal-maroon'" :data-ornament-density="['royal-maroon', 'loomed-lines'].includes(String(config?.variant ?? 'royal-maroon')) ? 'ornate' : 'balanced'">
     <!-- Opening -->
-    <header class="trad-hero">
+    <header data-section="opening" class="trad-hero">
       <div class="trad-frame">
         <TradCorner v-for="pos in ['tl', 'tr', 'bl', 'br']" :key="pos" :class="`trad-corner--${pos}`" />
         <div class="trad-hero__content">
@@ -57,7 +57,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Couple -->
-    <section class="trad-section trad-couple" aria-label="The couple">
+    <section data-section="couple" class="trad-section trad-couple" aria-label="The couple">
       <div class="trad-couple__grid">
         <figure v-reveal class="trad-person">
           <div v-if="content.couple.groom.image" class="trad-portrait"><ThemeImage :image="content.couple.groom.image" /></div>
@@ -82,7 +82,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Story -->
-    <section v-if="view.story" class="trad-section trad-story">
+    <section data-section="story" v-if="view.story" class="trad-section trad-story">
       <header v-reveal class="trad-col">
         <h2 class="trad-title">{{ view.story.title }}</h2>
         <TradDivider />
@@ -103,7 +103,7 @@ const view = useWeddingView(props)
 
     <!-- Events -->
     <div class="trad-band" aria-hidden="true" />
-    <section class="trad-section trad-events">
+    <section data-section="events" class="trad-section trad-events">
       <header v-reveal class="trad-col">
         <p class="trad-caps trad-gold">{{ view.t.saveTheDate }}</p>
         <h2 class="trad-title trad-title--light">{{ view.date.long }}</h2>
@@ -126,7 +126,7 @@ const view = useWeddingView(props)
     <div class="trad-band" aria-hidden="true" />
 
     <!-- Gallery -->
-    <section v-if="view.gallery" class="trad-section trad-gallery">
+    <section data-section="gallery" v-if="view.gallery" class="trad-section trad-gallery">
       <header v-reveal class="trad-col">
         <h2 class="trad-title">{{ view.gallery.title }}</h2>
         <TradDivider />
@@ -141,7 +141,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- RSVP -->
-    <section class="trad-section trad-rsvp">
+    <section data-section="rsvp" class="trad-section trad-rsvp">
       <div v-reveal class="trad-panel">
         <TradCorner v-for="pos in ['tl', 'tr', 'bl', 'br']" :key="pos" :class="`trad-corner--${pos}`" />
         <div class="trad-col">
@@ -154,7 +154,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Closing -->
-    <footer class="trad-closing">
+    <footer data-section="closing" class="trad-closing">
       <div class="trad-band" aria-hidden="true" />
       <div v-reveal class="trad-col trad-closing__inner">
         <div v-if="content.closing.image" class="trad-medallion trad-medallion--small">

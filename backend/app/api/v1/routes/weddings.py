@@ -10,7 +10,7 @@ from typing import Any
 
 from fastapi import APIRouter, Response, status
 
-from app.api.deps import CurrentUser, DbSession, OwnedWedding
+from app.api.deps import CurrentUser, DbSession, OwnedWedding, WritableWedding
 from app.schemas.wedding import (
     SECTION_MODELS,
     SECTION_OUT_MODELS,
@@ -36,6 +36,16 @@ router = APIRouter(prefix="/weddings", tags=["weddings"])
 _CONTENT = {"response_model_exclude_unset": True}
 
 
+def _tag(response: Response, wedding: Any, db: Any) -> None:
+    """Expose the content revision as an ETag, for the client's next `If-Match`.
+
+    Re-read from the database: writes bump it with a SQL expression, and sessions
+    don't expire attributes on commit.
+    """
+    db.refresh(wedding, attribute_names=["revision"])
+    response.headers["ETag"] = f'"{wedding.revision}"'
+
+
 # --- Wedding record -----------------------------------------------------------------------
 
 
@@ -59,13 +69,17 @@ def update_wedding(payload: WeddingUpdate, wedding: OwnedWedding, db: DbSession)
 
 
 @router.get("/{wedding_id}/content", response_model=WeddingDraftOut, **_CONTENT)
-def read_content(wedding: OwnedWedding, db: DbSession) -> Any:
-    return wedding_content_service.assemble_draft(db, wedding)
+def read_content(wedding: OwnedWedding, db: DbSession, response: Response) -> Any:
+    draft = wedding_content_service.assemble_draft(db, wedding)
+    _tag(response, wedding, db)
+    return draft
 
 
 @router.put("/{wedding_id}/content", response_model=WeddingDraftOut, **_CONTENT)
-def replace_content(payload: WeddingDraftIn, wedding: OwnedWedding, db: DbSession) -> Any:
-    return wedding_content_service.replace_content(db, wedding, payload)
+def replace_content(payload: WeddingDraftIn, wedding: WritableWedding, db: DbSession, response: Response) -> Any:
+    draft = wedding_content_service.replace_content(db, wedding, payload)
+    _tag(response, wedding, db)
+    return draft
 
 
 @router.get("/{wedding_id}/preview", response_model=PreviewOut, **_CONTENT)
@@ -77,11 +91,14 @@ def read_preview(wedding: OwnedWedding, db: DbSession) -> Any:
 
 
 def _register_section(section: str, body_model: type[RequestModel], out_model: type) -> None:
-    def read_section(wedding: OwnedWedding) -> Any:
+    def read_section(wedding: OwnedWedding, db: DbSession, response: Response) -> Any:
+        _tag(response, wedding, db)
         return wedding_content_service.get_section(wedding, section)  # type: ignore[arg-type]
 
-    def put_section(payload: body_model, wedding: OwnedWedding, db: DbSession) -> Any:  # type: ignore[valid-type]
-        return wedding_content_service.put_section(db, wedding, section, payload)  # type: ignore[arg-type]
+    def put_section(payload: body_model, wedding: WritableWedding, db: DbSession, response: Response) -> Any:  # type: ignore[valid-type]
+        out = wedding_content_service.put_section(db, wedding, section, payload)  # type: ignore[arg-type]
+        _tag(response, wedding, db)
+        return out
 
     path = f"/{{wedding_id}}/sections/{section}"
     router.add_api_route(
@@ -105,21 +122,30 @@ def _register_collection(collection: str, body_model: type[RequestModel], out_mo
     service = wedding_collection_service
     base = f"/{{wedding_id}}/{collection}"
 
-    def list_items(wedding: OwnedWedding, db: DbSession) -> Any:
+    def list_items(wedding: OwnedWedding, db: DbSession, response: Response) -> Any:
+        _tag(response, wedding, db)
         return service.list_items(db, wedding, collection)  # type: ignore[arg-type]
 
-    def create_item(payload: body_model, wedding: OwnedWedding, db: DbSession) -> Any:  # type: ignore[valid-type]
-        return service.create_item(db, wedding, collection, item=payload)  # type: ignore[arg-type]
+    def create_item(payload: body_model, wedding: WritableWedding, db: DbSession, response: Response) -> Any:  # type: ignore[valid-type]
+        out = service.create_item(db, wedding, collection, item=payload)  # type: ignore[arg-type]
+        _tag(response, wedding, db)
+        return out
 
-    def reorder_items(payload: ReorderRequest, wedding: OwnedWedding, db: DbSession) -> Any:
-        return service.reorder_items(db, wedding, collection, ids=payload.ids)  # type: ignore[arg-type]
+    def reorder_items(payload: ReorderRequest, wedding: WritableWedding, db: DbSession, response: Response) -> Any:
+        out = service.reorder_items(db, wedding, collection, ids=payload.ids)  # type: ignore[arg-type]
+        _tag(response, wedding, db)
+        return out
 
-    def update_item(item_id: str, payload: body_model, wedding: OwnedWedding, db: DbSession) -> Any:  # type: ignore[valid-type]
-        return service.update_item(db, wedding, collection, item_id, item=payload)  # type: ignore[arg-type]
+    def update_item(item_id: str, payload: body_model, wedding: WritableWedding, db: DbSession, response: Response) -> Any:  # type: ignore[valid-type]
+        out = service.update_item(db, wedding, collection, item_id, item=payload)  # type: ignore[arg-type]
+        _tag(response, wedding, db)
+        return out
 
-    def delete_item(item_id: str, wedding: OwnedWedding, db: DbSession) -> Response:
+    def delete_item(item_id: str, wedding: WritableWedding, db: DbSession) -> Response:
         service.delete_item(db, wedding, collection, item_id)  # type: ignore[arg-type]
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
+        response = Response(status_code=status.HTTP_204_NO_CONTENT)
+        _tag(response, wedding, db)
+        return response
 
     router.add_api_route(
         base, list_items, methods=["GET"], response_model=list[out_model],

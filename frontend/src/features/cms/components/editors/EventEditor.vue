@@ -36,7 +36,10 @@ const draft = useSectionDraft({
     if (props.item) await store.updateItem('events', props.item.id, payload)
     else await store.createItem('events', payload)
   },
-  successMessage: (): string => t(props.item ? 'itemSaved' : 'itemAdded', { name: draft.form.value.title || t('event') }),
+  // Saved items autosave; a new item is only created by an explicit Add.
+  autosave: !!props.item,
+  live: (payload) => ({ kind: 'item', collection: 'events', itemId: props.item?.id ?? null, value: payload }),
+  successMessage: (): string => t('itemAdded', { name: draft.form.value.title || t('event') }),
   failureMessage: () => t('itemSaveFailed'),
 })
 const { form, errors } = draft
@@ -67,7 +70,13 @@ async function submit() {
     return
   }
   emptyError.value = false
-  if (await draft.save()) emit('done')
+  if (await draft.save()) {
+    if (!props.item) emit('done') // added: close the new-item form
+  }
+}
+/** Saved item: save anything pending, then close (stays open if it couldn't be saved). */
+async function done() {
+  if (await draft.flush()) emit('done')
 }
 function cancel() {
   draft.discard()
@@ -129,6 +138,6 @@ function cancel() {
       inputmode="url"
     />
     <TextAreaField :id="id('description')" v-model="form.description" :label="t('additionalInfo')" :hint="t('additionalInfoHint')" :rows="3" :error="errors.description" />
-    <ItemEditorActions :dirty="draft.isDirty.value" :saving="draft.submitting.value" :is-new="!item" @cancel="cancel" />
+    <ItemEditorActions :saving="draft.submitting.value" :is-new="!item" @cancel="cancel" @done="done" />
   </form>
 </template>

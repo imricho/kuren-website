@@ -36,6 +36,7 @@ const when = (e: EventDraft) =>
       :max="20"
       :reorder="(ids) => store.reorder('events', ids)"
       :refresh="() => store.refreshCollection('events')"
+      :before-close="(item) => store.flushDraft(`events:${item.id}`)"
       :remove="(item) => store.deleteItem('events', item.id)"
     >
       <template #summary="{ item, index }">

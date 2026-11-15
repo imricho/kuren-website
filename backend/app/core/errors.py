@@ -74,6 +74,21 @@ class LimitReachedError(ConflictError):
     message = "The maximum number of items has been reached."
 
 
+class EditConflictError(ConflictError):
+    """The client edited an older revision of the content (If-Match mismatch)."""
+
+    code = "edit_conflict"
+    message = "This wedding was changed somewhere else. Reload to see the latest version."
+
+    def __init__(self, *, current_revision: int) -> None:
+        super().__init__(details={"currentRevision": current_revision})
+
+
+class BadRequestError(AppError):
+    code = "bad_request"
+    message = "The request could not be understood."
+
+
 class ValidationFailedError(AppError):
     """Service-level validation failure, shaped like request validation errors.
 

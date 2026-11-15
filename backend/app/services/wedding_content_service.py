@@ -76,7 +76,7 @@ def section_out(wedding: Wedding, section: SectionName) -> dict[str, Any]:
     if section == "couple":
         return {"groom": _person_out(raw.get("groom")), "bride": _person_out(raw.get("bride"))}
     out = _pick(raw, keys, image_keys)
-    if section == "rsvp":
+    if section in ("rsvp", "story", "gallery"):
         enabled = raw.get("enabled")
         out["enabled"] = enabled if isinstance(enabled, bool) else True
     return _ordered(out, _ORDER[section]) if section in _ORDER else out

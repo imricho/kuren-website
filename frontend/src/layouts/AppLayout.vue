@@ -61,8 +61,10 @@ const initials = computed(() =>
 const confirm = useConfirm()
 
 async function signOut() {
-  // Signing out clears the editor, so never drop unsaved edits silently.
-  if (wedding.anyDirty) {
+  // Signing out clears the editor, so never drop unsaved edits silently:
+  // flush pending autosaves first, and only ask if something still couldn't be saved.
+  if (wedding.hasUnsavedWork) await wedding.saveNow().catch(() => false)
+  if (wedding.hasUnsavedWork) {
     const discard = await confirm.ask({
       title: t('signOutUnsavedTitle'),
       message: t('signOutUnsavedBody'),

@@ -12,7 +12,6 @@ import { useAppLocale } from '@/composables/useAppLocale'
 import DateField from '@/features/cms/components/DateField.vue'
 import ErrorSummary from '@/features/cms/components/ErrorSummary.vue'
 import ImageField from '@/features/cms/components/ImageField.vue'
-import SaveBar from '@/features/cms/components/SaveBar.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
 import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
@@ -31,35 +30,23 @@ const toPayload = (f: OpeningForm) => ({
   locale: f.locale,
 })
 
-type Part = 'opening' | 'couple' | 'locale'
-/** Parts saved / the part that failed during the last save (for an accurate message). */
-let savedParts: Part[] = []
-let failedPart: Part | null = null
-const partLabel = (part: Part) =>
-  part === 'opening' ? t('partOpeningDetails') : part === 'couple' ? t('partNames') : t('partLanguage')
-const savedLabel = (part: Part) =>
-  part === 'opening' ? t('partOpeningDetails') : part === 'couple' ? t('partNamesSaved') : t('websiteLanguage')
-
 const draft = useSectionDraft({
   key: 'opening',
   source: () => openingForm(store.content!.opening, store.content!.couple, store.content!.locale),
   toPayload,
   validate: validateOpening,
-  // Up to three requests; after each success that part of the baseline is resynced
-  // from the store, so a later failure leaves only the unsaved part dirty.
+  // Opening details, the couple's names and the website language, live in the preview.
+  live: (p) => [
+    { kind: 'section', section: 'opening', value: p.opening },
+    { kind: 'names', groom: p.groom, bride: p.bride },
+    { kind: 'locale', locale: p.locale },
+  ],
+  // Up to three requests, each only if its part changed; after each success that
+  // part of the baseline is resynced, so a later failure leaves only that part dirty.
   async save(payload, _form, { commit }) {
-    savedParts = []
-    failedPart = null
     const saved = () => openingForm(store.content!.opening, store.content!.couple, store.content!.locale)
-    const step = async (part: Part, run: () => Promise<unknown>) => {
-      failedPart = part
-      await run()
-      failedPart = null
-      savedParts.push(part)
-    }
-
     if (JSON.stringify(openingPayload(saved())) !== JSON.stringify(payload.opening)) {
-      await step('opening', () => store.saveSection('opening', payload.opening))
+      await store.saveSection('opening', payload.opening)
       const f = saved()
       commit({
         weddingTitle: f.weddingTitle,
@@ -72,27 +59,20 @@ const draft = useSectionDraft({
     }
     const couple = store.content!.couple
     if ((couple.groom.name ?? '') !== payload.groom || (couple.bride.name ?? '') !== payload.bride) {
-      await step('couple', () =>
-        store.saveSection('couple', {
-          groom: clean({ ...couple.groom, name: payload.groom || undefined }),
-          bride: clean({ ...couple.bride, name: payload.bride || undefined }),
-        }),
-      )
+      await store.saveSection('couple', {
+        groom: clean({ ...couple.groom, name: payload.groom || undefined }),
+        bride: clean({ ...couple.bride, name: payload.bride || undefined }),
+      })
       const f = saved()
       commit({ groomName: f.groomName, brideName: f.brideName })
     }
     if (payload.locale !== store.content!.locale) {
-      await step('locale', () => store.setLocale(payload.locale))
+      await store.setLocale(payload.locale)
       commit({ locale: saved().locale })
     }
   },
   // Couple-name errors come back from the couple section as "groom.name" / "bride.name".
   mapServerField: (field) => (/^(groom|bride)\./.test(field) ? `couple.${field}` : field),
-  successMessage: () => t('sectionSaved', { section: t('sectionOpening') }),
-  failureMessage: () =>
-    savedParts.length && failedPart
-      ? t('partSaveFailed', { saved: savedParts.map(savedLabel).join(', '), failed: partLabel(failedPart) })
-      : t('sectionSaveFailed', { section: t('sectionOpening') }),
 })
 const { form, errors } = draft
 useUnsavedChangesGuard()
@@ -194,7 +174,5 @@ const labels = computed<Record<string, string>>(() => ({
     </fieldset>
 
     <ImageField v-model="form.coverImage" path="coverImage" :label="t('coverImage')" :errors="errors" :hint="t('coverImageHint')" />
-
-    <SaveBar :dirty="draft.isDirty.value" :saving="draft.submitting.value" @discard="draft.discard()" />
   </form>
 </template>

@@ -14,7 +14,7 @@ declare module 'vue-router' {
     guestOnly?: boolean
     /** Page name for the document title ("<Page> · Kuren"), translated with t(). */
     titleKey?: AppMessageKey
-    /** Full-width, full-height layout for the theme studio. */
+    /** Full-width, full-height layout (theme studio, live website editor). */
     layout?: 'studio'
   }
 }
@@ -109,15 +109,16 @@ const router = createRouter({
           path: 'wedding',
           name: 'wedding',
           component: () => import('@/pages/wedding/WeddingEditorLayout.vue'),
-          meta: { titleKey: 'myWebsite' },
+          // Live split editor: full width and (on desktop) the full remaining height.
+          meta: { titleKey: 'myWebsite', layout: 'studio' },
           children: [
-            { path: 'opening', name: 'wedding-opening', component: () => import('@/pages/wedding/OpeningPage.vue'), meta: { titleKey: 'sectionOpening' } },
-            { path: 'couple', name: 'wedding-couple', component: () => import('@/pages/wedding/CouplePage.vue'), meta: { titleKey: 'sectionCouple' } },
-            { path: 'story', name: 'wedding-story', component: () => import('@/pages/wedding/StoryPage.vue'), meta: { titleKey: 'sectionStory' } },
-            { path: 'events', name: 'wedding-events', component: () => import('@/pages/wedding/EventsPage.vue'), meta: { titleKey: 'sectionEvents' } },
-            { path: 'gallery', name: 'wedding-gallery', component: () => import('@/pages/wedding/GalleryPage.vue'), meta: { titleKey: 'sectionGallery' } },
-            { path: 'rsvp', name: 'wedding-rsvp', component: () => import('@/pages/wedding/RsvpPage.vue'), meta: { titleKey: 'sectionRsvp' } },
-            { path: 'closing', name: 'wedding-closing', component: () => import('@/pages/wedding/ClosingPage.vue'), meta: { titleKey: 'sectionClosing' } },
+            { path: 'opening', name: 'wedding-opening', component: () => import('@/pages/wedding/OpeningPage.vue'), meta: { titleKey: 'sectionOpening', layout: 'studio' } },
+            { path: 'couple', name: 'wedding-couple', component: () => import('@/pages/wedding/CouplePage.vue'), meta: { titleKey: 'sectionCouple', layout: 'studio' } },
+            { path: 'story', name: 'wedding-story', component: () => import('@/pages/wedding/StoryPage.vue'), meta: { titleKey: 'sectionStory', layout: 'studio' } },
+            { path: 'events', name: 'wedding-events', component: () => import('@/pages/wedding/EventsPage.vue'), meta: { titleKey: 'sectionEvents', layout: 'studio' } },
+            { path: 'gallery', name: 'wedding-gallery', component: () => import('@/pages/wedding/GalleryPage.vue'), meta: { titleKey: 'sectionGallery', layout: 'studio' } },
+            { path: 'rsvp', name: 'wedding-rsvp', component: () => import('@/pages/wedding/RsvpPage.vue'), meta: { titleKey: 'sectionRsvp', layout: 'studio' } },
+            { path: 'closing', name: 'wedding-closing', component: () => import('@/pages/wedding/ClosingPage.vue'), meta: { titleKey: 'sectionClosing', layout: 'studio' } },
           ],
         },
         {

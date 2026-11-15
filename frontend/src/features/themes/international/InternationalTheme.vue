@@ -20,7 +20,7 @@ const view = useWeddingView(props)
 <template>
   <article class="t-intl" :data-variant="config?.variant ?? 'editorial-ivory'">
     <!-- Opening -->
-    <header class="intl-hero" :class="{ 'intl-hero--image': content.opening.coverImage }">
+    <header data-section="opening" class="intl-hero" :class="{ 'intl-hero--image': content.opening.coverImage }">
       <div v-if="content.opening.coverImage" class="intl-hero__media">
         <ThemeImage :image="content.opening.coverImage" eager />
       </div>
@@ -47,7 +47,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Couple -->
-    <section class="intl-section intl-couple" aria-label="The couple">
+    <section data-section="couple" class="intl-section intl-couple" aria-label="The couple">
       <div class="intl-couple__grid">
         <figure v-for="(person, i) in [content.couple.groom, content.couple.bride]" :key="i" v-reveal class="intl-person">
           <div v-if="person.image" class="intl-person__photo"><ThemeImage :image="person.image" /></div>
@@ -62,7 +62,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Our story -->
-    <section v-if="view.story" class="intl-section intl-story">
+    <section data-section="story" v-if="view.story" class="intl-section intl-story">
       <div class="intl-wide">
         <header v-reveal class="intl-heading">
           <h2 class="intl-display">{{ view.story.title }}</h2>
@@ -82,7 +82,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Events -->
-    <section class="intl-section intl-events">
+    <section data-section="events" class="intl-section intl-events">
       <div class="intl-wide">
         <header v-reveal class="intl-heading">
           <p class="intl-eyebrow">{{ view.t.saveTheDate }}</p>
@@ -109,7 +109,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Gallery -->
-    <section v-if="view.gallery" class="intl-section intl-gallery">
+    <section data-section="gallery" v-if="view.gallery" class="intl-section intl-gallery">
       <div class="intl-wide">
         <header v-reveal class="intl-heading">
           <h2 class="intl-display">{{ view.gallery.title }}</h2>
@@ -125,7 +125,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- RSVP -->
-    <section class="intl-section intl-rsvp">
+    <section data-section="rsvp" class="intl-section intl-rsvp">
       <div v-reveal class="intl-narrow">
         <h2 class="intl-display">{{ content.rsvp.title }}</h2>
         <p v-if="content.rsvp.introduction" class="intl-lead">{{ content.rsvp.introduction }}</p>
@@ -134,7 +134,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Closing -->
-    <footer class="intl-closing">
+    <footer data-section="closing" class="intl-closing">
       <div v-if="content.closing.image" class="intl-closing__media"><ThemeImage :image="content.closing.image" /></div>
       <div v-reveal class="intl-narrow intl-closing__text">
         <p class="intl-lead">{{ content.closing.message }}</p>

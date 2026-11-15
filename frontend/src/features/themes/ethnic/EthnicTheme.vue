@@ -22,7 +22,7 @@ const view = useWeddingView(props)
 <template>
   <article class="t-eth" :style="activeMotifSet.cssVars" :data-motif="activeMotifSet.id" :data-variant="config?.variant ?? 'woven-indigo'">
     <!-- Opening -->
-    <header class="eth-hero">
+    <header data-section="opening" class="eth-hero">
       <div v-if="content.opening.coverImage" class="eth-hero__media">
         <ThemeImage :image="content.opening.coverImage" eager />
       </div>
@@ -53,7 +53,7 @@ const view = useWeddingView(props)
     <div class="eth-band" aria-hidden="true" />
 
     <!-- Couple -->
-    <section class="eth-section eth-couple" aria-label="The couple">
+    <section data-section="couple" class="eth-section eth-couple" aria-label="The couple">
       <div class="eth-couple__grid">
         <figure
           v-for="(person, i) in [content.couple.groom, content.couple.bride]"
@@ -75,7 +75,7 @@ const view = useWeddingView(props)
     <div class="eth-edge eth-edge--cream" aria-hidden="true" />
 
     <!-- Story -->
-    <section v-if="view.story" class="eth-section eth-story">
+    <section data-section="story" v-if="view.story" class="eth-section eth-story">
       <header v-reveal class="eth-col">
         <h2 class="eth-title">{{ view.story.title }}</h2>
         <p v-if="view.story.introduction" class="eth-body">{{ view.story.introduction }}</p>
@@ -96,7 +96,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Events -->
-    <section class="eth-section eth-events">
+    <section data-section="events" class="eth-section eth-events">
       <header v-reveal class="eth-col">
         <p class="eth-label eth-label--dark">{{ view.t.saveTheDate }}</p>
         <h2 class="eth-title">{{ view.date.long }}</h2>
@@ -124,7 +124,7 @@ const view = useWeddingView(props)
     <div class="eth-edge eth-edge--indigo" aria-hidden="true" />
 
     <!-- Gallery -->
-    <section v-if="view.gallery" class="eth-section eth-gallery">
+    <section data-section="gallery" v-if="view.gallery" class="eth-section eth-gallery">
       <header v-reveal class="eth-col">
         <h2 class="eth-title eth-title--light">{{ view.gallery.title }}</h2>
         <p v-if="view.gallery.description" class="eth-body eth-body--light">{{ view.gallery.description }}</p>
@@ -140,7 +140,7 @@ const view = useWeddingView(props)
     <div class="eth-band" aria-hidden="true" />
 
     <!-- RSVP -->
-    <section class="eth-section eth-rsvp">
+    <section data-section="rsvp" class="eth-section eth-rsvp">
       <div v-reveal class="eth-col">
         <h2 class="eth-title">{{ content.rsvp.title }}</h2>
         <p v-if="content.rsvp.introduction" class="eth-lead">{{ content.rsvp.introduction }}</p>
@@ -150,7 +150,7 @@ const view = useWeddingView(props)
 
     <!-- Closing -->
     <div class="eth-edge eth-edge--indigo" aria-hidden="true" />
-    <footer class="eth-closing">
+    <footer data-section="closing" class="eth-closing">
       <div v-if="content.closing.image" class="eth-closing__photo"><ThemeImage :image="content.closing.image" /></div>
       <div v-reveal class="eth-col">
         <p class="eth-lead eth-lead--light">{{ content.closing.message }}</p>

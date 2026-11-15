@@ -7,7 +7,6 @@ import TextField from '@/components/ui/TextField.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
 import DateField from '@/features/cms/components/DateField.vue'
 import ErrorSummary from '@/features/cms/components/ErrorSummary.vue'
-import SaveBar from '@/features/cms/components/SaveBar.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
 import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
@@ -27,8 +26,7 @@ const draft = useSectionDraft({
   toPayload: rsvpPayload,
   validate: validateRsvp,
   save: async (payload) => void (await store.saveSection('rsvp', payload)),
-  successMessage: () => t('sectionSaved', { section: t('sectionRsvp') }),
-  failureMessage: () => t('sectionSaveFailed', { section: t('sectionRsvp') }),
+  live: (value) => ({ kind: 'section', section: 'rsvp', value }),
 })
 const { form, errors } = draft
 const labels = computed<Record<string, string>>(() => ({
@@ -82,7 +80,5 @@ const deadlineAfterWedding = computed(
         />
       </div>
     </fieldset>
-
-    <SaveBar :dirty="draft.isDirty.value" :saving="draft.submitting.value" @discard="draft.discard()" />
   </form>
 </template>

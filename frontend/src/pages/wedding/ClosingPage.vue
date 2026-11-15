@@ -6,7 +6,6 @@ import TextField from '@/components/ui/TextField.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
 import ErrorSummary from '@/features/cms/components/ErrorSummary.vue'
 import ImageField from '@/features/cms/components/ImageField.vue'
-import SaveBar from '@/features/cms/components/SaveBar.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
 import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
@@ -24,8 +23,7 @@ const draft = useSectionDraft({
   toPayload: closingPayload,
   validate: validateClosing,
   save: async (payload) => void (await store.saveSection('closing', payload)),
-  successMessage: () => t('sectionSaved', { section: t('sectionClosing') }),
-  failureMessage: () => t('sectionSaveFailed', { section: t('sectionClosing') }),
+  live: (value) => ({ kind: 'section', section: 'closing', value }),
 })
 const { form, errors } = draft
 const labels = computed<Record<string, string>>(() => ({
@@ -55,7 +53,5 @@ const labels = computed<Record<string, string>>(() => ({
       <TextField :id="fieldId('thankYou')" v-model="form.thankYou" :label="t('thankYouLine')" :hint="t('thankYouHint')" :error="errors.thankYou" />
     </fieldset>
     <ImageField v-model="form.image" path="image" :label="t('photo')" :errors="errors" />
-
-    <SaveBar :dirty="draft.isDirty.value" :saving="draft.submitting.value" @discard="draft.discard()" />
   </form>
 </template>

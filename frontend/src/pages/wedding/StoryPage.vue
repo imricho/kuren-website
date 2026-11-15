@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import SwitchField from '@/components/ui/SwitchField.vue'
 import TextAreaField from '@/components/ui/TextAreaField.vue'
 import TextField from '@/components/ui/TextField.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
 import StoryEntryEditor from '@/features/cms/components/editors/StoryEntryEditor.vue'
 import ErrorSummary from '@/features/cms/components/ErrorSummary.vue'
 import ListEditor from '@/features/cms/components/ListEditor.vue'
-import SaveBar from '@/features/cms/components/SaveBar.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
 import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
@@ -26,11 +26,11 @@ const draft = useSectionDraft({
   toPayload: storyMetaPayload,
   validate: validateStoryMeta,
   save: async (payload) => void (await store.saveSection('story', payload)),
-  successMessage: () => t('sectionSaved', { section: t('sectionStory') }),
-  failureMessage: () => t('sectionSaveFailed', { section: t('sectionStory') }),
+  live: (value) => ({ kind: 'section', section: 'story', value }),
 })
 const { form, errors } = draft
 const labels = computed<Record<string, string>>(() => ({
+  enabled: t('showOnWebsite'),
   title: t('sectionTitleLabel'),
   introduction: t('introduction'),
 }))
@@ -47,10 +47,13 @@ const name = (e: StoryEntryDraft, i: number) => e.title?.trim() || t('untitledIt
       <ErrorSummary :errors="draft.errorList.value" :labels="labels" />
       <fieldset class="min-w-0 space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6">
         <legend class="px-1 font-display text-xl font-semibold">{{ t('sectionHeading') }}</legend>
+        <SwitchField :id="fieldId('enabled')" v-model="form.enabled" :label="t('showOnWebsite')" :hint="t('showSectionHint')" />
+        <p v-if="!form.enabled" class="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800" data-testid="section-hidden-note">
+          {{ t('sectionHiddenNote') }}
+        </p>
         <TextField :id="fieldId('title')" v-model="form.title" :label="t('sectionTitleLabel')" :hint="t('storyTitleHint')" :error="errors.title" />
         <TextAreaField :id="fieldId('introduction')" v-model="form.introduction" :label="t('introduction')" :rows="3" :error="errors.introduction" />
       </fieldset>
-      <SaveBar :dirty="draft.isDirty.value" :saving="draft.submitting.value" @discard="draft.discard()" />
     </form>
 
     <section aria-labelledby="story-entries" class="space-y-4">
@@ -65,6 +68,7 @@ const name = (e: StoryEntryDraft, i: number) => e.title?.trim() || t('untitledIt
         :max="20"
         :reorder="(ids) => store.reorder('stories', ids)"
         :refresh="() => store.refreshCollection('stories')"
+        :before-close="(item) => store.flushDraft(`story:${item.id}`)"
         :remove="(item) => store.deleteItem('stories', item.id)"
       >
         <template #summary="{ item, index }">

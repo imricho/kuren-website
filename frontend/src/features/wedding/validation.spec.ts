@@ -63,4 +63,25 @@ describe('shared wedding content model', () => {
     content.gallery!.images[0]!.alt = ''
     expect(validateWeddingContent(content)).toContain('gallery.images[0].alt is required')
   })
+
+  it('checks the optional CMS fields (nickname, Instagram, RSVP extras)', () => {
+    const content = clone(sampleWedding) as WeddingContent
+    content.couple.groom.nickname = 'Alex'
+    content.couple.groom.instagramUrl = 'https://www.instagram.com/alex'
+    content.rsvp.confirmationMessage = 'Thank you!'
+    content.rsvp.maxGuestsPerResponse = 4
+    expect(validateWeddingContent(content)).toEqual([])
+
+    content.couple.bride.instagramUrl = 'http://instagram.com/sarah'
+    content.rsvp.maxGuestsPerResponse = 21
+    expect(validateWeddingContent(content)).toEqual(
+      expect.arrayContaining([
+        'couple.bride.instagramUrl must be an https instagram.com URL',
+        'rsvp.maxGuestsPerResponse must be a whole number from 1 to 20',
+      ]),
+    )
+    content.couple.bride.instagramUrl = 'https://evil.example/instagram.com'
+    content.rsvp.maxGuestsPerResponse = 2.5
+    expect(validateWeddingContent(content)).toHaveLength(2)
+  })
 })

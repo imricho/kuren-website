@@ -5,10 +5,12 @@ import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
 import { vReveal } from '../core/directives/reveal'
+import { useHeroHeading } from '../core/composables/useHeroHeading'
 import type { ThemeProps } from '../core/types'
 import './styles/theme.css'
 
 const props = defineProps<ThemeProps>()
+const heroHeading = useHeroHeading()
 const view = useWeddingView(props)
 </script>
 
@@ -22,7 +24,7 @@ const view = useWeddingView(props)
       <div class="mf-hero__grid">
         <div class="mf-hero__copy">
           <p class="mf-kicker">A DAY TO REMEMBER</p>
-          <h1 class="mf-hero__names">
+          <h1 v-bind="heroHeading" class="mf-hero__names">
             <span>{{ content.couple.groom.name.split(' ')[0] }}</span>
             <span class="mf-amp">&amp;</span>
             <span>{{ content.couple.bride.name.split(' ')[0] }}</span>
@@ -65,6 +67,7 @@ const view = useWeddingView(props)
           <div class="mf-person__copy">
             <p class="mf-kicker">{{ i === 0 ? view.t.groom : view.t.bride }}</p>
             <h3>{{ person.name }}</h3>
+            <p v-if="person.parents" class="mf-body" data-role="parents" style="font-style: italic">{{ person.parents }}</p>
             <p v-if="person.description" class="mf-body">{{ person.description }}</p>
           </div>
         </figure>

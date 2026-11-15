@@ -73,3 +73,27 @@ def registered_user(client: TestClient) -> dict[str, str]:
     assert response.status_code == 201, response.text
     client.cookies.clear()  # start each test logged out
     return payload
+
+
+def _register_and_login(test_client: TestClient, email: str, full_name: str) -> None:
+    payload = {"email": email, "password": "correct-horse-1", "full_name": full_name}
+    response = test_client.post("/api/v1/auth/register", json=payload)  # also signs in
+    assert response.status_code == 201, response.text
+
+
+@pytest.fixture
+def auth_client(client: TestClient) -> TestClient:
+    """The shared `client`, signed in as user A."""
+    _register_and_login(client, "couple-a@example.com", "Couple A")
+    return client
+
+
+@pytest.fixture
+def other_client(client: TestClient) -> Iterator[TestClient]:
+    """A second TestClient (own cookie jar) signed in as user B.
+
+    It shares the app and the `get_db` override installed by `client`.
+    """
+    with TestClient(app, base_url="http://testserver") as second:
+        _register_and_login(second, "couple-b@example.com", "Couple B")
+        yield second

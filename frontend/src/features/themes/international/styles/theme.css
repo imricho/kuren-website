@@ -366,7 +366,8 @@
   font-size: 0.72rem;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--accent);
+  /* Small uppercase text: --accent is too light for 4.5:1 on --bg-alt. */
+  color: var(--muted);
 }
 .t-intl .rsvp-fieldset {
   border: 0;

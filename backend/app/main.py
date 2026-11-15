@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
+from app.core.limits import BodySizeLimitMiddleware
 
 
 def create_app() -> FastAPI:
@@ -29,6 +30,9 @@ def create_app() -> FastAPI:
             allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"],
             allow_headers=["Content-Type"],
         )
+
+    # Added last, so it runs first (outermost user middleware).
+    app.add_middleware(BodySizeLimitMiddleware, max_body_bytes=settings.max_request_body_bytes)
 
     register_exception_handlers(app)
     app.include_router(api_router, prefix=settings.api_v1_prefix)

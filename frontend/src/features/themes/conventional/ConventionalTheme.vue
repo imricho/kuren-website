@@ -8,12 +8,14 @@ import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
 import { vReveal } from '../core/directives/reveal'
+import { useHeroHeading } from '../core/composables/useHeroHeading'
 import type { ThemeProps } from '../core/types'
 import ConvBouquet from './components/ConvBouquet.vue'
 import ConvSprig from './components/ConvSprig.vue'
 import './styles/theme.css'
 
 const props = defineProps<ThemeProps>()
+const heroHeading = useHeroHeading()
 const view = useWeddingView(props)
 </script>
 
@@ -28,7 +30,7 @@ const view = useWeddingView(props)
         <div v-if="content.opening.coverImage" class="conv-arch conv-arch--hero">
           <ThemeImage :image="content.opening.coverImage" eager />
         </div>
-        <h1 class="conv-script conv-hero__names">{{ content.opening.coupleNames }}</h1>
+        <h1 v-bind="heroHeading" class="conv-script conv-hero__names">{{ content.opening.coupleNames }}</h1>
         <p class="conv-hero__date">{{ view.date.full }}</p>
       </div>
     </header>
@@ -50,6 +52,7 @@ const view = useWeddingView(props)
           <figcaption>
             <p class="conv-caps">{{ view.t.groom }}</p>
             <h3 class="conv-script conv-person__name">{{ content.couple.groom.name }}</h3>
+            <p v-if="content.couple.groom.parents" class="conv-body" data-role="parents" style="font-style: italic">{{ content.couple.groom.parents }}</p>
             <p v-if="content.couple.groom.description" class="conv-body">{{ content.couple.groom.description }}</p>
           </figcaption>
         </figure>
@@ -59,6 +62,7 @@ const view = useWeddingView(props)
           <figcaption>
             <p class="conv-caps">{{ view.t.bride }}</p>
             <h3 class="conv-script conv-person__name">{{ content.couple.bride.name }}</h3>
+            <p v-if="content.couple.bride.parents" class="conv-body" data-role="parents" style="font-style: italic">{{ content.couple.bride.parents }}</p>
             <p v-if="content.couple.bride.description" class="conv-body">{{ content.couple.bride.description }}</p>
           </figcaption>
         </figure>

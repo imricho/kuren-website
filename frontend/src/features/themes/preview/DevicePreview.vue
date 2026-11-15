@@ -29,7 +29,7 @@ const MAX_WIDTH: Record<Device, string> = { phone: '390px', tablet: '820px', des
       :aria-label="`${label ?? 'Template preview'} at ${device} size — scrollable`"
       tabindex="0"
     >
-      <ThemeRenderer :content="content" :theme-id="themeId" viewport-height="100cqh" />
+      <ThemeRenderer :content="content" :theme-id="themeId" viewport-height="100cqh" embedded />
     </div>
   </div>
 </template>

@@ -8,10 +8,12 @@ import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
 import { vReveal } from '../core/directives/reveal'
+import { useHeroHeading } from '../core/composables/useHeroHeading'
 import type { ThemeProps } from '../core/types'
 import './styles/theme.css'
 
 const props = defineProps<ThemeProps>()
+const heroHeading = useHeroHeading()
 const view = useWeddingView(props)
 </script>
 
@@ -24,7 +26,7 @@ const view = useWeddingView(props)
       </div>
       <div class="intl-hero__text">
         <p class="intl-eyebrow">{{ view.t.weddingOf }}</p>
-        <h1 class="intl-hero__names">
+        <h1 v-bind="heroHeading" class="intl-hero__names">
           <span>{{ content.couple.groom.name.split(' ')[0] }}</span>
           <span class="intl-amp">&amp;</span>
           <span>{{ content.couple.bride.name.split(' ')[0] }}</span>
@@ -37,6 +39,8 @@ const view = useWeddingView(props)
       <div v-reveal class="intl-narrow">
         <p class="intl-eyebrow">{{ content.opening.weddingTitle }}</p>
         <h2 v-if="content.opening.headline" class="intl-display">{{ content.opening.headline }}</h2>
+        <!-- Keeps the heading order (h1 → h2 → h3) when there is no headline. -->
+        <h2 v-else class="sr-only">{{ view.t.couple }}</h2>
         <p v-if="content.opening.introduction" class="intl-lead">{{ content.opening.introduction }}</p>
         <CountdownTimer :content="content" />
       </div>
@@ -50,6 +54,7 @@ const view = useWeddingView(props)
           <figcaption>
             <p class="intl-eyebrow">{{ i === 0 ? view.t.groom : view.t.bride }}</p>
             <h3 class="intl-person__name">{{ person.name }}</h3>
+            <p v-if="person.parents" class="intl-body" data-role="parents" style="font-style: italic">{{ person.parents }}</p>
             <p v-if="person.description" class="intl-body">{{ person.description }}</p>
           </figcaption>
         </figure>

@@ -7,6 +7,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import FormAlert from '@/components/ui/FormAlert.vue'
 import TextField from '@/components/ui/TextField.vue'
 import { useForm } from '@/composables/useForm'
+import { translateApiError } from '@/features/shell/apiErrors'
 import { safeRedirect } from '@/router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -15,7 +16,8 @@ const { t } = useAppLocale()
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
-const { submitting, formError, fieldErrors, submit } = useForm()
+// Server messages are English-only; show localized ones instead (features/shell/apiErrors).
+const { submitting, formError, fieldErrors, submit } = useForm({ translateError: (err) => translateApiError(err, 'login', t) })
 
 const email = ref('')
 const password = ref('')
@@ -30,8 +32,8 @@ function onSubmit() {
 
 <template>
   <div>
-    <h1 class="text-4xl font-semibold">{{ t('welcomeBack') }}</h1>
-    <p class="mt-2 text-sm text-ink-500">{{ t('signInBody') }}</p>
+    <h1 class="text-3xl font-semibold break-words sm:text-4xl">{{ t('welcomeBack') }}</h1>
+    <p class="mt-2 text-sm text-ink-700">{{ t('signInBody') }}</p>
 
     <form class="mt-8 space-y-5" novalidate @submit.prevent="onSubmit">
       <FormAlert v-if="formError">{{ formError }}</FormAlert>
@@ -47,9 +49,9 @@ function onSubmit() {
       <BaseButton type="submit" block :loading="submitting">{{ submitting ? t('saving') : t('signIn') }}</BaseButton>
     </form>
 
-    <p class="mt-8 text-center text-sm text-ink-500">
+    <p class="mt-8 text-center text-sm text-ink-700">
       {{ t('newHere') }}
-      <RouterLink :to="{ name: 'register' }" class="font-medium text-rose-600 hover:text-rose-700">
+      <RouterLink :to="{ name: 'register' }" class="inline-flex min-h-11 items-center font-medium text-rose-700 underline-offset-2 hover:underline">
         {{ t('createAnAccount') }}
       </RouterLink>
     </p>

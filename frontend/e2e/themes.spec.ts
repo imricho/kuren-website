@@ -33,7 +33,12 @@ function collectErrors(page: Page) {
   const errors: string[] = []
   page.on('pageerror', (err) => errors.push(err.message))
   page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(msg.text())
+    // A first-time user has no wedding yet: GET /weddings/me answers 404 by design and the app
+    // then creates one. Parallel tests share this account, so the create can also lose the race
+    // with a 409 (the app then loads the existing wedding). Both are expected, not errors.
+    const url = msg.location().url
+    const expected = /\/api\/v1\/weddings(\/me)?$/.test(url)
+    if (msg.type() === 'error' && !expected) errors.push(msg.text())
   })
   return errors
 }

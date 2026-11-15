@@ -56,6 +56,38 @@ class ConflictError(AppError):
     message = "The resource already exists."
 
 
+class NotFoundError(AppError):
+    """Missing resource, or one owned by someone else (never 403, to hide ids)."""
+
+    status_code = status.HTTP_404_NOT_FOUND
+    code = "not_found"
+    message = "The requested resource was not found."
+
+
+class WeddingExistsError(ConflictError):
+    code = "wedding_exists"
+    message = "You already have a wedding."
+
+
+class LimitReachedError(ConflictError):
+    code = "limit_reached"
+    message = "The maximum number of items has been reached."
+
+
+class ValidationFailedError(AppError):
+    """Service-level validation failure, shaped like request validation errors.
+
+    `details` is a list of `{"field": "<camelCase path>", "message": "..."}`.
+    """
+
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    code = "validation_error"
+    message = "Some fields are invalid."
+
+    def __init__(self, field: str, field_message: str) -> None:
+        super().__init__(details=[{"field": field, "message": field_message}])
+
+
 def _error_body(code: str, message: str, details: Any = None) -> dict[str, Any]:
     body: dict[str, Any] = {"code": code, "message": message}
     if details is not None:
@@ -70,6 +102,7 @@ _HTTP_CODES = {
     404: "not_found",
     405: "method_not_allowed",
     409: "conflict",
+    413: "payload_too_large",
     422: "validation_error",
     429: "too_many_requests",
 }

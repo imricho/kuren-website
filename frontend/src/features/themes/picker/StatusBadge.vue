@@ -14,7 +14,10 @@ const STYLE = {
 </script>
 
 <template>
-  <span class="inline-flex w-fit shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium" :class="STYLE[status]">
+  <!-- "Available" is the normal state, so it gets no badge; only exceptions are labelled. -->
+  <span
+    v-if="status !== 'available'"
+    class="inline-flex w-fit shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium" :class="STYLE[status]">
     <svg v-if="status === 'selected'" class="size-3" viewBox="0 0 12 12" aria-hidden="true">
       <path d="M2.5 6.5 5 9l4.5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
     </svg>

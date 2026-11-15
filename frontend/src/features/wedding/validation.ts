@@ -16,6 +16,10 @@ export function validateWeddingContent(content: WeddingContent): string[] {
   const date = (value: unknown, path: string) => {
     if (typeof value !== 'string' || !ISO_DATE.test(value)) problems.push(`${path} must be YYYY-MM-DD`)
   }
+  const instagram = (value: string | undefined, path: string) => {
+    if (value === undefined) return
+    if (!isInstagramUrl(value)) problems.push(`${path} must be an https instagram.com URL`)
+  }
   const image = (value: ImageAsset | undefined, path: string) => {
     if (!value) return
     required(value.src, `${path}.src`)
@@ -33,6 +37,8 @@ export function validateWeddingContent(content: WeddingContent): string[] {
   required(content.couple?.bride?.name, 'couple.bride.name')
   image(content.couple?.groom?.image, 'couple.groom.image')
   image(content.couple?.bride?.image, 'couple.bride.image')
+  instagram(content.couple?.groom?.instagramUrl, 'couple.groom.instagramUrl')
+  instagram(content.couple?.bride?.instagramUrl, 'couple.bride.instagramUrl')
 
   content.story?.timeline.forEach((entry, i) => {
     required(entry.title, `story.timeline[${i}].title`)
@@ -64,9 +70,27 @@ export function validateWeddingContent(content: WeddingContent): string[] {
   required(content.rsvp?.title, 'rsvp.title')
   if (typeof content.rsvp?.enabled !== 'boolean') problems.push('rsvp.enabled must be true or false')
   if (content.rsvp?.deadline !== undefined) date(content.rsvp.deadline, 'rsvp.deadline')
+  const maxGuests = content.rsvp?.maxGuestsPerResponse
+  if (maxGuests !== undefined && !isGuestCount(maxGuests)) problems.push('rsvp.maxGuestsPerResponse must be a whole number from 1 to 20')
 
   required(content.closing?.message, 'closing.message')
   image(content.closing?.image, 'closing.image')
 
   return problems
+}
+
+/** https URL on instagram.com or www.instagram.com (≤2048 chars). */
+export function isInstagramUrl(value: string): boolean {
+  if (value.length > 2048) return false
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' && (url.hostname === 'instagram.com' || url.hostname === 'www.instagram.com')
+  } catch {
+    return false
+  }
+}
+
+/** Whole number of guests per RSVP response, 1–20. */
+export function isGuestCount(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 20
 }

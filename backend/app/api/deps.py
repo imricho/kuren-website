@@ -1,15 +1,16 @@
 """Shared FastAPI dependencies: database session, authentication, CSRF guard."""
 
+import uuid
 from typing import Annotated
 
 from fastapi import Depends, Request
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
-from app.core.errors import NotAuthenticatedError, PermissionDeniedError
+from app.core.errors import NotAuthenticatedError, NotFoundError, PermissionDeniedError
 from app.db.session import get_db
-from app.models import User
-from app.services import auth_service
+from app.models import User, Wedding
+from app.services import auth_service, wedding_service
 
 DbSession = Annotated[Session, Depends(get_db)]
 AppSettings = Annotated[Settings, Depends(get_settings)]
@@ -53,3 +54,19 @@ def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def get_owned_wedding(wedding_id: str, user: CurrentUser, db: DbSession) -> Wedding:
+    """Authorization: resolve `{wedding_id}` to a wedding the caller owns.
+
+    Missing, malformed and foreign ids all yield the same 404, so ids of other
+    users' weddings cannot be probed.
+    """
+    try:
+        parsed = uuid.UUID(wedding_id)
+    except ValueError:
+        raise NotFoundError("Wedding not found.") from None
+    return wedding_service.get_owned_wedding(db, owner_id=user.id, wedding_id=parsed)
+
+
+OwnedWedding = Annotated[Wedding, Depends(get_owned_wedding)]

@@ -11,6 +11,7 @@ import { computed, defineAsyncComponent, h, watch, type Component } from 'vue'
 
 import type { WeddingContent } from '@/features/wedding/types'
 
+import { provideThemeEmbedded } from './composables/useHeroHeading'
 import { useThemeFonts } from './composables/useThemeFonts'
 import { DEFAULT_THEME_ID, getTheme } from './registry'
 import type { RenderableTemplate } from './types'
@@ -25,9 +26,13 @@ const props = withDefaults(
      * uses the real viewport; framed previews pass the frame height.
      */
     viewportHeight?: string
+    /** Rendered inside another page (studio/editor) that owns the page's h1. */
+    embedded?: boolean
   }>(),
-  { viewportHeight: '100svh' },
+  { viewportHeight: '100svh', embedded: false },
 )
+
+provideThemeEmbedded(props.embedded)
 
 const emit = defineEmits<{ fallback: [requestedId: string | null | undefined] }>()
 

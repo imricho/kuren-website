@@ -1,7 +1,10 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 
+import type { AppMessageKey } from '@/composables/useAppLocale'
 import { canonicalCollection, canonicalFamily, canonicalTemplate } from '@/features/themes/picker/guards'
 import { useAuthStore } from '@/stores/auth'
+
+import { isSameView } from './views'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -9,10 +12,23 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     /** Page is only for signed-out visitors (login/register). */
     guestOnly?: boolean
-    title?: string
+    /** Page name for the document title ("<Page> · Kuren"), translated with t(). */
+    titleKey?: AppMessageKey
     /** Full-width, full-height layout for the theme studio. */
     layout?: 'studio'
   }
+}
+
+/**
+ * Back/forward restores the saved position; a new page starts at the top; staying on
+ * the same page (studio levels, welcome steps) keeps the position. Always instant —
+ * no smooth scrolling, so prefers-reduced-motion is respected.
+ */
+function scrollBehavior(to: RouteLocationNormalized, from: RouteLocationNormalized, saved: { left: number; top: number } | null) {
+  if (saved) return saved
+  if (to.hash) return { el: to.hash }
+  if (isSameView(to, from)) return false
+  return { top: 0 }
 }
 
 // Shared by all studio routes so navigating between levels reuses the same page instance.
@@ -27,12 +43,12 @@ const router = createRouter({
       component: () => import('@/layouts/AuthLayout.vue'),
       meta: { guestOnly: true },
       children: [
-        { path: 'login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { title: 'Sign in' } },
+        { path: 'login', name: 'login', component: () => import('@/pages/LoginPage.vue'), meta: { titleKey: 'signIn' } },
         {
           path: 'register',
           name: 'register',
           component: () => import('@/pages/RegisterPage.vue'),
-          meta: { title: 'Create account' },
+          meta: { titleKey: 'createAccount' },
         },
       ],
     },
@@ -45,7 +61,15 @@ const router = createRouter({
           path: 'dashboard',
           name: 'dashboard',
           component: () => import('@/pages/DashboardPage.vue'),
-          meta: { title: 'Dashboard' },
+          meta: { titleKey: 'dashboard' },
+        },
+        // First run: names & date → theme → see your site. The dashboard sends a fresh
+        // wedding here once (see features/shell/firstRun); always skippable.
+        {
+          path: 'welcome',
+          name: 'welcome',
+          component: () => import('@/pages/WelcomePage.vue'),
+          meta: { titleKey: 'welcomeTitle' },
         },
         // Theme studio: sidebar (Family → Collection → Template) + live preview, one page.
         // Every level has its own URL; guards redirect aliases to canonical URLs.
@@ -53,14 +77,14 @@ const router = createRouter({
           path: 'themes',
           name: 'themes',
           component: ThemeStudioPage,
-          meta: { title: 'Themes', layout: 'studio' },
+          meta: { titleKey: 'themes', layout: 'studio' },
         },
         {
           path: 'themes/:familyId',
           name: 'theme-family',
           component: ThemeStudioPage,
           props: true,
-          meta: { title: 'Themes', layout: 'studio' },
+          meta: { titleKey: 'themes', layout: 'studio' },
           beforeEnter: canonicalFamily,
         },
         {
@@ -68,7 +92,7 @@ const router = createRouter({
           name: 'theme-collection',
           component: ThemeStudioPage,
           props: true,
-          meta: { title: 'Themes', layout: 'studio' },
+          meta: { titleKey: 'themes', layout: 'studio' },
           beforeEnter: canonicalCollection,
         },
         {
@@ -76,14 +100,31 @@ const router = createRouter({
           name: 'theme-template',
           component: ThemeStudioPage,
           props: true,
-          meta: { title: 'Themes', layout: 'studio' },
+          meta: { titleKey: 'themes', layout: 'studio' },
           beforeEnter: canonicalTemplate,
+        },
+        {
+          // Website editor: section nav + one page per section. /wedding redirects to the
+          // first incomplete section once the wedding has loaded (see WeddingEditorLayout).
+          path: 'wedding',
+          name: 'wedding',
+          component: () => import('@/pages/wedding/WeddingEditorLayout.vue'),
+          meta: { titleKey: 'myWebsite' },
+          children: [
+            { path: 'opening', name: 'wedding-opening', component: () => import('@/pages/wedding/OpeningPage.vue'), meta: { titleKey: 'sectionOpening' } },
+            { path: 'couple', name: 'wedding-couple', component: () => import('@/pages/wedding/CouplePage.vue'), meta: { titleKey: 'sectionCouple' } },
+            { path: 'story', name: 'wedding-story', component: () => import('@/pages/wedding/StoryPage.vue'), meta: { titleKey: 'sectionStory' } },
+            { path: 'events', name: 'wedding-events', component: () => import('@/pages/wedding/EventsPage.vue'), meta: { titleKey: 'sectionEvents' } },
+            { path: 'gallery', name: 'wedding-gallery', component: () => import('@/pages/wedding/GalleryPage.vue'), meta: { titleKey: 'sectionGallery' } },
+            { path: 'rsvp', name: 'wedding-rsvp', component: () => import('@/pages/wedding/RsvpPage.vue'), meta: { titleKey: 'sectionRsvp' } },
+            { path: 'closing', name: 'wedding-closing', component: () => import('@/pages/wedding/ClosingPage.vue'), meta: { titleKey: 'sectionClosing' } },
+          ],
         },
         {
           path: 'account',
           name: 'account',
           component: () => import('@/pages/AccountPage.vue'),
-          meta: { title: 'Account' },
+          meta: { titleKey: 'account' },
         },
       ],
     },
@@ -93,8 +134,15 @@ const router = createRouter({
       name: 'theme-preview',
       component: () => import('@/pages/ThemePreviewPage.vue'),
       props: true,
-      meta: { requiresAuth: true, title: 'Template preview' },
+      meta: { requiresAuth: true, titleKey: 'templatePreview' },
       beforeEnter: canonicalTemplate,
+    },
+    {
+      // The couple's own website with their SAVED content, outside the dashboard chrome.
+      path: '/wedding/preview',
+      name: 'wedding-preview',
+      component: () => import('@/pages/wedding/WeddingPreviewPage.vue'),
+      meta: { requiresAuth: true, titleKey: 'websitePreview' },
     },
     {
       // Workstream 2 URL (and template aliases) → redirected to the canonical preview URL.
@@ -104,8 +152,14 @@ const router = createRouter({
       meta: { requiresAuth: true },
       beforeEnter: canonicalTemplate,
     },
-    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/pages/NotFoundPage.vue') },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/pages/NotFoundPage.vue'),
+      meta: { titleKey: 'pageNotFound' },
+    },
   ],
+  scrollBehavior,
 })
 
 router.beforeEach(async (to) => {
@@ -120,13 +174,8 @@ router.beforeEach(async (to) => {
   }
 })
 
-router.afterEach((to) => {
-  document.title = to.meta.title ? `${to.meta.title} · Kuren` : 'Kuren · Wedding Websites'
-})
+// Document titles and focus on route change: see composables/useRouteA11y (used in App.vue).
 
-/** Only allow in-app relative redirects (prevents open-redirects via ?redirect=). */
-export function safeRedirect(value: unknown): string {
-  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : '/dashboard'
-}
+export { safeRedirect } from './redirect'
 
 export default router

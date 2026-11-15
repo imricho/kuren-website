@@ -9,11 +9,13 @@ import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
 import { vReveal } from '../core/directives/reveal'
+import { useHeroHeading } from '../core/composables/useHeroHeading'
 import type { ThemeProps } from '../core/types'
 import { activeMotifSet } from './motifs'
 import './styles/theme.css'
 
 const props = defineProps<ThemeProps>()
+const heroHeading = useHeroHeading()
 const view = useWeddingView(props)
 </script>
 
@@ -26,7 +28,7 @@ const view = useWeddingView(props)
       </div>
       <div class="eth-hero__panel">
         <p class="eth-label">{{ view.t.weddingOf }}</p>
-        <h1 class="eth-hero__names">
+        <h1 v-bind="heroHeading" class="eth-hero__names">
           {{ content.couple.groom.name.split(' ')[0] }}
           <span class="eth-hero__amp">&amp;</span>
           {{ content.couple.bride.name.split(' ')[0] }}
@@ -63,6 +65,7 @@ const view = useWeddingView(props)
           <figcaption>
             <p class="eth-label">{{ i === 0 ? view.t.groom : view.t.bride }}</p>
             <h3 class="eth-person__name">{{ person.name }}</h3>
+            <p v-if="person.parents" class="eth-person__bio" data-role="parents" style="font-style: italic">{{ person.parents }}</p>
             <p v-if="person.description" class="eth-person__bio">{{ person.description }}</p>
           </figcaption>
         </figure>

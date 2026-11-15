@@ -80,12 +80,12 @@ describe.each(TEMPLATES.filter(isRenderable).map((t) => [t.id]))('%s theme', (th
 
   it('shows a placeholder instead of a broken image', async () => {
     const content = clone(sampleWedding)
-    content.gallery!.images[0]!.src = '/missing.jpg'
+    content.gallery!.images[0]!.src = '/sample-wedding/missing.jpg'
     content.gallery!.images[1]!.src = 'javascript:alert(1)'
     const wrapper = await renderTheme(content, themeId)
 
-    await wrapper.find('img[src="/missing.jpg"]').trigger('error')
-    expect(wrapper.find('img[src="/missing.jpg"]').exists()).toBe(false)
+    await wrapper.find('img[src="/sample-wedding/missing.jpg"]').trigger('error')
+    expect(wrapper.find('img[src="/sample-wedding/missing.jpg"]').exists()).toBe(false)
     expect(wrapper.find('img[src^="javascript:"]').exists()).toBe(false)
     const placeholders = wrapper.findAll('.theme-image--placeholder')
     expect(placeholders.map((p) => p.attributes('aria-label'))).toEqual(

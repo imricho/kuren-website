@@ -5,10 +5,12 @@ import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
 import { vReveal } from '../core/directives/reveal'
+import { useHeroHeading } from '../core/composables/useHeroHeading'
 import type { ThemeProps } from '../core/types'
 import './styles/theme.css'
 
 const props = defineProps<ThemeProps>()
+const heroHeading = useHeroHeading()
 const view = useWeddingView(props)
 </script>
 
@@ -21,7 +23,7 @@ const view = useWeddingView(props)
       <div class="rn-hero__topline"><span>FIELD NOTES</span><span>{{ view.date.short }}</span></div>
       <div class="rn-hero__copy">
         <p class="rn-kicker">{{ view.t.weddingOf }}</p>
-        <h1><span>{{ content.couple.groom.name.split(' ')[0] }}</span><i>&amp;</i><span>{{ content.couple.bride.name.split(' ')[0] }}</span></h1>
+        <h1 v-bind="heroHeading"><span>{{ content.couple.groom.name.split(' ')[0] }}</span><i>&amp;</i><span>{{ content.couple.bride.name.split(' ')[0] }}</span></h1>
         <p class="rn-hero__date">{{ view.date.full }}</p>
         <svg class="rn-sprig" viewBox="0 0 170 44" aria-hidden="true" focusable="false">
           <path d="M8 36 C45 35 76 23 115 7 C132 0 147 6 162 12" fill="none" stroke="currentColor" stroke-width="1.2" />
@@ -51,6 +53,7 @@ const view = useWeddingView(props)
           <figcaption>
             <p class="rn-kicker">{{ i === 0 ? view.t.groom : view.t.bride }}</p>
             <h3>{{ person.name }}</h3>
+            <p v-if="person.parents" class="rn-body" data-role="parents" style="font-style: italic">{{ person.parents }}</p>
             <p v-if="person.description" class="rn-body">{{ person.description }}</p>
           </figcaption>
         </figure>

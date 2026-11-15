@@ -66,6 +66,7 @@ const LABELS = {
     weddingOf: 'The Wedding of',
     saveTheDate: 'Save the Date',
     groom: 'The Groom',
+    couple: 'The Couple',
     bride: 'The Bride',
     viewMap: 'View map',
     venue: 'Venue',
@@ -89,6 +90,7 @@ const LABELS = {
     weddingOf: 'Pernikahan',
     saveTheDate: 'Simpan Tanggalnya',
     groom: 'Mempelai Pria',
+    couple: 'Kedua Mempelai',
     bride: 'Mempelai Wanita',
     viewMap: 'Lihat peta',
     venue: 'Lokasi',
@@ -129,10 +131,34 @@ export function isSafeHttpUrl(value: string | undefined): value is string {
   }
 }
 
-/** Image sources may be http(s) URLs or same-origin absolute paths. */
+/** Control characters, whitespace and backslashes: browsers strip or reinterpret them in URLs. */
+export const UNSAFE_URL_CHARS = /[\x00-\x20\\]/
+
+/** Same-origin image paths are limited to the bundled sample photos. */
+export const SAMPLE_IMAGE_PREFIX = '/sample-wedding/'
+const SAMPLE_IMAGE_PATH = /^\/sample-wedding\/[A-Za-z0-9/_.-]+$/
+
+function currentOrigin(): string {
+  return typeof location !== 'undefined' && location.origin && location.origin !== 'null' ? location.origin : 'http://localhost'
+}
+
+/**
+ * Image sources may be http(s) URLs or paths under /sample-wedding/ on this origin.
+ * Rejects control characters, whitespace, backslashes, `..` and anything that
+ * would resolve to another origin (e.g. `//host`).
+ */
 export function isSafeImageSrc(value: string | undefined): value is string {
-  if (!value) return false
-  if (value.startsWith('/') && !value.startsWith('//')) return true
+  if (!value || UNSAFE_URL_CHARS.test(value)) return false
+  if (value.startsWith('/')) {
+    if (!SAMPLE_IMAGE_PATH.test(value) || value.includes('..')) return false
+    try {
+      const origin = currentOrigin()
+      const url = new URL(value, origin)
+      return url.origin === origin && url.pathname.startsWith(SAMPLE_IMAGE_PREFIX)
+    } catch {
+      return false
+    }
+  }
   return isSafeHttpUrl(value)
 }
 

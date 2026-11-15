@@ -10,12 +10,14 @@ import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
 import { vReveal } from '../core/directives/reveal'
+import { useHeroHeading } from '../core/composables/useHeroHeading'
 import type { ThemeProps } from '../core/types'
 import TradCorner from './components/TradCorner.vue'
 import TradDivider from './components/TradDivider.vue'
 import './styles/theme.css'
 
 const props = defineProps<ThemeProps>()
+const heroHeading = useHeroHeading()
 const view = useWeddingView(props)
 </script>
 
@@ -30,7 +32,7 @@ const view = useWeddingView(props)
           <div v-if="content.opening.coverImage" class="trad-medallion">
             <ThemeImage :image="content.opening.coverImage" eager />
           </div>
-          <h1 class="trad-hero__names">
+          <h1 v-bind="heroHeading" class="trad-hero__names">
             <span>{{ content.couple.groom.name }}</span>
             <TradDivider />
             <span>{{ content.couple.bride.name }}</span>
@@ -60,6 +62,7 @@ const view = useWeddingView(props)
           <figcaption>
             <p class="trad-caps trad-maroon">{{ view.t.groom }}</p>
             <h3 class="trad-person__name">{{ content.couple.groom.name }}</h3>
+            <p v-if="content.couple.groom.parents" class="trad-body" data-role="parents" style="font-style: italic">{{ content.couple.groom.parents }}</p>
             <p v-if="content.couple.groom.description" class="trad-body">{{ content.couple.groom.description }}</p>
           </figcaption>
         </figure>
@@ -69,6 +72,7 @@ const view = useWeddingView(props)
           <figcaption>
             <p class="trad-caps trad-maroon">{{ view.t.bride }}</p>
             <h3 class="trad-person__name">{{ content.couple.bride.name }}</h3>
+            <p v-if="content.couple.bride.parents" class="trad-body" data-role="parents" style="font-style: italic">{{ content.couple.bride.parents }}</p>
             <p v-if="content.couple.bride.description" class="trad-body">{{ content.couple.bride.description }}</p>
           </figcaption>
         </figure>

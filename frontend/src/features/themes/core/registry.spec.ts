@@ -20,10 +20,10 @@ import {
 import type { ThemeCollection, ThemeFamily, ThemeTemplate } from './types'
 
 describe('theme registry — Workstream 2 compatibility', () => {
-  it('exposes all 48 available templates as selectable THEMES', () => {
-    expect(THEMES).toHaveLength(48)
+  it('exposes all 49 available templates as selectable THEMES', () => {
+    expect(THEMES).toHaveLength(49)
     expect(THEMES.map((t) => t.id)).toEqual([
-      'international', 'traditional', 'ethnic', 'conventional', 'artistic', 'still-form', 'wildwood-gathering',
+      'international', 'traditional', 'royal-maroon-v2', 'ethnic', 'conventional', 'artistic', 'still-form', 'wildwood-gathering',
       'ivory-processional', 'terracotta-geometry', 'gilded-vow', 'candlelit-hall', 'pressed-filigree', 'loomed-lines',
       'the-monograph', 'coastal-issue', 'the-sunday-edit', 'city-journal', 'gallery-no-08', 'modern-heirloom', 'afterglow',
       'rosewater', 'lily-and-lace', 'the-conservatory', 'pearl-keepsake', 'peony-season', 'bluebell-manor', 'garden-at-dusk',
@@ -205,10 +205,10 @@ describe('naming, aliases and counts', () => {
 
   it('counts templates by availability per family and collection', () => {
     for (const family of FAMILIES) {
-      expect(templateCounts({ familyId: family.id })).toEqual({ available: 8, draft: 0, comingSoon: 0 })
+      expect(templateCounts({ familyId: family.id })).toEqual({ available: family.id === 'traditional' ? 9 : 8, draft: 0, comingSoon: 0 })
     }
     for (const collection of COLLECTIONS) {
-      expect(templateCounts({ collectionId: collection.id })).toEqual({ available: 2, draft: 0, comingSoon: 0 })
+      expect(templateCounts({ collectionId: collection.id })).toEqual({ available: collection.id === 'ceremonial-classic' ? 3 : 2, draft: 0, comingSoon: 0 })
     }
   })
 

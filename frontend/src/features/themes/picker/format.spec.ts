@@ -4,16 +4,16 @@ import { ACTION, STATUS_LABEL, countLabel, familySummary, formatTemplatePath } f
 
 describe('picker wording', () => {
   it('formats counts the same way everywhere', () => {
-    expect(countLabel({ collectionId: 'ceremonial-classic' })).toBe('2 templates available')
+    expect(countLabel({ collectionId: 'ceremonial-classic' })).toBe('3 templates available')
     expect(countLabel({ collectionId: 'romantic-floral' })).toBe('2 templates available')
     expect(countLabel({ familyId: 'modern-minimalist' })).toBe('8 templates available')
     expect(countLabel({ familyId: 'rustic-nature' })).toBe('8 templates available')
-    expect(countLabel({ familyId: 'traditional' })).toBe('8 templates available')
+    expect(countLabel({ familyId: 'traditional' })).toBe('9 templates available')
   })
 
   it('summarises families in terms that agree with collection statuses', () => {
     for (const family of ['traditional', 'classic', 'international', 'artistic', 'modern-minimalist', 'rustic-nature']) {
-      expect(familySummary(family)).toBe('8 templates available')
+      expect(familySummary(family)).toBe(family === 'traditional' ? '9 templates available' : '8 templates available')
     }
   })
 

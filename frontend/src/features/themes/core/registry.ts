@@ -23,6 +23,7 @@ import { internationalTheme } from '../international'
 import { minimalistTheme } from '../minimalist'
 import { rusticTheme } from '../rustic'
 import { traditionalTheme } from '../traditional'
+import { royalMaroonV2Theme } from '../royal-maroon-v2'
 import {
   isRenderable,
   type RenderableTemplate,
@@ -34,6 +35,7 @@ import {
 const RENDERABLE_TEMPLATES: readonly RenderableTemplate[] = [
   internationalTheme,
   traditionalTheme,
+  royalMaroonV2Theme,
   ethnicTheme,
   conventionalTheme,
   artisticTheme,

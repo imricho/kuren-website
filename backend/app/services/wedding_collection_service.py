@@ -94,6 +94,11 @@ def _event_columns(item: EventIn) -> dict[str, Any]:
         "address": item.address,
         "maps_url": item.maps_url,
         "description": item.description,
+        "extras": {
+            key: dump_section(value)
+            for key, value in (("dressCode", item.dress_code), ("livestream", item.livestream))
+            if value is not None
+        },
     }
 
 
@@ -111,6 +116,7 @@ def _event_out(row: WeddingEvent) -> dict[str, Any]:
                 "address": row.address,
                 "mapsUrl": row.maps_url,
                 "description": row.description,
+                **{k: v for k, v in (row.extras or {}).items() if k in ("dressCode", "livestream") and isinstance(v, dict)},
             }
         ),
     }

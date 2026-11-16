@@ -137,6 +137,8 @@ export const UNSAFE_URL_CHARS = /[\x00-\x20\\]/
 /** Same-origin image paths are limited to the bundled sample photos. */
 export const SAMPLE_IMAGE_PREFIX = '/sample-wedding/'
 const SAMPLE_IMAGE_PATH = /^\/sample-wedding\/[A-Za-z0-9/_.-]+$/
+/** Couple uploads served by the API (`POST /weddings/{id}/assets` → `/media/<uuid>.<ext>`). */
+export const MEDIA_IMAGE_PATH = /^\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:jpg|png|webp)$/
 
 function currentOrigin(): string {
   return typeof location !== 'undefined' && location.origin && location.origin !== 'null' ? location.origin : 'http://localhost'
@@ -150,6 +152,7 @@ function currentOrigin(): string {
 export function isSafeImageSrc(value: string | undefined): value is string {
   if (!value || UNSAFE_URL_CHARS.test(value)) return false
   if (value.startsWith('/')) {
+    if (MEDIA_IMAGE_PATH.test(value)) return true
     if (!SAMPLE_IMAGE_PATH.test(value) || value.includes('..')) return false
     try {
       const origin = currentOrigin()

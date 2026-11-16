@@ -4,6 +4,10 @@
  * Neutral palette, large refined serif, generous whitespace, full-bleed photos.
  */
 import UniversalSection from '../core/components/UniversalSection.vue'
+import GuestGreeting from '../core/components/GuestGreeting.vue'
+import GreetingPrayer from '../core/components/GreetingPrayer.vue'
+import EventExtras from '../core/components/EventExtras.vue'
+import FamilyAcknowledgments from '../core/components/FamilyAcknowledgments.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -25,6 +29,7 @@ const view = useWeddingView(props)
         <ThemeImage :image="content.opening.coverImage" eager />
       </div>
       <div class="intl-hero__text">
+        <GuestGreeting :content="content" />
         <p class="intl-eyebrow">{{ view.t.weddingOf }}</p>
         <h1 v-bind="heroHeading" class="intl-hero__names">
           <span>{{ content.couple.groom.name.split(' ')[0] }}</span>
@@ -44,6 +49,7 @@ const view = useWeddingView(props)
         <!-- Keeps the heading order (h1 → h2 → h3) when there is no headline. -->
         <h2 v-else class="sr-only">{{ view.t.couple }}</h2>
         <p v-if="view.greeting?.message" class="intl-lead">{{ view.greeting?.message }}</p>
+        <GreetingPrayer :prayer="view.greeting?.prayer" />
       </div>
     </section>
 
@@ -78,7 +84,7 @@ const view = useWeddingView(props)
             <div class="intl-event__main">
               <h3 class="intl-event__title">{{ event.title }}</h3>
               <p class="intl-event__when">{{ event.dateText }} · {{ event.timeText }}</p>
-              <p v-if="event.description" class="intl-body">{{ event.description }}</p>
+              <p v-if="event.description" class="intl-body">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
             </div>
             <div class="intl-event__where">
               <p class="intl-event__venue">{{ event.venueName }}</p>
@@ -146,6 +152,7 @@ const view = useWeddingView(props)
       <div v-reveal class="intl-narrow intl-closing__text">
         <p class="intl-lead">{{ content.closing.message }}</p>
         <p v-if="content.closing.thankYou" class="intl-closing__thanks">{{ content.closing.thankYou }}</p>
+        <FamilyAcknowledgments :content="content" />
         <p class="intl-closing__names">{{ content.opening.coupleNames }}</p>
         <p class="intl-eyebrow">{{ view.date.short }}</p>
       </div>

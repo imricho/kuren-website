@@ -26,7 +26,23 @@ async function skipWelcome(page: Page, userId: string) {
   await page.addInitScript((key) => localStorage.setItem(key, '1'), `kuren.welcomeSeen.${userId}`)
 }
 
-export const test = base.extend<{ freshUser: FreshUser; welcomeSeen: boolean }>({
+export const test = base.extend<{ freshUser: FreshUser; welcomeSeen: boolean; isolateFromHmr: void }>({
+  // The dev server watches the source tree (polling): an edit elsewhere in the repo while a
+  // test runs makes Vite send `full-reload`, which reloads the page mid-test and drops the
+  // editor's unsaved state (seen as "saved" instead of "failed" in live-editor (7)). Answer the
+  // HMR socket locally so tests only ever see code changes on their own navigations.
+  isolateFromHmr: [
+    async ({ page }, use) => {
+      await page.routeWebSocket(
+        (url) => url.pathname === '/' && url.searchParams.has('token'),
+        () => {
+          /* never connect to the dev server: no HMR updates, no full reloads */
+        },
+      )
+      await use()
+    },
+    { auto: true },
+  ],
   // Tests of the first-run flow opt out with test.use({ welcomeSeen: false }).
   welcomeSeen: [true, { option: true }],
   // A brand-new, logged-in user for this test only (cookies are set on `page`).

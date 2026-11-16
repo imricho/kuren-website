@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
 from tests.wedding_helpers import API, create_wedding
-from tests.wedding_samples import SAMPLE_WEDDING
+from tests.wedding_samples import SAMPLE_WEDDING, SAVED_SAMPLE
 
 LIMIT = get_settings().max_request_body_bytes
 
@@ -40,7 +40,7 @@ def test_normal_content_put_still_works(auth_client: TestClient) -> None:
     wid = create_wedding(auth_client)["id"]
     response = auth_client.put(f"{API}/{wid}/content", json=SAMPLE_WEDDING)
     assert response.status_code == 200
-    assert response.json() == SAMPLE_WEDDING
+    assert response.json() == SAVED_SAMPLE
 
 
 def test_body_at_limit_is_not_rejected_for_size(client: TestClient) -> None:

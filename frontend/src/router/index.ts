@@ -16,6 +16,10 @@ declare module 'vue-router' {
     titleKey?: AppMessageKey
     /** Full-width, full-height layout (theme studio, live website editor). */
     layout?: 'studio'
+    /** Guest-facing page (published invitation): no session lookup, no app chrome. */
+    publicPage?: boolean
+    /** Which Holy Recite the shared editor page edits. */
+    recite?: 1 | 2
   }
 }
 
@@ -119,6 +123,14 @@ const router = createRouter({
             { path: 'gallery', name: 'wedding-gallery', component: () => import('@/pages/wedding/GalleryPage.vue'), meta: { titleKey: 'sectionGallery', layout: 'studio' } },
             { path: 'rsvp', name: 'wedding-rsvp', component: () => import('@/pages/wedding/RsvpPage.vue'), meta: { titleKey: 'sectionRsvp', layout: 'studio' } },
             { path: 'closing', name: 'wedding-closing', component: () => import('@/pages/wedding/ClosingPage.vue'), meta: { titleKey: 'sectionClosing', layout: 'studio' } },
+            // CMS v2.0 sections (canonical ids: holyRecite1, greeting, weddingDate, wishes, amplopDigital, holyRecite2).
+            { path: 'holy-recite-1', name: 'wedding-holy-recite-1', component: () => import('@/pages/wedding/HolyRecitePage.vue'), meta: { titleKey: 'sectionHolyRecite1', layout: 'studio', recite: 1 } },
+            { path: 'greeting', name: 'wedding-greeting', component: () => import('@/pages/wedding/GreetingPage.vue'), meta: { titleKey: 'sectionGreeting', layout: 'studio' } },
+            { path: 'date', name: 'wedding-date', component: () => import('@/pages/wedding/WeddingDatePage.vue'), meta: { titleKey: 'sectionWeddingDate', layout: 'studio' } },
+            { path: 'wishes', name: 'wedding-wishes', component: () => import('@/pages/wedding/WishesPage.vue'), meta: { titleKey: 'sectionWishes', layout: 'studio' } },
+            { path: 'gifts', name: 'wedding-gifts', component: () => import('@/pages/wedding/AmplopDigitalPage.vue'), meta: { titleKey: 'sectionAmplopDigital', layout: 'studio' } },
+            { path: 'holy-recite-2', name: 'wedding-holy-recite-2', component: () => import('@/pages/wedding/HolyRecitePage.vue'), meta: { titleKey: 'sectionHolyRecite2', layout: 'studio', recite: 2 } },
+            { path: 'publish', name: 'wedding-publish', component: () => import('@/pages/wedding/PublishPage.vue'), meta: { titleKey: 'sectionPublish', layout: 'studio' } },
           ],
         },
         {
@@ -146,6 +158,14 @@ const router = createRouter({
       meta: { requiresAuth: true, titleKey: 'websitePreview' },
     },
     {
+      // Published invitation for guests: no sign-in, served from the published snapshot only.
+      path: '/i/:slug',
+      name: 'public-invitation',
+      component: () => import('@/pages/PublicInvitationPage.vue'),
+      props: true,
+      meta: { titleKey: 'publicInvitation', publicPage: true },
+    },
+    {
       // Workstream 2 URL (and template aliases) → redirected to the canonical preview URL.
       path: '/themes/:themeId/preview',
       name: 'theme-preview-legacy',
@@ -164,6 +184,8 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
+  // Guest-facing published invitations never depend on (or probe) a session.
+  if (to.meta.publicPage) return
   const auth = useAuthStore()
   await auth.ensureLoaded()
 

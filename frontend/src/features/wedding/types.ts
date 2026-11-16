@@ -62,6 +62,13 @@ export interface OpeningSection {
   introduction?: string
   coverImage?: ImageAsset
   weddingDate: ISODate
+  /** "Kepada Yth." line; the public page adds the guest name from `?to=`. */
+  guestGreeting?: GuestGreeting
+}
+
+export interface GuestGreeting {
+  enabled: boolean
+  label?: string
 }
 
 export interface CoupleSection {
@@ -106,6 +113,9 @@ export interface WeddingEvent {
   address: string
   mapsUrl?: string
   description?: string
+  /** Optional extras, each with its own toggle (data kept when off). */
+  dressCode?: { enabled: boolean; text?: string }
+  livestream?: { enabled: boolean; url?: string; label?: string }
 }
 
 export interface GalleryImage extends ImageAsset {
@@ -135,36 +145,54 @@ export interface ClosingSection {
   message: string
   thankYou?: string
   image?: ImageAsset
+  /** "Turut mengundang" names; line breaks preserved. */
+  familyAcknowledgments?: string
 }
 
+/** Sacred text exactly as entered by the couple — never rewritten, invented or auto-filled. */
 export interface HolyReciteSection {
   enabled: boolean
-  passage?: string
+  /** Optional heading. */
+  title?: string
+  /** Scripture/tradition name (free text; no religion selection is required). */
+  tradition?: string
+  book?: string
+  /** Chapter/surah/verse reference. */
   reference?: string
+  passage?: string
+  /** Original-language passage (any script, incl. RTL). */
   originalScript?: string
+  /** Language code of the original passage (e.g. "ar"), for screen readers and fonts. */
+  originalLanguage?: string
   translation?: string
+  translationLanguage?: string
+  attribution?: string
 }
-export interface GreetingSection { enabled: boolean; title?: string; message?: string }
+export interface GreetingSection { enabled: boolean; title?: string; message?: string; prayer?: string }
+/** Wedding Date & Countdown options (the date itself is `opening.weddingDate`). */
+export interface CountdownSection { enabled: boolean; addToCalendar?: boolean }
+export interface BankAccount { id?: string; bankName: string; accountHolder: string; accountNumber: string }
+export interface PhysicalGifts { enabled: boolean; recipient?: string; address?: string; note?: string; phone?: string }
 export interface WishesSection { enabled: boolean; title?: string; introduction?: string }
 export interface AmplopDigitalSection {
   enabled: boolean
   title?: string
   message?: string
   bankAccountsEnabled: boolean
-  bankAccounts: { id?: string; bankName: string; accountHolder: string; accountNumber: string }[]
+  bankAccounts: BankAccount[]
   qrisEnabled: boolean
   qrisImage?: ImageAsset
-  physicalGifts?: { enabled: boolean; recipient?: string; address?: string; phone?: string }
+  physicalGifts?: PhysicalGifts
 }
 
 // --- Root ---------------------------------------------------------------------
 
 export interface WeddingContent {
-  contentVersion?: '1.1'
+  contentVersion?: '1.1' | '1.2'
   holyRecite1?: HolyReciteSection
   holyRecite2?: HolyReciteSection
   greeting?: GreetingSection
-  countdown?: { enabled: boolean }
+  countdown?: CountdownSection
   wishes?: WishesSection
   amplopDigital?: AmplopDigitalSection
   schemaVersion: typeof WEDDING_SCHEMA_VERSION

@@ -5,6 +5,7 @@
 docs/api/weddings.md, omitting keys that are not set.
 """
 
+import secrets
 from typing import Any, Literal
 
 from sqlalchemy.orm import Session
@@ -12,7 +13,14 @@ from pydantic.alias_generators import to_camel
 
 from app.core.errors import NotFoundError
 from app.models import Wedding
-from app.schemas.wedding import SECTION_MODELS, UNIVERSAL_FIELDS, RequestModel, WeddingDraftIn
+from app.schemas.wedding import (
+    SECTION_MODELS,
+    UNIVERSAL_FIELDS,
+    UNIVERSAL_SECTION_MODELS,
+    UNIVERSAL_SECTION_OUT_MODELS,
+    RequestModel,
+    WeddingDraftIn,
+)
 from app.services import wedding_service
 from app.services.wedding_collection_service import (
     check_replacement,
@@ -28,7 +36,7 @@ SectionName = Literal["opening", "couple", "story", "gallery", "rsvp", "closing"
 _SECTIONS: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
     "opening": (
         "opening",
-        ("weddingTitle", "coupleNames", "headline", "introduction", "weddingDate"),
+        ("weddingTitle", "coupleNames", "headline", "introduction", "weddingDate", "guestGreeting"),
         ("coverImage",),
     ),
     "couple": ("couple", (), ()),
@@ -39,15 +47,15 @@ _SECTIONS: dict[str, tuple[str, tuple[str, ...], tuple[str, ...]]] = {
         ("title", "introduction", "deadline", "confirmationMessage", "maxGuestsPerResponse"),
         (),
     ),
-    "closing": ("closing", ("message", "thankYou"), ("image",)),
+    "closing": ("closing", ("message", "thankYou", "familyAcknowledgments"), ("image",)),
 }
 _PERSON_KEYS = ("name", "nickname", "description", "parents", "instagramUrl")
 # Output key order follows the contract's interfaces.
 _ORDER = {
-    "opening": ("weddingTitle", "coupleNames", "headline", "introduction", "coverImage", "weddingDate"),
+    "opening": ("weddingTitle", "coupleNames", "headline", "introduction", "coverImage", "weddingDate", "guestGreeting"),
     "person": ("name", "nickname", "image", "description", "parents", "instagramUrl"),
     "rsvp": ("title", "introduction", "enabled", "deadline", "confirmationMessage", "maxGuestsPerResponse"),
-    "closing": ("message", "thankYou", "image"),
+    "closing": ("message", "thankYou", "image", "familyAcknowledgments"),
 }
 
 
@@ -100,6 +108,50 @@ def put_section(db: Session, wedding: Wedding, section: SectionName, payload: Re
     wedding_service.touch(wedding)
     db.commit()
     return section_out(wedding, section)
+
+
+# --- Universal (v1.1+) sections in `weddings.universal_content` ---------------------------
+
+
+def get_universal_section(wedding: Wedding, section: str) -> dict[str, Any]:
+    if section not in UNIVERSAL_SECTION_MODELS:
+        raise NotFoundError("Section not found.")
+    raw = (wedding.universal_content or {}).get(section)
+    model = UNIVERSAL_SECTION_OUT_MODELS[section]
+    return model.model_validate(raw if isinstance(raw, dict) else {}).model_dump(
+        mode="json", by_alias=True, exclude_none=True, exclude_unset=True
+    )
+
+
+def put_universal_section(db: Session, wedding: Wedding, section: str, payload: RequestModel) -> dict[str, Any]:
+    """Replace one universal section (unlike PUT /content, which merges for legacy clients).
+
+    Replacing means a field the couple cleared is really cleared. Bank accounts without
+    an id get one, so editors can key rows and the snapshot stays stable.
+    """
+    if section not in UNIVERSAL_SECTION_MODELS or not isinstance(payload, UNIVERSAL_SECTION_MODELS[section]):
+        raise NotFoundError("Section not found.")
+    wedding_service.lock_wedding(db, wedding)
+    db.refresh(wedding, attribute_names=["universal_content"])
+    stored = dump_section(payload)
+    if section == "amplopDigital":
+        taken = {a["id"] for a in stored.get("bankAccounts", []) if a.get("id")}
+        for account in stored.get("bankAccounts", []):
+            if not account.get("id"):
+                account["id"] = _new_account_id(taken)
+                taken.add(account["id"])
+    # Assign a new dict: in-place JSONB mutation is not tracked by SQLAlchemy.
+    wedding.universal_content = {**(wedding.universal_content or {}), section: stored, "contentVersion": "1.2"}
+    wedding_service.touch(wedding)
+    db.commit()
+    return get_universal_section(wedding, section)
+
+
+def _new_account_id(taken: set[str]) -> str:
+    while True:
+        candidate = f"acc-{secrets.token_hex(4)}"
+        if candidate not in taken:
+            return candidate
 
 
 def assemble_draft(db: Session, wedding: Wedding) -> dict[str, Any]:

@@ -39,6 +39,15 @@ class Settings(BaseSettings):
     # Requests with a larger body are rejected with 413 before being parsed.
     max_request_body_bytes: int = Field(default=1_048_576, ge=1024)
 
+    # Image uploads: stored (re-encoded) under `media_root`, served at /media/<name>.
+    media_root: str = "/app/media"
+    max_upload_bytes: int = Field(default=5 * 1024 * 1024, ge=1024)
+    max_image_pixels: int = Field(default=40_000_000, ge=1_000_000)
+    max_assets_per_wedding: int = Field(default=300, ge=1)
+
+    # Public invitation endpoint: requests per client IP per minute, per process.
+    public_rate_limit_per_minute: int = Field(default=120, ge=1)
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:

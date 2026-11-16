@@ -51,7 +51,12 @@ def test_me_is_404_before_create(auth_client: TestClient) -> None:
 
 def test_create_and_read_wedding(auth_client: TestClient) -> None:
     created = create_wedding(auth_client)
-    assert set(created) == {"id", "themeId", "locale", "status", "publishedAt", "revision", "createdAt", "updatedAt"}
+    assert set(created) == {
+        "id", "themeId", "locale", "status", "publishedAt", "revision", "createdAt", "updatedAt",
+        "slug", "hasUnpublishedChanges", "publication",
+    }
+    assert created["slug"] is None and created["publication"] is None
+    assert created["hasUnpublishedChanges"] is False
     assert created["themeId"] is None
     assert created["locale"] == "en"
     assert created["status"] == "draft"

@@ -28,7 +28,7 @@ export function validateWeddingContent(content: WeddingContent): string[] {
 
   if (content.schemaVersion !== WEDDING_SCHEMA_VERSION) problems.push('schemaVersion is not supported')
 
-  if (content.contentVersion !== undefined && content.contentVersion !== '1.1') problems.push('contentVersion is not supported')
+  if (content.contentVersion !== undefined && content.contentVersion !== '1.1' && content.contentVersion !== '1.2') problems.push('contentVersion is not supported')
   const toggle = (value: unknown, path: string) => {
     if (value !== undefined && typeof value !== 'boolean') problems.push(`${path} must be true or false`)
   }

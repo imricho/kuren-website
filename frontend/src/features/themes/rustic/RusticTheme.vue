@@ -1,6 +1,10 @@
 <script setup lang="ts">
 /** Field Notes: a garden-led invitation with organic pacing and original botanical linework. */
 import UniversalSection from '../core/components/UniversalSection.vue'
+import GuestGreeting from '../core/components/GuestGreeting.vue'
+import GreetingPrayer from '../core/components/GreetingPrayer.vue'
+import EventExtras from '../core/components/EventExtras.vue'
+import FamilyAcknowledgments from '../core/components/FamilyAcknowledgments.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -22,6 +26,7 @@ const view = useWeddingView(props)
       <div class="rn-hero__veil" aria-hidden="true" />
       <div class="rn-hero__topline"><span>FIELD NOTES</span><span>{{ view.date.short }}</span></div>
       <div class="rn-hero__copy">
+        <GuestGreeting :content="content" />
         <p class="rn-kicker">{{ view.t.weddingOf }}</p>
         <h1 v-bind="heroHeading"><span>{{ content.couple.groom.name.split(' ')[0] }}</span><i>&amp;</i><span>{{ content.couple.bride.name.split(' ')[0] }}</span></h1>
         <p class="rn-hero__date">{{ view.date.full }}</p>
@@ -40,6 +45,7 @@ const view = useWeddingView(props)
         <p class="rn-kicker">{{ content.opening.weddingTitle }}</p>
         <h2 v-if="view.greeting?.title">{{ view.greeting?.title }}</h2>
         <p v-if="view.greeting?.message" class="rn-body">{{ view.greeting?.message }}</p>
+        <GreetingPrayer :prayer="view.greeting?.prayer" />
       </div>
     </section>
 
@@ -78,7 +84,7 @@ const view = useWeddingView(props)
             <h3>{{ event.title }}</h3>
             <p class="rn-event__venue">{{ event.venueName }}</p>
             <p class="rn-body">{{ event.address }}</p>
-            <p v-if="event.description" class="rn-body">{{ event.description }}</p>
+            <p v-if="event.description" class="rn-body">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
             <a class="rn-link" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} <span aria-hidden="true">↗</span></a>
           </div>
           <span class="rn-event__index" aria-hidden="true">0{{ i + 1 }}</span>
@@ -141,6 +147,7 @@ const view = useWeddingView(props)
         <p class="rn-kicker">{{ view.date.short }}</p>
         <p class="rn-closing__message">{{ content.closing.message }}</p>
         <p v-if="content.closing.thankYou" class="rn-closing__thanks">{{ content.closing.thankYou }}</p>
+        <FamilyAcknowledgments :content="content" />
         <p class="rn-closing__names">{{ content.opening.coupleNames }}</p>
       </div>
     </footer>

@@ -5,6 +5,10 @@
  * accent. Body text stays at comfortable sizes and contrast for readability.
  */
 import UniversalSection from '../core/components/UniversalSection.vue'
+import GuestGreeting from '../core/components/GuestGreeting.vue'
+import GreetingPrayer from '../core/components/GreetingPrayer.vue'
+import EventExtras from '../core/components/EventExtras.vue'
+import FamilyAcknowledgments from '../core/components/FamilyAcknowledgments.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -35,6 +39,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
         <div class="art-hero__photo"><ThemeImage :image="content.opening.coverImage" eager /></div>
       </div>
       <div class="art-hero__meta">
+        <GuestGreeting :content="content" />
         <p class="art-mono">{{ view.t.weddingOf }}</p>
         <p class="art-hero__date">{{ view.date.full }}</p>
         <svg class="art-squiggle" viewBox="0 0 160 20" aria-hidden="true">
@@ -51,6 +56,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
         <div v-reveal class="art-intro__aside">
           <p class="art-mono">{{ content.opening.weddingTitle }}</p>
           <p v-if="view.greeting?.message" class="art-body art-body--large">{{ view.greeting?.message }}</p>
+          <GreetingPrayer :prayer="view.greeting?.prayer" />
         </div>
       </div>
     </section>
@@ -101,7 +107,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
                 </dd>
               </div>
             </dl>
-            <p v-if="event.description" class="art-body">{{ event.description }}</p>
+            <p v-if="event.description" class="art-body">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
             <a class="art-link" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} ↗</a>
           </div>
         </div>
@@ -164,6 +170,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
       <div v-reveal class="art-closing__text">
         <p class="art-statement art-statement--small">{{ content.closing.message }}</p>
         <p v-if="content.closing.thankYou" class="art-mono art-accent">{{ content.closing.thankYou }}</p>
+        <FamilyAcknowledgments :content="content" />
         <p class="art-closing__names">{{ content.opening.coupleNames }}</p>
       </div>
     </footer>

@@ -17,6 +17,7 @@ import { computed, onScopeDispose, reactive, ref, shallowReactive, watch } from 
 
 import { ApiError } from '@/api/http'
 import { weddingsApi, type IfMatch, type Revisioned, type WeddingRead } from '@/api/weddings'
+import { publishingApi } from '@/api/publishing'
 import { useAppLocale } from '@/composables/useAppLocale'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/features/cms/composables/useConfirm'
@@ -34,6 +35,7 @@ import {
   type WeddingDraft,
 } from '@/features/wedding/draft'
 import type { WeddingLocale } from '@/features/wedding/types'
+import { issueFromServer, publishChecks, type PublishIssue, type ServerPublishDetail } from '@/features/wedding/publishChecks'
 
 import { useAuthStore } from './auth'
 import { applyLivePatches, type LivePatch } from './liveDraft'
@@ -94,6 +96,19 @@ export interface AutosaveHandle {
 /** Polite announcement for the save status region; `seq` changes on every announcement. */
 export interface SaveAnnouncement {
   kind: 'saved' | 'invalid' | 'failed' | 'offline' | 'conflict'
+  seq: number
+}
+
+/** Publishing status shown by the publish page and editor header chip. */
+export type PublishState = 'draft' | 'published' | 'unpublished_changes' | 'publishing' | 'failed'
+
+/** Outcome of `publish()`. */
+export type PublishResult = 'published' | 'blocked' | 'conflict' | 'unsaved' | 'failed' | 'busy'
+
+/** Polite announcement for publish/unpublish outcomes; `seq` changes on every announcement. */
+export interface PublishAnnouncement {
+  kind: 'published' | 'updated' | 'failed' | 'blocked' | 'unpublished' | 'unpublish_failed'
+  count?: number
   seq: number
 }
 
@@ -460,6 +475,111 @@ export const useWeddingStore = defineStore('wedding', () => {
     return task
   }
 
+
+  // --- Publishing (docs/api/weddings.md "Publishing") ------------------------------
+  const publishing = ref(false)
+  const publishFailed = ref(false)
+  /** Blocking issues the server reported on the last publish attempt (422 publish_blocked). */
+  const publishIssues = ref<PublishIssue[]>([])
+  const publishAnnouncement = ref<PublishAnnouncement | null>(null)
+  let publishSeq = 0
+  function announcePublish(kind: PublishAnnouncement['kind'], count?: number) {
+    publishAnnouncement.value = { kind, count, seq: ++publishSeq }
+  }
+  const publication = computed(() => (record.value?.status === 'published' ? record.value.publication ?? null : null))
+  const isPublished = computed(() => publication.value !== null)
+  /** Live publication differs from the saved draft (content revision or theme). */
+  const hasUnpublishedChanges = computed(() => {
+    const pub = publication.value
+    if (!pub || !record.value) return false
+    if (revision.value !== null && revision.value !== pub.revision) return true
+    if ((record.value.themeId ?? null) !== (pub.themeId ?? null)) return true
+    return revision.value === null ? record.value.hasUnpublishedChanges === true : false
+  })
+  const publishState = computed<PublishState>(() => {
+    if (publishing.value) return 'publishing'
+    if (publishFailed.value) return 'failed'
+    if (isPublished.value) return hasUnpublishedChanges.value ? 'unpublished_changes' : 'published'
+    return 'draft'
+  })
+  const publicUrl = computed(() => {
+    const slug = record.value?.slug
+    if (!slug) return null
+    const origin = typeof location !== 'undefined' ? location.origin : ''
+    return `${origin}/i/${encodeURIComponent(slug)}`
+  })
+  /** Client checklist over the SAVED draft (mirrors the server's blocking rules + warnings). */
+  const publishChecklist = computed<PublishIssue[]>(() =>
+    content.value ? publishChecks(content.value, { themeId: themeId.value, locale: uiLocale.value }) : [],
+  )
+  // Server issues describe an older revision; drop them once content changes.
+  watch(revision, () => (publishIssues.value = []))
+
+  /**
+   * Publish (or publish an update): save everything first, refuse unless Saved,
+   * then POST /publish through the content write queue so If-Match is current.
+   */
+  async function publish(): Promise<PublishResult> {
+    if (publishing.value) return 'busy'
+    const gen = generation
+    publishing.value = true
+    publishFailed.value = false
+    const wasPublished = isPublished.value
+    try {
+      const saved = await saveNow()
+      if (gen !== generation) return 'failed'
+      if (!saved || saveState.value !== 'saved') return conflict.value ? 'conflict' : 'unsaved'
+      await contentWrite(
+        (rec, ifMatch) => publishingApi.publish(rec.id, ifMatch),
+        (updated) => (record.value = updated),
+      )
+      publishIssues.value = []
+      announcePublish(wasPublished ? 'updated' : 'published')
+      return 'published'
+    } catch (err) {
+      if (err instanceof StaleError || gen !== generation) return 'failed'
+      if (err instanceof ApiError && err.status === 409 && err.code === 'edit_conflict') return 'conflict'
+      if (err instanceof ApiError && err.status === 422 && err.code === 'publish_blocked') {
+        const details = Array.isArray(err.details) ? (err.details as ServerPublishDetail[]) : []
+        publishIssues.value = details.map(issueFromServer)
+        announcePublish('blocked', publishIssues.value.length)
+        return 'blocked'
+      }
+      publishFailed.value = true
+      announcePublish('failed')
+      return 'failed'
+    } finally {
+      if (gen === generation) publishing.value = false
+    }
+  }
+
+  /** Take the invitation offline (after confirming). The draft and history are kept. */
+  async function unpublish(options: { confirm?: boolean } = {}): Promise<boolean> {
+    if (options.confirm !== false) {
+      const ok = await confirmDialog.ask({
+        title: t('unpublishTitle'),
+        message: t('unpublishBody'),
+        confirmLabel: t('unpublishConfirm'),
+        cancelLabel: t('cancel'),
+        tone: 'danger',
+      })
+      if (!ok) return false
+    }
+    try {
+      await write(
+        (rec) => publishingApi.unpublish(rec.id),
+        (updated) => (record.value = updated),
+      )
+      publishFailed.value = false
+      announcePublish('unpublished')
+      return true
+    } catch (err) {
+      if (err instanceof StaleError) return false
+      announcePublish('unpublish_failed')
+      return false
+    }
+  }
+
   // --- Settings ------------------------------------------------------------------
   async function setTheme(id: string | null) {
     await write(
@@ -588,6 +708,10 @@ export const useWeddingStore = defineStore('wedding', () => {
     writeQueue = Promise.resolve()
     networkDown.value = false
     announcement.value = null
+    publishing.value = false
+    publishFailed.value = false
+    publishIssues.value = []
+    publishAnnouncement.value = null
   }
 
   // Connectivity: pause autosave while offline, resume as soon as we're back.
@@ -621,6 +745,16 @@ export const useWeddingStore = defineStore('wedding', () => {
   )
 
   return {
+    publish,
+    unpublish,
+    publishState,
+    publishIssues,
+    publishChecklist,
+    publishAnnouncement,
+    publicUrl,
+    publication,
+    isPublished,
+    hasUnpublishedChanges,
     livePreviewContent,
     livePreviewMissing,
     liveDraft,

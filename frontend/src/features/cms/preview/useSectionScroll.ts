@@ -4,7 +4,9 @@
  * scroll the preview freely afterwards; nothing syncs back.
  *
  *  - Never moves focus.
- *  - Missing section (theme rendered without it) → do nothing.
+ *  - Missing section (theme rendered without it, e.g. turned off or still
+ *    empty) → do nothing now, but scroll to it as soon as it appears while it is
+ *    still the current section (the couple just switched it on / added content).
  *  - Theme not rendered yet (async chunk) → wait for it once, then try.
  *  - Hidden preview (mobile Edit tab) → remember the request and apply it when
  *    the preview becomes visible again (`flush`).
@@ -34,10 +36,34 @@ export function sectionScrollTop(scroller: HTMLElement, target: HTMLElement, sca
 export function useSectionScroll(options: SectionScrollOptions) {
   let pending: string | null = null
   let observer: MutationObserver | null = null
+  /** Current section that the theme did not render; watched until it shows up. */
+  let missing: string | null = null
+  let missingObserver: MutationObserver | null = null
 
   const stopWaiting = () => {
     observer?.disconnect()
     observer = null
+  }
+  const stopWatchingMissing = () => {
+    missingObserver?.disconnect()
+    missingObserver = null
+    missing = null
+  }
+
+  function watchMissing(key: string) {
+    stopWatchingMissing()
+    const scroller = options.scroller.value
+    if (!scroller || typeof MutationObserver !== 'function') return
+    missing = key
+    missingObserver = new MutationObserver(() => {
+      const el = options.scroller.value
+      if (!missing || !el || !el.querySelector(selectorFor(missing))) return
+      const key = missing
+      stopWatchingMissing()
+      pending = key
+      if (!attempt()) waitForTheme()
+    })
+    missingObserver.observe(scroller, { childList: true, subtree: true })
   }
 
   /** Try to apply the pending request. Returns true when it is settled (scrolled or dropped). */
@@ -51,6 +77,7 @@ export function useSectionScroll(options: SectionScrollOptions) {
       // Theme rendered but has no such section → drop it; not rendered yet → keep waiting.
       if (scroller.querySelector('[data-section]')) {
         pending = null
+        watchMissing(key)
         return true
       }
       return false
@@ -76,6 +103,7 @@ export function useSectionScroll(options: SectionScrollOptions) {
   function request(key: string | null | undefined) {
     pending = key ?? null
     stopWaiting()
+    stopWatchingMissing()
     void nextTick(() => {
       if (!attempt() && options.visible()) waitForTheme()
     })
@@ -93,7 +121,10 @@ export function useSectionScroll(options: SectionScrollOptions) {
 
   watch(options.section, request, { immediate: true })
   watch(options.scroller, (el) => el && pending && request(pending))
-  onBeforeUnmount(stopWaiting)
+  onBeforeUnmount(() => {
+    stopWaiting()
+    stopWatchingMissing()
+  })
 
   return { flush, hasPending: () => pending !== null }
 }

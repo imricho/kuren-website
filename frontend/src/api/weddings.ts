@@ -18,12 +18,30 @@ export interface WeddingRead {
   /** Canonical template id; null = not chosen. */
   themeId: string | null
   locale: WeddingLocale
+  /** 'published' while a publication is live. */
   status: 'draft' | 'published'
   publishedAt: string | null
   /** Content revision (optimistic concurrency); 0 for a new wedding. Theme/locale changes don't bump it. */
   revision: number
   createdAt: string
   updatedAt: string
+  /**
+   * CMS v2.0 publishing (docs/api/weddings.md "Publishing"). Optional so records from
+   * servers/fixtures that predate migration 0006 still type-check; absent = never published.
+   */
+  /** Public slug, assigned on first publish (`/i/<slug>`). */
+  slug?: string | null
+  /** Published and (revision ≠ publication.revision or themeId ≠ publication.themeId). */
+  hasUnpublishedChanges?: boolean
+  /** The live publication, or null when not published. */
+  publication?: WeddingPublication | null
+}
+
+export interface WeddingPublication {
+  publishedAt: string
+  /** Content revision the snapshot was built from. */
+  revision: number
+  themeId: string | null
 }
 
 export interface WeddingSettings {

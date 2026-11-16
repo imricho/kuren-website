@@ -6,6 +6,7 @@
 import { computed } from 'vue'
 
 import SelectField from '@/components/ui/SelectField.vue'
+import SwitchField from '@/components/ui/SwitchField.vue'
 import TextAreaField from '@/components/ui/TextAreaField.vue'
 import TextField from '@/components/ui/TextField.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
@@ -55,6 +56,8 @@ const draft = useSectionDraft({
         headline: f.headline,
         introduction: f.introduction,
         coverImage: f.coverImage,
+        guestGreetingEnabled: f.guestGreetingEnabled,
+        guestGreetingLabel: f.guestGreetingLabel,
       })
     }
     const couple = store.content!.couple
@@ -101,6 +104,7 @@ const labels = computed<Record<string, string>>(() => ({
   introduction: t('introduction'),
   'coverImage.src': t('coverImage'),
   'coverImage.alt': t('altText'),
+  'guestGreeting.label': t('guestGreetingLabel'),
 }))
 </script>
 
@@ -174,5 +178,25 @@ const labels = computed<Record<string, string>>(() => ({
     </fieldset>
 
     <ImageField v-model="form.coverImage" path="coverImage" :label="t('coverImage')" :errors="errors" :hint="t('coverImageHint')" />
+
+    <fieldset class="min-w-0 space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6" data-testid="guest-greeting">
+      <legend class="px-1 font-display text-xl font-semibold">{{ t('guestGreeting') }}</legend>
+      <SwitchField
+        :id="fieldId('guestGreeting.enabled')"
+        v-model="form.guestGreetingEnabled"
+        :label="t('guestGreeting')"
+        :hint="t('guestGreetingHint')"
+      />
+      <div v-show="form.guestGreetingEnabled || errors['guestGreeting.label']">
+        <TextField
+          :id="fieldId('guestGreeting.label')"
+          v-model="form.guestGreetingLabel"
+          :label="t('guestGreetingLabel')"
+          :error="errors['guestGreeting.label']"
+          autocomplete="off"
+        />
+      </div>
+      <p v-if="!form.guestGreetingEnabled && form.guestGreetingLabel.trim()" class="text-xs text-ink-500">{{ t('extraKept') }}</p>
+    </fieldset>
   </form>
 </template>

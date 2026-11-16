@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import SwitchField from '@/components/ui/SwitchField.vue'
 import TextAreaField from '@/components/ui/TextAreaField.vue'
 import TextField from '@/components/ui/TextField.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
@@ -9,6 +8,8 @@ import StoryEntryEditor from '@/features/cms/components/editors/StoryEntryEditor
 import ErrorSummary from '@/features/cms/components/ErrorSummary.vue'
 import ListEditor from '@/features/cms/components/ListEditor.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
+import SectionHiddenNote from '@/features/cms/components/SectionHiddenNote.vue'
+import SectionToggle from '@/features/cms/components/SectionToggle.vue'
 import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
 import { storyMetaForm, storyMetaPayload } from '@/features/cms/forms'
@@ -41,22 +42,23 @@ const name = (e: StoryEntryDraft, i: number) => e.title?.trim() || t('untitledIt
 
 <template>
   <div class="space-y-8">
-    <SectionHeader section="story" :description="t('storyIntro')" />
+    <SectionHeader section="story" :description="t('storyIntro')">
+      <template #toggle>
+        <SectionToggle v-model="form.enabled" section="story" />
+      </template>
+    </SectionHeader>
+    <SectionHiddenNote v-if="!form.enabled" />
 
-    <form class="space-y-4" novalidate data-testid="story-meta-form" @submit.prevent="draft.save()">
+    <form v-show="form.enabled" class="space-y-4" novalidate data-testid="story-meta-form" @submit.prevent="draft.save()">
       <ErrorSummary :errors="draft.errorList.value" :labels="labels" />
       <fieldset class="min-w-0 space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6">
         <legend class="px-1 font-display text-xl font-semibold">{{ t('sectionHeading') }}</legend>
-        <SwitchField :id="fieldId('enabled')" v-model="form.enabled" :label="t('showOnWebsite')" :hint="t('showSectionHint')" />
-        <p v-if="!form.enabled" class="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800" data-testid="section-hidden-note">
-          {{ t('sectionHiddenNote') }}
-        </p>
         <TextField :id="fieldId('title')" v-model="form.title" :label="t('sectionTitleLabel')" :hint="t('storyTitleHint')" :error="errors.title" />
         <TextAreaField :id="fieldId('introduction')" v-model="form.introduction" :label="t('introduction')" :rows="3" :error="errors.introduction" />
       </fieldset>
     </form>
 
-    <section aria-labelledby="story-entries" class="space-y-4">
+    <section v-show="form.enabled" aria-labelledby="story-entries" class="space-y-4">
       <h2 id="story-entries" class="text-2xl font-semibold">{{ t('storyEntries') }}</h2>
       <ListEditor
         :items="entries"

@@ -6,6 +6,9 @@ as soon as the limit is crossed. Either way the body is never fully buffered
 or parsed.
 """
 
+import re
+from collections.abc import Sequence
+
 from fastapi import HTTPException, status
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -21,16 +24,34 @@ def _too_large_response() -> JSONResponse:
 
 
 class BodySizeLimitMiddleware:
-    def __init__(self, app: ASGIApp, *, max_body_bytes: int) -> None:
+    """`overrides` = [(method, compiled full-path regex, limit)] for routes that need a
+    different cap (e.g. image uploads); every other request gets `max_body_bytes`."""
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        *,
+        max_body_bytes: int,
+        overrides: Sequence[tuple[str, re.Pattern[str], int]] = (),
+    ) -> None:
         self.app = app
         self.max_body_bytes = max_body_bytes
+        self.overrides = tuple(overrides)
+
+    def _limit_for(self, scope: Scope) -> int:
+        method = scope.get("method", "")
+        path = scope.get("path", "")
+        for override_method, pattern, limit in self.overrides:
+            if method == override_method and pattern.fullmatch(path):
+                return limit
+        return self.max_body_bytes
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
-        limit = self.max_body_bytes
+        limit = self._limit_for(scope)
         for name, value in scope["headers"]:
             if name == b"content-length":
                 try:

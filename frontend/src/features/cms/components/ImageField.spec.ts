@@ -1,11 +1,13 @@
 import { enableAutoUnmount, mount } from '@vue/test-utils'
-import { afterEach, describe, expect, it } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { defineComponent, h, ref } from 'vue'
 
 import type { ImageForm } from '../forms'
 import ImageField from './ImageField.vue'
 
 enableAutoUnmount(afterEach)
+beforeEach(() => setActivePinia(createPinia()))
 
 function setup(initial: ImageForm = { src: '', alt: '', focalPoint: null }, errors: Record<string, string> = {}) {
   const model = ref<ImageForm>(initial)
@@ -69,7 +71,7 @@ describe('ImageField', () => {
 
   it('has no "coming soon" upload teaser; the dev sample picker uses real files', async () => {
     const { wrapper, model } = setup()
-    expect(wrapper.find('[data-action="upload"]').exists()).toBe(false)
+    expect(wrapper.get('[data-action="upload-image"]').text()).toBe('Upload photo')
     expect(wrapper.text()).not.toMatch(/coming soon/i)
     // Vitest runs in development mode, so the sample picker is available.
     const picker = wrapper.get('[data-testid="sample-photo"]')

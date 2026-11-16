@@ -29,7 +29,8 @@ describe.each(TEMPLATES.filter(isRenderable).map(t => [t.id]))('%s universal v1.
     expect(wrapper.find('[data-section="holyRecite1"] [dir="auto"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('001234567890123456789')
     expect(wrapper.text()).toContain('00042')
-    expect(wrapper.findAll('form:not([aria-disabled="true"])')).toHaveLength(0)
+    // Preview forms can never be used: every form's controls sit in a disabled fieldset.
+    for (const form of wrapper.findAll('form')) expect(form.find('fieldset[disabled]').exists()).toBe(true)
     expect(wrapper.find('[data-section="wishes"] form').exists()).toBe(false)
   })
 
@@ -43,10 +44,10 @@ describe.each(TEMPLATES.filter(isRenderable).map(t => [t.id]))('%s universal v1.
     expect(wrapper.find('[data-section="weddingDate"] .countdown').exists()).toBe(false)
     expect(wrapper.find('[data-section="holyRecite1"]').text()).toContain('<img src=x')
     expect(wrapper.find('[data-section="holyRecite1"] img').exists()).toBe(false)
-    const gifts = wrapper.find('[data-section="amplopDigital"]')
-    expect(gifts.text()).not.toContain('001234567890123456789')
-    expect(gifts.text()).not.toContain('Gift Address 42')
-    expect(gifts.find('img').exists()).toBe(false)
+    // Every gift method off → nothing to show → no orphan "Amplop Digital" heading or wrapper.
+    expect(wrapper.find('[data-section="amplopDigital"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('001234567890123456789')
+    expect(wrapper.text()).not.toContain('Gift Address 42')
     for (const hidden of ['bankAccountsEnabled', 'qrisEnabled', 'physicalGifts'] as const) {
       const next = universalFixture()
       if (hidden === 'physicalGifts') next.amplopDigital!.physicalGifts!.enabled = false

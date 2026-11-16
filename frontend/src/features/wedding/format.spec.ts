@@ -55,6 +55,17 @@ describe('format helpers', () => {
     expect(isSafeImageSrc('data:image/svg+xml,<svg onload=alert(1)>')).toBe(false)
   })
 
+  it('accepts uploaded /media/<uuid>.(jpg|png|webp) paths only', () => {
+    const uuid = '0f8fad5b-d9cb-469f-a165-70867728950e'
+    for (const ext of ['jpg', 'png', 'webp']) expect(isSafeImageSrc(`/media/${uuid}.${ext}`)).toBe(true)
+    expect(isSafeImageSrc(`/media/${uuid}.svg`)).toBe(false)
+    expect(isSafeImageSrc(`/media/${uuid}.jpg\n`)).toBe(false)
+    expect(isSafeImageSrc(`/media/${uuid}.jpg?x=1`)).toBe(false)
+    expect(isSafeImageSrc('/media/../api/v1/x.jpg')).toBe(false)
+    expect(isSafeImageSrc('/media/not-a-uuid.jpg')).toBe(false)
+    expect(isSafeImageSrc(`/media/${uuid.toUpperCase()}.jpg`)).toBe(false)
+  })
+
   it('builds a map link, falling back to a search when the URL is missing or unsafe', () => {
     const event = { venueName: 'Hall', address: 'Jl. A 1', mapsUrl: 'javascript:alert(1)' }
     expect(mapsLink(event)).toBe('https://www.google.com/maps/search/?api=1&query=Hall%2C%20Jl.%20A%201')

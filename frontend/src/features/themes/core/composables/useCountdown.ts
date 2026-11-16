@@ -1,12 +1,20 @@
 import { computed, onMounted, onUnmounted, ref, type MaybeRefOrGetter, toValue } from 'vue'
 
-/** Live countdown to a date, ticking once per second while mounted. */
+/** True when the visitor asked for reduced motion (no constantly changing content). */
+export function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+}
+
+/**
+ * Live countdown to a date. Ticks once per second while mounted — or once a minute
+ * when reduced motion is preferred (the seconds unit is then hidden by the timer).
+ */
 export function useCountdown(target: MaybeRefOrGetter<Date>) {
   const now = ref(Date.now())
   let timer: ReturnType<typeof setInterval> | undefined
 
   onMounted(() => {
-    timer = setInterval(() => (now.value = Date.now()), 1000)
+    timer = setInterval(() => (now.value = Date.now()), prefersReducedMotion() ? 60_000 : 1000)
   })
   onUnmounted(() => clearInterval(timer))
 

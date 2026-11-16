@@ -21,6 +21,8 @@ const COPY: Partial<Record<SectionKey, [AppMessageKey, AppMessageKey]>> = {
   opening: ['nextOpeningAction', 'nextOpeningHint'],
   couple: ['nextCoupleAction', 'nextCoupleHint'],
   events: ['nextEventsAction', 'nextEventsHint'],
+  // The wedding date is shared with Opening, so its next-step copy is Opening's.
+  weddingDate: ['nextOpeningAction', 'nextOpeningHint'],
   rsvp: ['nextRsvpAction', 'nextRsvpHint'],
   closing: ['nextClosingAction', 'nextClosingHint'],
 }

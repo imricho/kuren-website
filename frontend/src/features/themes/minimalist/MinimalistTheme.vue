@@ -1,6 +1,10 @@
 <script setup lang="ts">
 /** Warm, sans-led minimalism: precise alignment, tactile neutrals and restrained detail. */
 import UniversalSection from '../core/components/UniversalSection.vue'
+import GuestGreeting from '../core/components/GuestGreeting.vue'
+import GreetingPrayer from '../core/components/GreetingPrayer.vue'
+import EventExtras from '../core/components/EventExtras.vue'
+import FamilyAcknowledgments from '../core/components/FamilyAcknowledgments.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -23,6 +27,7 @@ const view = useWeddingView(props)
       </div>
       <div class="mf-hero__grid">
         <div class="mf-hero__copy">
+          <GuestGreeting :content="content" />
           <p class="mf-kicker">A DAY TO REMEMBER</p>
           <h1 v-bind="heroHeading" class="mf-hero__names">
             <span>{{ content.couple.groom.name.split(' ')[0] }}</span>
@@ -57,6 +62,7 @@ const view = useWeddingView(props)
         <p class="mf-kicker">{{ content.opening.weddingTitle }}</p>
         <h2 v-if="view.greeting?.title">{{ view.greeting?.title }}</h2>
         <p v-if="view.greeting?.message" class="mf-body">{{ view.greeting?.message }}</p>
+        <GreetingPrayer :prayer="view.greeting?.prayer" />
       </div>
     </section>
 
@@ -95,7 +101,7 @@ const view = useWeddingView(props)
           <div class="mf-event__place">
             <p class="mf-event__venue">{{ event.venueName }}</p>
             <p class="mf-body">{{ event.address }}</p>
-            <p v-if="event.description" class="mf-body">{{ event.description }}</p>
+            <p v-if="event.description" class="mf-body">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
             <a class="mf-link" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} <span aria-hidden="true">↗</span></a>
           </div>
         </article>
@@ -154,6 +160,7 @@ const view = useWeddingView(props)
         <p class="mf-kicker">{{ view.date.short }}</p>
         <p class="mf-closing__message">{{ content.closing.message }}</p>
         <p v-if="content.closing.thankYou" class="mf-body">{{ content.closing.thankYou }}</p>
+        <FamilyAcknowledgments :content="content" />
         <p class="mf-closing__names">{{ content.opening.coupleNames }}</p>
       </div>
     </footer>

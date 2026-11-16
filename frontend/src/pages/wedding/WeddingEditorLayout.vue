@@ -13,6 +13,7 @@
  */
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { focusMainHeading } from '@/composables/useRouteA11y'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
@@ -24,6 +25,8 @@ import EditorDivider from '@/features/cms/preview/EditorDivider.vue'
 import { clampWidth, editorWidthBounds, useEditorWidth } from '@/features/cms/preview/editorWidth'
 import MobileEditorTabs, { type EditorTab } from '@/features/cms/preview/MobileEditorTabs.vue'
 import PreviewPanel from '@/features/cms/preview/PreviewPanel.vue'
+import PublishAnnouncer from '@/features/cms/preview/PublishAnnouncer.vue'
+import PublishChip from '@/features/cms/preview/PublishChip.vue'
 import { useElementSize } from '@/features/cms/preview/useElementSize'
 import { sectionByKey } from '@/features/cms/sections'
 import { SECTION_KEYS } from '@/features/wedding/completeness'
@@ -92,6 +95,33 @@ watch(tab, async (next, previous) => {
   await nextTick()
   window.scrollTo({ top: tabScroll[next], left: 0, behavior: 'auto' })
 })
+// --- Focus a field from a checklist link (/wedding/<section>#f-<field>) ------------------
+/** Wait for the section page (and any item editor) to render, then focus the field once. */
+async function focusHashField(hash: string) {
+  const id = decodeURIComponent(hash.slice(1))
+  if (!/^f-[A-Za-z0-9-]+$/.test(id)) return
+  if (isDesktop.value === false) tab.value = 'edit'
+  for (let i = 0; i < 20; i++) {
+    await nextTick()
+    const el = document.getElementById(id)
+    if (el) {
+      el.scrollIntoView?.({ block: 'center' })
+      ;(el as HTMLElement).focus?.({ preventScroll: true })
+      return
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  }
+  // The field never appeared (e.g. inside a collapsed item): don't leave focus on <body>.
+  void focusMainHeading()
+}
+watch(
+  () => [store.loadState, route.name, route.hash] as const,
+  ([state, , hash]) => {
+    if (state === 'ready' && hash) void focusHashField(hash)
+  },
+  { immediate: true },
+)
+
 </script>
 
 <template>
@@ -103,8 +133,12 @@ watch(tab, async (next, previous) => {
     :data-mode="isDesktop ? 'split' : 'tabs'"
     data-testid="editor-layout"
   >
+    <PublishAnnouncer />
     <MobileEditorTabs v-if="!isDesktop" v-model="tab" :ids="ids">
-      <SaveStatus />
+      <div class="flex min-w-0 items-center gap-2">
+        <SaveStatus />
+        <PublishChip compact />
+      </div>
     </MobileEditorTabs>
     <!-- On phones the banner sits outside both tab panels, so it is visible on Edit and Preview. -->
     <ConflictBanner v-if="!isDesktop" />
@@ -122,6 +156,7 @@ watch(tab, async (next, previous) => {
           <p class="text-xs text-ink-500" data-testid="sections-done">
             {{ t('sectionsDone', { done: store.completeness.done, total: store.completeness.total }) }}
           </p>
+          <PublishChip v-if="isDesktop" />
         </div>
         <SectionNav />
       </div>

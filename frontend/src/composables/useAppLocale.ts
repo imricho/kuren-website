@@ -6,6 +6,10 @@ import { editorEn } from '@/locales/en/editor'
 import { editorId } from '@/locales/id/editor'
 import { autosaveEn } from '@/locales/en/autosave'
 import { autosaveId } from '@/locales/id/autosave'
+import { publishEn } from '@/locales/en/publish'
+import { publishId } from '@/locales/id/publish'
+import { sectionsEn } from '@/locales/en/sections'
+import { sectionsId } from '@/locales/id/sections'
 import { previewEn } from '@/locales/en/preview'
 import { previewId } from '@/locales/id/preview'
 import { shellEn } from '@/locales/en/shell'
@@ -47,6 +51,8 @@ const messages = {
     ...editorEn,
     ...previewEn,
     ...autosaveEn,
+    ...sectionsEn,
+    ...publishEn,
   },
   id: {
     language: 'Bahasa', english: 'English', bahasa: 'Bahasa Indonesia', mainNav: 'Navigasi utama', dashboard: 'Dasbor', themes: 'Tema', account: 'Akun', signOut: 'Keluar',
@@ -79,6 +85,8 @@ const messages = {
     ...editorId,
     ...previewId,
     ...autosaveId,
+    ...sectionsId,
+    ...publishId,
   },
 } as const
 

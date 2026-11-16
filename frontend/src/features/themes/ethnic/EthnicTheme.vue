@@ -5,6 +5,10 @@
  * original pattern systems can be added without touching this layout.
  */
 import UniversalSection from '../core/components/UniversalSection.vue'
+import GuestGreeting from '../core/components/GuestGreeting.vue'
+import GreetingPrayer from '../core/components/GreetingPrayer.vue'
+import EventExtras from '../core/components/EventExtras.vue'
+import FamilyAcknowledgments from '../core/components/FamilyAcknowledgments.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -27,6 +31,7 @@ const view = useWeddingView(props)
         <ThemeImage :image="content.opening.coverImage" eager />
       </div>
       <div class="eth-hero__panel">
+        <GuestGreeting :content="content" />
         <p class="eth-label">{{ view.t.weddingOf }}</p>
         <h1 v-bind="heroHeading" class="eth-hero__names">
           {{ content.couple.groom.name.split(' ')[0] }}
@@ -48,6 +53,7 @@ const view = useWeddingView(props)
         <p class="eth-label eth-label--dark">{{ content.opening.weddingTitle }}</p>
         <h2 v-if="view.greeting?.title" class="eth-title">{{ view.greeting?.title }}</h2>
         <p v-if="view.greeting?.message" class="eth-lead">{{ view.greeting?.message }}</p>
+        <GreetingPrayer :prayer="view.greeting?.prayer" />
       </div>
     </section>
 
@@ -97,7 +103,7 @@ const view = useWeddingView(props)
             <p class="eth-event__when">{{ event.timeText }}</p>
             <p class="eth-event__venue">{{ event.venueName }}</p>
             <p class="eth-body">{{ event.address }}</p>
-            <p v-if="event.description" class="eth-body eth-event__note">{{ event.description }}</p>
+            <p v-if="event.description" class="eth-body eth-event__note">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
             <a class="eth-button" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }}</a>
           </div>
         </div>
@@ -163,6 +169,7 @@ const view = useWeddingView(props)
         <p class="eth-lead eth-lead--light">{{ content.closing.message }}</p>
         <div class="eth-band eth-band--short" aria-hidden="true" />
         <p v-if="content.closing.thankYou" class="eth-closing__thanks">{{ content.closing.thankYou }}</p>
+        <FamilyAcknowledgments :content="content" />
         <p class="eth-closing__names">{{ content.opening.coupleNames }}</p>
       </div>
     </footer>

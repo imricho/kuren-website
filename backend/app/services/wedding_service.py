@@ -66,7 +66,18 @@ def get_my_wedding(db: Session, owner: User) -> Wedding:
 def create_wedding(db: Session, owner: User, *, theme_id: str | None, locale: str) -> Wedding:
     if db.scalar(select(Wedding.id).where(Wedding.owner_id == owner.id)) is not None:
         raise WeddingExistsError()
-    wedding = Wedding(owner_id=owner.id, theme_id=theme_id, locale=locale)
+    # Approved defaults for NEW weddings (existing weddings are left as they are: no backfill):
+    # the date countdown and "add to calendar" are on; optional sections that need the
+    # couple's own content (story, gallery) or a guest backend (RSVP) start off, so an
+    # untouched section never blocks publishing. Holy Recite, greeting, wishes and
+    # Amplop Digital are absent = off.
+    wedding = Wedding(
+        owner_id=owner.id, theme_id=theme_id, locale=locale,
+        universal_content={"countdown": {"enabled": True, "addToCalendar": True}},
+        story_meta={"enabled": False},
+        gallery_meta={"enabled": False},
+        rsvp={"enabled": False},
+    )
     db.add(wedding)
     try:
         db.commit()

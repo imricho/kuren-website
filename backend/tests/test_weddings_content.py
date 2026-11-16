@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from tests.wedding_helpers import API, create_wedding, fields
-from tests.wedding_samples import EMPTY_DRAFT, SAMPLE_WEDDING
+from tests.wedding_samples import EMPTY_DRAFT, SAMPLE_WEDDING, SAVED_SAMPLE
 
 
 @pytest.fixture
@@ -29,8 +29,8 @@ def test_new_wedding_has_empty_draft(auth_client: TestClient, wid: str) -> None:
 def test_sample_wedding_round_trips_exactly(auth_client: TestClient, wid: str) -> None:
     response = auth_client.put(f"{API}/{wid}/content", json=_put_body(SAMPLE_WEDDING))
     assert response.status_code == 200, response.text
-    assert response.json() == SAMPLE_WEDDING
-    assert auth_client.get(f"{API}/{wid}/content").json() == SAMPLE_WEDDING
+    assert response.json() == SAVED_SAMPLE
+    assert auth_client.get(f"{API}/{wid}/content").json() == SAVED_SAMPLE
     # key order of a section follows the contract
     assert list(response.json()["events"][1]) == [
         "id", "type", "title", "date", "startTime", "endTime", "venueName", "address", "mapsUrl", "description",
@@ -45,7 +45,7 @@ def test_preview_returns_theme_and_content(auth_client: TestClient, wid: str) ->
     auth_client.put(f"{API}/{wid}/content", json=_put_body(SAMPLE_WEDDING) | {"locale": "id"})
     response = auth_client.get(f"{API}/{wid}/preview")
     assert response.status_code == 200
-    assert response.json() == {"themeId": "afterglow", "content": SAMPLE_WEDDING | {"locale": "id"}}
+    assert response.json() == {"themeId": "afterglow", "content": SAVED_SAMPLE | {"locale": "id"}}
 
 
 def test_empty_optionals_are_omitted(auth_client: TestClient, wid: str) -> None:
@@ -125,7 +125,7 @@ def test_full_put_without_schema_version_and_locale(auth_client: TestClient, wid
     del body["schemaVersion"], body["locale"]
     response = auth_client.put(f"{API}/{wid}/content", json=body)
     assert response.status_code == 200
-    assert response.json() == SAMPLE_WEDDING
+    assert response.json() == SAVED_SAMPLE
 
 
 def test_content_change_bumps_updated_at(auth_client: TestClient, wid: str) -> None:
@@ -151,9 +151,11 @@ def test_content_change_bumps_updated_at(auth_client: TestClient, wid: str) -> N
          {"groom": {}, "bride": {"name": "Ayu", "nickname": "Ayu", "parents": "Putri dari Bapak Hadi & Ibu Sri",
                                  "instagramUrl": "https://www.instagram.com/ayu"}}),
         ("couple", SAMPLE_WEDDING["couple"], SAMPLE_WEDDING["couple"]),
-        ("story", {"title": "Our Story"}, {"title": "Our Story", "enabled": True}),
+        # Without an explicit switch the section keeps its state (new weddings: off).
+        ("story", {"title": "Our Story"}, {"title": "Our Story", "enabled": False}),
+        ("story", {"title": "Our Story", "enabled": True}, {"title": "Our Story", "enabled": True}),
         ("story", {"enabled": False}, {"enabled": False}),
-        ("gallery", {"description": "Pics"}, {"description": "Pics", "enabled": True}),
+        ("gallery", {"description": "Pics"}, {"description": "Pics", "enabled": False}),
         ("gallery", {"enabled": False}, {"enabled": False}),
         ("rsvp", {}, {"enabled": True}),
         ("rsvp", {"enabled": False, "confirmationMessage": "See you!", "maxGuestsPerResponse": 4},

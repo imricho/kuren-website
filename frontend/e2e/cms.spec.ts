@@ -27,6 +27,13 @@ async function expectAllSaved(page: Page) {
   await expect(page.getByTestId('save-status-text')).toHaveText('All changes saved')
 }
 
+/** Sections are grouped: pick the group tab first, then the section chip (docs/ux/live-editor.md). */
+async function goToSection(page: Page, group: string, section: string) {
+  const nav = page.getByTestId('section-nav')
+  await nav.locator(`[data-testid="section-nav-groups"] [role="tab"][data-group="${group}"]`).click()
+  await nav.locator(`a[data-section="${section}"]`).click()
+}
+
 async function fillOpening(page: Page) {
   await page.goto('/wedding/opening')
   const form = page.getByTestId('opening-form')
@@ -86,24 +93,24 @@ test.describe('Wedding CMS', () => {
     await title.fill('Draft title')
     await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'unsaved')
     await expect(nav.locator('a[data-section="opening"] [data-testid="unsaved-badge"]')).toHaveCount(1)
-    await nav.getByRole('link', { name: /Events/ }).click()
+    await goToSection(page, 'events', 'events')
     await expect(page).toHaveURL(/\/wedding\/events$/)
     await expect(page.getByTestId('confirm-dialog').filter({ visible: true })).toHaveCount(0)
     expect((await savedContent(page)).opening.weddingTitle).toBe('Draft title')
 
     // An invalid value (title > 120 characters) can't be saved, so leaving asks.
-    await nav.getByRole('link', { name: /Opening/ }).click()
+    await goToSection(page, 'wedding', 'opening')
     await expect(title).toHaveValue('Draft title')
     const tooLong = 'x'.repeat(121)
     await title.fill(tooLong)
-    await nav.getByRole('link', { name: /Events/ }).click()
+    await goToSection(page, 'events', 'events')
     const dialog = page.getByTestId('confirm-dialog')
     await expect(dialog).toBeVisible()
     await dialog.getByRole('button', { name: 'Keep editing' }).click()
     await expect(page).toHaveURL(/\/wedding\/opening$/)
     await expect(title).toHaveValue(tooLong)
 
-    await nav.getByRole('link', { name: /Events/ }).click()
+    await nav.locator('a[data-section="events"]').click() // the Events group is still selected
     await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Discard changes' }).click()
     await expect(page).toHaveURL(/\/wedding\/events$/)
     expect((await savedContent(page)).opening.weddingTitle).toBe('Draft title')
@@ -255,7 +262,7 @@ test.describe('Wedding CMS', () => {
     await page.setViewportSize({ width: 320, height: 720 })
     for (const section of ['opening', 'couple', 'story', 'events', 'gallery', 'rsvp', 'closing']) {
       await page.goto(`/wedding/${section}`)
-      await expect(page.getByTestId(/.*-form|list-editor/).first()).toBeVisible()
+      await expect(page.getByTestId(/.*-form|list-editor|section-toggle/).filter({ visible: true }).first()).toBeVisible()
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
       expect(overflow, `/wedding/${section} must not scroll horizontally`).toBeLessThanOrEqual(0)
       await page.screenshot({ path: `test-results/screens/cms-${section}-phone.png`, fullPage: true })
@@ -264,7 +271,7 @@ test.describe('Wedding CMS', () => {
     await page.screenshot({ path: 'test-results/screens/cms-dashboard-phone.png', fullPage: true })
 
     await page.goto('/wedding/opening')
-    await page.getByTestId('section-nav').getByRole('link', { name: /Events/ }).click()
+    await goToSection(page, 'events', 'events')
     await expect(page).toHaveURL(/\/wedding\/events$/)
   })
 

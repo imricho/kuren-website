@@ -4,6 +4,10 @@
  * Blush & sage pastels, original SVG florals, arched photo frames, script names.
  */
 import UniversalSection from '../core/components/UniversalSection.vue'
+import GuestGreeting from '../core/components/GuestGreeting.vue'
+import GreetingPrayer from '../core/components/GreetingPrayer.vue'
+import EventExtras from '../core/components/EventExtras.vue'
+import FamilyAcknowledgments from '../core/components/FamilyAcknowledgments.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -26,6 +30,7 @@ const view = useWeddingView(props)
       <ConvBouquet class="conv-bouquet--tl" />
       <ConvBouquet class="conv-bouquet--br" />
       <div class="conv-hero__content">
+        <GuestGreeting :content="content" />
         <p class="conv-caps">{{ view.t.weddingOf }}</p>
         <div v-if="content.opening.coverImage" class="conv-arch conv-arch--hero">
           <ThemeImage :image="content.opening.coverImage" eager />
@@ -42,6 +47,7 @@ const view = useWeddingView(props)
         <ConvSprig class="conv-sprig--small" />
         <h2 v-if="view.greeting?.title" class="conv-title">{{ view.greeting?.title }}</h2>
         <p v-if="view.greeting?.message" class="conv-lead">{{ view.greeting?.message }}</p>
+        <GreetingPrayer :prayer="view.greeting?.prayer" />
       </div>
     </section>
 
@@ -89,7 +95,7 @@ const view = useWeddingView(props)
           <span class="conv-rule" aria-hidden="true" />
           <p class="conv-event__venue">{{ event.venueName }}</p>
           <p class="conv-body">{{ event.address }}</p>
-          <p v-if="event.description" class="conv-body conv-event__note">{{ event.description }}</p>
+          <p v-if="event.description" class="conv-body conv-event__note">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
           <a class="conv-pill" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }}</a>
         </div>
       </div>
@@ -149,6 +155,7 @@ const view = useWeddingView(props)
         <div v-if="content.closing.image" class="conv-arch conv-arch--small"><ThemeImage :image="content.closing.image" /></div>
         <p class="conv-lead">{{ content.closing.message }}</p>
         <p v-if="content.closing.thankYou" class="conv-script conv-closing__thanks">{{ content.closing.thankYou }}</p>
+        <FamilyAcknowledgments :content="content" />
         <p class="conv-caps">{{ view.date.long }}</p>
       </div>
     </footer>

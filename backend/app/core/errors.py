@@ -84,6 +84,35 @@ class EditConflictError(ConflictError):
         super().__init__(details={"currentRevision": current_revision})
 
 
+class PublishBlockedError(AppError):
+    """Publishing refused: `details` = [{"section", "field", "code", "message"}]."""
+
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    code = "publish_blocked"
+    message = "Some required content is missing. Complete it before publishing."
+
+    def __init__(self, issues: list[dict[str, str]]) -> None:
+        super().__init__(details=issues)
+
+
+class UnsupportedImageError(AppError):
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    code = "unsupported_image"
+    message = "Upload a JPEG, PNG or WebP image."
+
+
+class PayloadTooLargeError(AppError):
+    status_code = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+    code = "payload_too_large"
+    message = "The request body is too large."
+
+
+class RateLimitedError(AppError):
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+    code = "too_many_requests"
+    message = "Too many requests. Please try again shortly."
+
+
 class BadRequestError(AppError):
     code = "bad_request"
     message = "The request could not be understood."

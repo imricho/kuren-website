@@ -26,13 +26,22 @@ describe('completeness rules', () => {
     expect(Object.fromEntries(Object.entries(c.sections).map(([k, v]) => [k, v.status]))).toEqual({
       theme: 'not_started',
       opening: 'not_started',
+      holyRecite1: 'optional',
+      greeting: 'optional',
       couple: 'not_started',
-      story: 'optional',
+      weddingDate: 'not_started',
       events: 'not_started',
+      story: 'optional',
       gallery: 'optional',
-      rsvp: 'not_started',
+      rsvp: 'optional',
+      wishes: 'optional',
+      amplopDigital: 'optional',
+      holyRecite2: 'optional',
       closing: 'not_started',
     })
+    expect(Object.entries(c.sections).filter(([, v]) => v.required).map(([k]) => k)).toEqual([
+      'theme', 'opening', 'couple', 'weddingDate', 'events', 'closing',
+    ])
     expect(c.sections.opening.missing).toEqual(['weddingTitle', 'weddingDate', 'coupleNames'])
   })
 
@@ -65,8 +74,28 @@ describe('completeness rules', () => {
     ['events: none', (d) => (d.events = []), 'ethnic', { events: 'not_started' }],
     ['events: one incomplete', (d) => d.events.push({ id: 'e2', type: 'other', title: 'Party' }), 'ethnic', { events: 'in_progress' }],
     ['events: bad time is not complete', (d) => (d.events = [{ ...completeEvent, startTime: '25:00' }]), 'ethnic', { events: 'in_progress' }],
-    ['rsvp: disabled without title', (d) => (d.rsvp = { enabled: false }), 'ethnic', { rsvp: 'in_progress' }],
-    ['rsvp: default only', (d) => (d.rsvp = { enabled: true }), 'ethnic', { rsvp: 'not_started' }],
+    ['rsvp: disabled without title', (d) => (d.rsvp = { enabled: false }), 'ethnic', { rsvp: 'optional' }],
+    ['rsvp: default only', (d) => (d.rsvp = { enabled: true }), 'ethnic', { rsvp: 'optional' }],
+    ['rsvp: started without title', (d) => (d.rsvp = { enabled: true, introduction: 'Hi' }), 'ethnic', { rsvp: 'in_progress' }],
+    ['weddingDate: missing', (d) => (d.opening.weddingDate = undefined), 'ethnic', { weddingDate: 'not_started', opening: 'in_progress' }],
+    ['holyRecite1: on, empty', (d) => (d.holyRecite1 = { enabled: true, reference: 'QS 30:21' }), 'ethnic', { holyRecite1: 'in_progress' }],
+    ['holyRecite2: on, original script only', (d) => (d.holyRecite2 = { enabled: true, originalScript: 'نص' }), 'ethnic', { holyRecite2: 'complete' }],
+    ['holyRecite1: off keeps optional', (d) => (d.holyRecite1 = { enabled: false, passage: 'x' }), 'ethnic', { holyRecite1: 'optional' }],
+    ['greeting: on with message', (d) => (d.greeting = { enabled: true, message: 'Hi' }), 'ethnic', { greeting: 'complete' }],
+    ['wishes: on', (d) => (d.wishes = { enabled: true }), 'ethnic', { wishes: 'complete' }],
+    [
+      'amplop: half-filled bank row',
+      (d) => (d.amplopDigital = { enabled: true, bankAccountsEnabled: true, qrisEnabled: false, bankAccounts: [{ id: 'b', bankName: 'BCA', accountHolder: '', accountNumber: '0123' }] }),
+      'ethnic',
+      { amplopDigital: 'in_progress' },
+    ],
+    [
+      'amplop: complete bank row',
+      (d) => (d.amplopDigital = { enabled: true, bankAccountsEnabled: true, qrisEnabled: false, bankAccounts: [{ id: 'b', bankName: 'BCA', accountHolder: 'Ayu', accountNumber: '0123' }] }),
+      'ethnic',
+      { amplopDigital: 'complete' },
+    ],
+    ['amplop: no method on', (d) => (d.amplopDigital = { enabled: true, bankAccountsEnabled: false, qrisEnabled: false, bankAccounts: [] }), 'ethnic', { amplopDigital: 'in_progress' }],
     ['closing: thank-you only', (d) => (d.closing = { thankYou: 'Love' }), 'ethnic', { closing: 'in_progress' }],
     ['story: valid entry', (d) => (d.story.timeline = [{ id: 's', title: 'Met', description: 'Library' }]), 'ethnic', { story: 'complete' }],
     ['story: started but invalid', (d) => (d.story.timeline = [{ id: 's', title: 'Met' }]), 'ethnic', { story: 'in_progress' }],
@@ -83,7 +112,21 @@ describe('completeness rules', () => {
   it('optional sections never count toward the total', () => {
     const d = complete()
     d.story.timeline = [{ id: 's', title: 'Met' }]
-    expect(computeCompleteness(d, 'ethnic').done).toBe(6)
+    d.rsvp = { enabled: true, introduction: 'x' }
+    d.amplopDigital = { enabled: true, bankAccountsEnabled: true, qrisEnabled: false, bankAccounts: [] }
+    const c = computeCompleteness(d, 'ethnic')
+    expect(c.done).toBe(6)
+    expect(c.total).toBe(6)
+  })
+
+  it('counts the 5 mandatory sections + theme (RSVP is not required)', () => {
+    const d = complete()
+    d.rsvp = { enabled: true }
+    expect(computeCompleteness(d, 'ethnic')).toMatchObject({ done: 6, total: 6, percent: 100 })
+    d.opening.weddingDate = undefined
+    const c = computeCompleteness(d, 'ethnic')
+    expect(c.done).toBe(4) // opening and weddingDate both need the (shared) date
+    expect(c.sections.weddingDate.missing).toEqual(['weddingDate'])
   })
 
   it('reports missing codes, never English', () => {

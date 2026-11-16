@@ -2,8 +2,11 @@
  * How complete each part of the wedding website is. Pure rules over the SAVED
  * draft; they return status and missing-field codes, never display text.
  *
- * Six sections are required before publishing (theme, opening, couple, events,
- * rsvp, closing). Story and gallery are optional and never count toward the total.
+ * Six things are required before publishing: the theme plus the five mandatory
+ * sections (opening, couple, wedding date, events, closing). Every other section
+ * (incl. RSVP) is optional and never counts toward the total. An optional section
+ * that is switched off reads 'optional'; switched on, it is 'complete' once it
+ * has what it needs to render, otherwise 'in_progress'.
  */
 import { isThemeId } from '@/features/themes/core/registry'
 
@@ -11,10 +14,14 @@ import { deriveCoupleNames, isIsoDate, isTime, type EventDraft, type WeddingDraf
 
 export type SectionStatus = 'not_started' | 'in_progress' | 'complete' | 'optional'
 
-export const SECTION_KEYS = ['theme', 'opening', 'couple', 'story', 'events', 'gallery', 'rsvp', 'closing'] as const
+/** Editor order: the theme, then the canonical public section order (WEDDING_SECTION_ORDER). */
+export const SECTION_KEYS = [
+  'theme', 'opening', 'holyRecite1', 'greeting', 'couple', 'weddingDate', 'events',
+  'story', 'gallery', 'rsvp', 'wishes', 'amplopDigital', 'holyRecite2', 'closing',
+] as const
 export type SectionKey = (typeof SECTION_KEYS)[number]
 
-export const REQUIRED_SECTIONS = ['theme', 'opening', 'couple', 'events', 'rsvp', 'closing'] as const satisfies readonly SectionKey[]
+export const REQUIRED_SECTIONS = ['theme', 'opening', 'couple', 'weddingDate', 'events', 'closing'] as const satisfies readonly SectionKey[]
 
 export interface SectionCompleteness {
   status: SectionStatus
@@ -75,13 +82,47 @@ export function computeCompleteness(draft: WeddingDraft | null | undefined, them
   const eventsMissing = events.length === 0 ? ['events'] : events.flatMap((e, i) => eventMissing(e).map((f) => `${i}.${f}`))
   req('events', eventsMissing, events.length > 0)
 
-  const r = d?.rsvp ?? { enabled: true }
-  req('rsvp', has(r.title) ? [] : ['title'], anySet(r, ['enabled']) || r.enabled === false)
-
   const c = d?.closing ?? {}
   req('closing', has(c.message) ? [] : ['message'], anySet(c))
 
+  req('weddingDate', isIsoDate(o.weddingDate) ? [] : ['weddingDate'], has(o.weddingDate))
+
   // Optional sections.
+  const optional = (key: SectionKey, enabled: boolean, missing: string[]) =>
+    (sections[key] = { status: enabled ? (missing.length ? 'in_progress' : 'complete') : 'optional', missing: enabled ? missing : [], required: false })
+
+  const r = d?.rsvp ?? { enabled: true }
+  const rsvpStarted = anySet(r, ['enabled'])
+  sections.rsvp = {
+    status: r.enabled === false || !rsvpStarted ? 'optional' : has(r.title) ? 'complete' : 'in_progress',
+    missing: r.enabled !== false && rsvpStarted && !has(r.title) ? ['title'] : [],
+    required: false,
+  }
+
+  for (const key of ['holyRecite1', 'holyRecite2'] as const) {
+    const h = d?.[key]
+    optional(key, h?.enabled === true, has(h?.passage) || has(h?.originalScript) || has(h?.translation) ? [] : ['passage'])
+  }
+  const g = d?.greeting
+  optional('greeting', g?.enabled === true, has(g?.title) || has(g?.message) || has(g?.prayer) ? [] : ['message'])
+  optional('wishes', d?.wishes?.enabled === true, [])
+
+  const a = d?.amplopDigital
+  const giftsMissing: string[] = []
+  if (a?.enabled) {
+    const physical = a.physicalGifts?.enabled === true
+    if (!a.bankAccountsEnabled && !a.qrisEnabled && !physical) giftsMissing.push('methods')
+    if (a.bankAccountsEnabled) {
+      if (!a.bankAccounts?.length) giftsMissing.push('bankAccounts')
+      a.bankAccounts?.forEach((b, i) =>
+        (['bankName', 'accountHolder', 'accountNumber'] as const).forEach((f) => !has(b[f]) && giftsMissing.push(`bankAccounts.${i}.${f}`)),
+      )
+    }
+    if (a.qrisEnabled && !has(a.qrisImage?.src)) giftsMissing.push('qrisImage')
+    if (physical && !has(a.physicalGifts?.address)) giftsMissing.push('physicalGifts.address')
+  }
+  optional('amplopDigital', a?.enabled === true, giftsMissing)
+
   const timeline = d?.story?.timeline ?? []
   const storyMissing = timeline.flatMap((e, i) =>
     [!has(e.title) && `${i}.title`, !has(e.description) && `${i}.description`].filter((x): x is string => !!x),
@@ -101,7 +142,8 @@ export function computeCompleteness(draft: WeddingDraft | null | undefined, them
 
   const total = REQUIRED_SECTIONS.length
   const done = REQUIRED_SECTIONS.filter((k) => sections[k].status === 'complete').length
-  return { sections, done, total, percent: Math.round((done / total) * 100) }
+  const ordered = Object.fromEntries(SECTION_KEYS.map((k) => [k, sections[k]])) as Record<SectionKey, SectionCompleteness>
+  return { sections: ordered, done, total, percent: Math.round((done / total) * 100) }
 }
 
 /** First required section that isn't complete (in editor order), else undefined. */

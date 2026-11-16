@@ -73,6 +73,22 @@ function watchWrites(page: Page) {
 
 const openingForm = (page: Page) => page.getByTestId('opening-form')
 
+/** Sections are grouped: pick the group tab first, then the section chip. */
+async function goToSection(page: Page, group: string, section: string) {
+  const nav = page.getByTestId('section-nav')
+  await nav.locator(`[data-testid="section-nav-groups"] [role="tab"][data-group="${group}"]`).click()
+  await nav.locator(`a[data-section="${section}"]`).click()
+}
+
+/**
+ * Royal Maroon v2 shows the website title in its Greeting section (since CMS v2.0
+ * the greeting is its own optional section): switch it on so the title renders.
+ */
+async function showGreeting(page: Page, weddingId: string) {
+  const res = await page.request.put(`${API}/weddings/${weddingId}/sections/greeting`, { data: { enabled: true, message: 'Welcome to our wedding' } })
+  expect(res.ok(), `PUT greeting → ${res.status()}`).toBe(true)
+}
+
 test.describe('Live editor', () => {
   test('(1) text edits update the preview immediately, before any save request', async ({ page, freshUser }) => {
     void freshUser
@@ -113,7 +129,7 @@ test.describe('Live editor', () => {
     await expect(site(page).locator('[data-section="opening"]')).not.toContainText('2027')
 
     // Events: the new-item form previews live, Add persists it ("“X” added" toast kept).
-    await page.getByTestId('section-nav').locator('a[data-section="events"]').click()
+    await goToSection(page, 'events', 'events')
     await expect(page).toHaveURL(/\/wedding\/events$/)
     const events = site(page).locator('[data-section="events"]')
     await page.getByRole('button', { name: 'Add an event' }).click()
@@ -165,6 +181,10 @@ test.describe('Live editor', () => {
   test('(4) Story and Gallery can be hidden from and shown on the website', async ({ page, freshUser }) => {
     void freshUser
     const w = await seedWedding(page)
+    // New weddings start with Story and Gallery switched off: show them first.
+    for (const section of ['story', 'gallery']) {
+      expect((await page.request.put(`${API}/weddings/${w.id}/sections/${section}`, { data: { enabled: true } })).ok()).toBe(true)
+    }
     // Optional sections only render with content: seed one entry each through the API.
     expect((await page.request.post(`${API}/weddings/${w.id}/stories`, { data: { title: 'We met', date: 'March 2018', description: 'At a friend’s wedding in Bandung.' } })).status()).toBe(201)
     expect(
@@ -249,7 +269,7 @@ test.describe('Live editor', () => {
   test('(7) a failed save keeps the local changes and Retry saves them', async ({ page, freshUser }) => {
     void freshUser
     test.setTimeout(60_000) // three automatic retries (2 s, 5 s, 10 s) before "Couldn't save"
-    await seedWedding(page, 'royal-maroon-v2') // renders the website title in the preview
+    await showGreeting(page, (await seedWedding(page, 'royal-maroon-v2')).id) // renders the website title in the preview
     await openEditor(page)
 
     let failures = 0
@@ -279,7 +299,7 @@ test.describe('Live editor', () => {
 
   test('(8) a slow earlier save never overwrites a newer edit', async ({ page, freshUser }) => {
     void freshUser
-    await seedWedding(page, 'royal-maroon-v2') // renders the website title in the preview
+    await showGreeting(page, (await seedWedding(page, 'royal-maroon-v2')).id) // renders the website title in the preview
     await openEditor(page)
 
     let release!: () => void
@@ -378,7 +398,7 @@ test.describe('Live editor', () => {
       for (const section of SECTIONS) {
         await page.goto(`/wedding/${section}`)
         await expect(page.getByTestId('editor-layout')).toHaveAttribute('data-mode', 'tabs')
-        await expect(page.getByTestId(/.*-form|list-editor/).first()).toBeVisible()
+        await expect(page.getByTestId(/.*-form|list-editor|section-toggle/).filter({ visible: true }).first()).toBeVisible()
         expect(await overflow(), `/wedding/${section} (Edit) must not scroll horizontally`).toBeLessThanOrEqual(0)
 
         await page.getByRole('tab', { name: 'Preview' }).click()
@@ -407,7 +427,7 @@ test.describe('Live editor', () => {
     }
     expect(await offsetOf('events')).toBeGreaterThan(100) // well below the fold at first
 
-    await page.getByTestId('section-nav').locator('a[data-section="events"]').click()
+    await goToSection(page, 'events', 'events')
     await expect(page).toHaveURL(/\/wedding\/events$/)
     await expect.poll(() => offsetOf('events')).toBeGreaterThanOrEqual(-2)
     await expect.poll(() => offsetOf('events')).toBeLessThanOrEqual(24)
@@ -424,7 +444,7 @@ test.describe('Live editor', () => {
     expect(focus.tag).toBe('H1')
 
     // Back to an earlier section scrolls up again.
-    await page.getByTestId('section-nav').locator('a[data-section="couple"]').click()
+    await goToSection(page, 'wedding', 'couple')
     await expect.poll(() => offsetOf('couple')).toBeGreaterThanOrEqual(-2)
     await expect.poll(() => offsetOf('couple')).toBeLessThanOrEqual(24)
   })
@@ -437,7 +457,7 @@ test.describe('Live editor', () => {
     // After the autosave pause the status says the field needs attention, and it is announced once.
     await expect(saveStatus(page)).toHaveAttribute('data-state', 'invalid')
     await expect(page.getByTestId('save-status-live')).toContainText('check the highlighted fields')
-    await page.getByTestId('section-nav').locator('a[data-section="events"]').click()
+    await goToSection(page, 'events', 'events')
     const dialog = page.getByTestId('confirm-dialog')
     await expect(dialog).toBeVisible()
     await dialog.getByRole('button', { name: 'Keep editing' }).click()

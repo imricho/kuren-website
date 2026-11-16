@@ -6,9 +6,14 @@
  * swap the ornament components and palette without touching the layout.
  */
 import UniversalSection from '../core/components/UniversalSection.vue'
+import GuestGreeting from '../core/components/GuestGreeting.vue'
+import GreetingPrayer from '../core/components/GreetingPrayer.vue'
+import EventExtras from '../core/components/EventExtras.vue'
+import FamilyAcknowledgments from '../core/components/FamilyAcknowledgments.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
+import { holyReciteHasContent } from '../core/visibility'
 import { vReveal } from '../core/directives/reveal'
 import { useHeroHeading } from '../core/composables/useHeroHeading'
 import type { ThemeProps } from '../core/types'
@@ -30,6 +35,7 @@ const view = useWeddingView(props)
         <TradCorner v-for="pos in ['tl', 'tr', 'bl', 'br']" :key="pos" :class="`trad-corner--${pos}`" />
         <div class="trad-hero__content">
           <TradCrest />
+          <GuestGreeting :content="content" />
           <p class="trad-caps trad-gold">{{ view.t.weddingOf }}</p>
           <div v-if="content.opening.coverImage" class="trad-medallion">
             <ThemeImage :image="content.opening.coverImage" eager />
@@ -44,7 +50,7 @@ const view = useWeddingView(props)
       </div>
     </header>
 
-    <div v-if="view.greeting || content.holyRecite1?.enabled" class="trad-band" aria-hidden="true" />
+    <div v-if="view.greeting || holyReciteHasContent(content.holyRecite1)" class="trad-band" aria-hidden="true" />
 
     <UniversalSection section="holyRecite1" :content="content" class="trad-section" />
 
@@ -54,6 +60,7 @@ const view = useWeddingView(props)
         <h2 v-if="view.greeting?.title" class="trad-title">{{ view.greeting?.title }}</h2>
         <TradDivider />
         <p v-if="view.greeting?.message" class="trad-lead">{{ view.greeting?.message }}</p>
+        <GreetingPrayer :prayer="view.greeting?.prayer" />
       </div>
     </section>
 
@@ -102,7 +109,7 @@ const view = useWeddingView(props)
           <TradDivider />
           <p class="trad-event__venue">{{ event.venueName }}</p>
           <p class="trad-event__address">{{ event.address }}</p>
-          <p v-if="event.description" class="trad-event__note">{{ event.description }}</p>
+          <p v-if="event.description" class="trad-event__note">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
           <a class="trad-button" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }}</a>
         </article>
       </div>
@@ -170,6 +177,7 @@ const view = useWeddingView(props)
         <p class="trad-lead">{{ content.closing.message }}</p>
         <TradDivider />
         <p v-if="content.closing.thankYou" class="trad-closing__thanks">{{ content.closing.thankYou }}</p>
+        <FamilyAcknowledgments :content="content" />
         <p class="trad-closing__names">{{ content.opening.coupleNames }}</p>
       </div>
     </footer>

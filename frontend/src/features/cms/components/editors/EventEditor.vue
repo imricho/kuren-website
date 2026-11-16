@@ -2,6 +2,7 @@
 import { computed, nextTick, ref } from 'vue'
 
 import SelectField from '@/components/ui/SelectField.vue'
+import SwitchField from '@/components/ui/SwitchField.vue'
 import TextAreaField from '@/components/ui/TextAreaField.vue'
 import TextField from '@/components/ui/TextField.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
@@ -138,6 +139,30 @@ function cancel() {
       inputmode="url"
     />
     <TextAreaField :id="id('description')" v-model="form.description" :label="t('additionalInfo')" :hint="t('additionalInfoHint')" :rows="3" :error="errors.description" />
+    <div class="space-y-3 rounded-lg border border-line p-4" data-testid="event-dress-code">
+      <SwitchField :id="id('dressCode.enabled')" v-model="form.dressCodeEnabled" :label="t('dressCode')" />
+      <div v-show="form.dressCodeEnabled || errors['dressCode.text']">
+        <TextField :id="id('dressCode.text')" v-model="form.dressCodeText" :label="t('dressCodeText')" :error="errors['dressCode.text']" />
+      </div>
+      <p v-if="!form.dressCodeEnabled && form.dressCodeText.trim()" class="text-xs text-ink-500">{{ t('extraKept') }}</p>
+    </div>
+    <div class="space-y-3 rounded-lg border border-line p-4" data-testid="event-livestream">
+      <SwitchField :id="id('livestream.enabled')" v-model="form.livestreamEnabled" :label="t('livestream')" />
+      <div v-show="form.livestreamEnabled || errors['livestream.url'] || errors['livestream.label']" class="space-y-3">
+        <TextField
+          :id="id('livestream.url')"
+          v-model="form.livestreamUrl"
+          type="url"
+          inputmode="url"
+          autocomplete="off"
+          :label="t('livestreamUrl')"
+          :hint="t('livestreamUrlHint')"
+          :error="errors['livestream.url']"
+        />
+        <TextField :id="id('livestream.label')" v-model="form.livestreamLabel" :label="t('livestreamLabel')" :hint="t('optional')" :error="errors['livestream.label']" />
+      </div>
+      <p v-if="!form.livestreamEnabled && (form.livestreamUrl.trim() || form.livestreamLabel.trim())" class="text-xs text-ink-500">{{ t('extraKept') }}</p>
+    </div>
     <ItemEditorActions :saving="draft.submitting.value" :is-new="!item" @cancel="cancel" @done="done" />
   </form>
 </template>

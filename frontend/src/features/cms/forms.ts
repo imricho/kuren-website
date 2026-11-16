@@ -26,7 +26,7 @@ export interface ImageForm {
 }
 
 export const s = (value: string | undefined | null): string => value ?? ''
-const opt = (value: string): string | undefined => {
+export const opt = (value: string): string | undefined => {
   const trimmed = value.trim()
   return trimmed === '' ? undefined : trimmed
 }
@@ -55,6 +55,9 @@ export interface OpeningForm {
   introduction: string
   coverImage: ImageForm
   locale: WeddingLocale
+  /** "Kepada Yth." line before the guest name from the link's ?to= parameter. */
+  guestGreetingEnabled: boolean
+  guestGreetingLabel: string
 }
 export function openingForm(o: OpeningDraft, couple: CoupleDraft, locale: WeddingLocale): OpeningForm {
   return {
@@ -67,7 +70,14 @@ export function openingForm(o: OpeningDraft, couple: CoupleDraft, locale: Weddin
     introduction: s(o.introduction),
     coverImage: imageForm(o.coverImage),
     locale,
+    guestGreetingEnabled: o.guestGreeting?.enabled === true,
+    guestGreetingLabel: s(o.guestGreeting?.label),
   }
+}
+/** Guest greeting payload: omitted while it was never used (off and no label); kept (data) when switched off. */
+export function guestGreetingPayload(f: Pick<OpeningForm, 'guestGreetingEnabled' | 'guestGreetingLabel'>) {
+  const label = opt(f.guestGreetingLabel)
+  return f.guestGreetingEnabled || label ? clean({ enabled: f.guestGreetingEnabled, label }) : undefined
 }
 export function openingPayload(f: OpeningForm): OpeningDraft {
   return clean({
@@ -77,6 +87,7 @@ export function openingPayload(f: OpeningForm): OpeningDraft {
     introduction: opt(f.introduction),
     coverImage: imagePayload(f.coverImage),
     weddingDate: opt(f.weddingDate),
+    guestGreeting: guestGreetingPayload(f),
   })
 }
 
@@ -154,6 +165,11 @@ export interface EventForm {
   address: string
   mapsUrl: string
   description: string
+  dressCodeEnabled: boolean
+  dressCodeText: string
+  livestreamEnabled: boolean
+  livestreamUrl: string
+  livestreamLabel: string
 }
 /** Type of a new custom event (most Indonesian weddings have a reception). */
 export const DEFAULT_EVENT_TYPE: EventType = 'reception'
@@ -167,6 +183,11 @@ export const eventForm = (e?: Partial<EventDraft>): EventForm => ({
   address: s(e?.address),
   mapsUrl: s(e?.mapsUrl),
   description: s(e?.description),
+  dressCodeEnabled: e?.dressCode?.enabled === true,
+  dressCodeText: s(e?.dressCode?.text),
+  livestreamEnabled: e?.livestream?.enabled === true,
+  livestreamUrl: s(e?.livestream?.url),
+  livestreamLabel: s(e?.livestream?.label),
 })
 export const eventPayload = (e: EventForm): NewItem<'events'> =>
   clean({
@@ -179,6 +200,13 @@ export const eventPayload = (e: EventForm): NewItem<'events'> =>
     address: opt(e.address),
     mapsUrl: opt(e.mapsUrl),
     description: opt(e.description),
+    // Each extra has its own switch; its details are kept while it is off.
+    dressCode:
+      e.dressCodeEnabled || opt(e.dressCodeText) ? clean({ enabled: e.dressCodeEnabled, text: opt(e.dressCodeText) }) : undefined,
+    livestream:
+      e.livestreamEnabled || opt(e.livestreamUrl) || opt(e.livestreamLabel)
+        ? clean({ enabled: e.livestreamEnabled, url: opt(e.livestreamUrl), label: opt(e.livestreamLabel) })
+        : undefined,
   })
 
 // --- Gallery -----------------------------------------------------------------------
@@ -247,7 +275,19 @@ export interface ClosingForm {
   message: string
   thankYou: string
   image: ImageForm
+  /** "Turut mengundang" names; line breaks kept. */
+  familyAcknowledgments: string
 }
-export const closingForm = (c: ClosingDraft): ClosingForm => ({ message: s(c.message), thankYou: s(c.thankYou), image: imageForm(c.image) })
+export const closingForm = (c: ClosingDraft): ClosingForm => ({
+  message: s(c.message),
+  thankYou: s(c.thankYou),
+  image: imageForm(c.image),
+  familyAcknowledgments: s(c.familyAcknowledgments),
+})
 export const closingPayload = (c: ClosingForm): ClosingDraft =>
-  clean({ message: opt(c.message), thankYou: opt(c.thankYou), image: imagePayload(c.image) })
+  clean({
+    message: opt(c.message),
+    thankYou: opt(c.thankYou),
+    image: imagePayload(c.image),
+    familyAcknowledgments: opt(c.familyAcknowledgments),
+  })

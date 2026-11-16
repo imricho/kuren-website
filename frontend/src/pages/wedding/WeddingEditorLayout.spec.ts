@@ -75,10 +75,15 @@ describe('live editor: desktop split', () => {
     expect(editor.find('[data-testid="opening-form"]').exists()).toBe(true)
     // No 16rem column, completion meter card or "Preview website" chip any more.
     const nav = editor.get('[data-testid="section-nav"]')
-    expect(nav.findAll('a[data-section]')).toHaveLength(8)
+    // Chips show the active group only (Our Wedding on the Opening page).
+    expect(nav.findAll('a[data-section]').map((a) => a.attributes('data-section'))).toEqual(['opening', 'holyRecite1', 'greeting', 'couple', 'weddingDate'])
     expect(nav.find('a[data-section="preview"]').exists()).toBe(false)
     expect(nav.find('progress').exists()).toBe(false)
-    expect(wrapper.find('[role="tablist"]').exists()).toBe(false)
+    // No mobile Edit/Preview tabs on desktop (the nav's own group tabs are separate).
+    expect(wrapper.find('[data-testid="editor-tabs"]').exists()).toBe(false)
+    // Compact publish status + action in the header row.
+    expect(editor.get('[data-testid="publish-chip"]').attributes('data-state')).toBe('draft')
+    expect(editor.get('[data-testid="publish-chip"] a[data-action="open-publish"]').attributes('href')).toBe('/wedding/publish')
 
     const preview = wrapper.get('#preview-panel')
     expect(preview.attributes('aria-label')).toBe('Live preview')
@@ -166,10 +171,12 @@ describe('live editor: mobile tabs', () => {
     const { wrapper } = await mountEditor('/wedding/opening')
     expect(wrapper.get('[data-testid="editor-layout"]').attributes('data-mode')).toBe('tabs')
     expect(wrapper.find('[role="separator"]').exists()).toBe(false)
-    const tablist = wrapper.get('[role="tablist"]')
+    const tablist = wrapper.get('[data-testid="editor-tabs"] [role="tablist"]')
     expect(tablist.attributes('aria-label')).toBe('Editor view')
     // Save status sits in the tab bar, visible on both tabs.
     expect(wrapper.get('[data-testid="editor-tabs"]').find('[data-testid="save-status"]').exists()).toBe(true)
+    // So does the compact publish chip/button.
+    expect(wrapper.get('[data-testid="editor-tabs"] [data-testid="publish-chip"] a').attributes('href')).toBe('/wedding/publish')
     const edit = () => wrapper.get('#editor-tab-edit')
     const prev = () => wrapper.get('#editor-tab-preview')
     const editPanel = () => wrapper.get('#editor-panel')

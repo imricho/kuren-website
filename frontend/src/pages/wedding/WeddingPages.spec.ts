@@ -28,12 +28,18 @@ describe('editor layout', () => {
     expect(nav.get('a[aria-current="page"]').attributes('data-section')).toBe('events')
     // One compact list (chips on phones, a column on desktop) — no disclosure toggle.
     expect(nav.find('[data-testid="section-nav-toggle"]').exists()).toBe(false)
-    // Live editor: the preview sits beside the form, so no "Preview website" chip (8 sections incl. Theme).
-    expect(nav.findAll('a[data-section]')).toHaveLength(8)
-    expect(nav.get('a[data-section="theme"]').attributes('href')).toBe('/themes')
-    // Markers only where meaningful: a check for complete, "Needs details" for required-but-incomplete, nothing for optional.
-    expect(nav.find('a[data-section="opening"] [data-status="complete"]').exists()).toBe(true)
+    // Five group tabs; the chips show only the current route's group (Events & Location → Events).
+    expect(nav.findAll('[role="tab"]').map((tab) => tab.attributes('data-group'))).toEqual(['wedding', 'events', 'moments', 'guests', 'finishing'])
+    expect(nav.get('[role="tab"][aria-selected="true"]').attributes('data-group')).toBe('events')
+    expect(nav.findAll('a[data-section]').map((a) => a.attributes('data-section'))).toEqual(['events'])
     expect(nav.get('a[data-section="events"] [data-status="needed"]').text()).toBe('Needs details')
+    // Our Wedding: markers only where meaningful (a check for complete, nothing for optional).
+    await nav.get('[data-group="wedding"]').trigger('click')
+    expect(nav.findAll('a[data-section]').map((a) => a.attributes('data-section'))).toEqual(['opening', 'holyRecite1', 'greeting', 'couple', 'weddingDate'])
+    expect(nav.find('a[data-section="opening"] [data-status="complete"]').exists()).toBe(true)
+    // Universal sections default off: "Hidden".
+    expect(nav.get('a[data-section="holyRecite1"] [data-status="hidden"]').text()).toBe('Hidden')
+    await nav.get('[data-group="moments"]').trigger('click')
     expect(nav.get('a[data-section="story"]').text()).toBe('Our story')
     expect(nav.find('[data-status="optional"]').exists()).toBe(false)
     // One level-1 heading: the embedded preview announces the theme's hero <h1> as level 2.
@@ -397,7 +403,7 @@ describe('RSVP page', () => {
     const { wrapper } = await mountApp('/wedding/rsvp')
     const sw = wrapper.get('input[role="switch"]')
     expect((sw.element as HTMLInputElement).checked).toBe(true)
-    expect(wrapper.text()).toContain('Guests can’t reply online yet; this controls what your website shows.')
+    expect(wrapper.get('[data-testid="rsvp-offline-note"]').text()).toBe('Guests can’t reply online yet — your invitation shows the deadline and your message.')
     await wrapper.get('#f-deadline').setValue('2027-07-01')
     expect(wrapper.get('[data-testid="deadline-warning"]').text()).toContain('after your wedding date')
     await wrapper.get('#f-maxGuestsPerResponse').setValue('25')
@@ -519,7 +525,7 @@ describe('live draft: the preview follows the forms', () => {
       expect(wrapper.find('[data-testid="section-hidden-note"]').exists()).toBe(false)
       await sw.setValue(false)
       expect(store.livePreviewContent!.story?.enabled).toBe(false)
-      expect(wrapper.get('[data-testid="section-hidden-note"]').text()).toContain('Your content is kept')
+      expect(wrapper.get('[data-testid="section-hidden-note"]').text()).toBe('Hidden from your invitation — your content is kept')
       await vi.advanceTimersByTimeAsync(1000)
       await flushPromises()
       expect(api.callsTo('PUT', '/weddings/w1/sections/story')[0]!.body).toEqual({ title: 'Kisah', enabled: false })

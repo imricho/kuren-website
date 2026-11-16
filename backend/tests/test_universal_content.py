@@ -105,7 +105,7 @@ def test_legacy_save_refreshes_stale_orm_state_before_merge(auth_client, db):
 
     wedding_id = uuid.UUID(create_wedding(auth_client)["id"])
     stale = db.get(Wedding, wedding_id)
-    assert stale.universal_content == {}
+    assert stale.universal_content == {"countdown": {"enabled": True, "addToCalendar": True}}
     with Session(bind=db.get_bind()) as concurrent:
         concurrent.execute(update(Wedding).where(Wedding.id == wedding_id).values(
             universal_content={"holyRecite2": {"enabled": False, "passage": "Concurrent update"}},

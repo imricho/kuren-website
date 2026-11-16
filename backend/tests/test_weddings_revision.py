@@ -107,6 +107,6 @@ def test_story_and_gallery_can_be_hidden_without_losing_content(auth_client: Tes
     assert hidden.json() == {"title": "Kisah Kami", "introduction": "Dulu…", "enabled": False}
     content = auth_client.get(f"{base}/content").json()
     assert content["story"]["enabled"] is False
-    assert content["gallery"]["enabled"] is True
+    assert content["gallery"]["enabled"] is False  # new weddings start with the gallery off
     # Strict booleans, as for RSVP.
     assert auth_client.put(f"{base}/sections/gallery", json={"enabled": "no"}).status_code == 422

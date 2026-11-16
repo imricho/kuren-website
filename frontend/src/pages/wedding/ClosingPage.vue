@@ -31,6 +31,7 @@ const labels = computed<Record<string, string>>(() => ({
   thankYou: t('thankYouLine'),
   'image.src': t('photo'),
   'image.alt': t('altText'),
+  familyAcknowledgments: t('familyAcknowledgments'),
 }))
 </script>
 
@@ -51,6 +52,14 @@ const labels = computed<Record<string, string>>(() => ({
         :needed-hint="t('neededBeforePublishing')"
       />
       <TextField :id="fieldId('thankYou')" v-model="form.thankYou" :label="t('thankYouLine')" :hint="t('thankYouHint')" :error="errors.thankYou" />
+      <TextAreaField
+        :id="fieldId('familyAcknowledgments')"
+        v-model="form.familyAcknowledgments"
+        :label="t('familyAcknowledgments')"
+        :hint="t('familyAcknowledgmentsHint')"
+        :rows="4"
+        :error="errors.familyAcknowledgments"
+      />
     </fieldset>
     <ImageField v-model="form.image" path="image" :label="t('photo')" :errors="errors" />
   </form>

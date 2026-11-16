@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UniversalSection from '../core/components/UniversalSection.vue'
+import GuestGreeting from '../core/components/GuestGreeting.vue'
+import GreetingPrayer from '../core/components/GreetingPrayer.vue'
+import EventExtras from '../core/components/EventExtras.vue'
+import FamilyAcknowledgments from '../core/components/FamilyAcknowledgments.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
 import { useHeroHeading } from '../core/composables/useHeroHeading'
+import { useIsDraftRender } from '../core/composables/useRenderMode'
 import type { ThemeProps } from '../core/types'
 import BotanicalOrnament from './BotanicalOrnament.vue'
 import './theme.css'
@@ -12,6 +17,7 @@ import './theme.css'
 const props = defineProps<ThemeProps>()
 const view = useWeddingView(props)
 const heroHeading = useHeroHeading()
+const isDraft = useIsDraftRender()
 const initials = computed(() => [props.content.couple.groom, props.content.couple.bride].map(p => Array.from((p.nickname || p.name).trim())[0] || '').join(' & '))
 const people = computed(() => [
   { key: 'groom', label: view.value.t.groom, ...props.content.couple.groom },
@@ -26,6 +32,7 @@ const people = computed(() => [
         <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tl" />
         <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tr" />
         <div class="rm2-monogram"><BotanicalOrnament kind="wreath" /><span aria-hidden="true">{{ initials }}</span></div>
+        <GuestGreeting :content="content" />
         <p class="rm2-eyebrow">{{ view.t.weddingOf }}</p>
         <div class="rm2-arch">
           <div v-if="content.opening.coverImage" class="rm2-arch__photo"><ThemeImage :image="content.opening.coverImage" eager /></div>
@@ -54,6 +61,7 @@ const people = computed(() => [
         <p class="rm2-eyebrow">{{ content.opening.weddingTitle }}</p>
         <h2 v-if="view.greeting?.title">{{ view.greeting?.title }}</h2>
         <p v-if="view.greeting?.message" class="rm2-lead">{{ view.greeting?.message }}</p>
+        <GreetingPrayer :prayer="view.greeting?.prayer" />
         <BotanicalOrnament class="rm2-intro__tail" />
       </div>
     </section>
@@ -92,7 +100,7 @@ const people = computed(() => [
           <p v-if="event.typeLabel.toLocaleLowerCase() !== event.title.toLocaleLowerCase()" class="rm2-eyebrow">{{ event.typeLabel }}</p>
           <h3>{{ event.title }}</h3><p>{{ event.dateText }}</p><p class="rm2-event__time">{{ event.timeText }}</p>
           <div class="rm2-rule" aria-hidden="true"><BotanicalOrnament kind="rosette" /></div>
-          <p class="rm2-event__venue">{{ event.venueName }}</p><p>{{ event.address }}</p><p v-if="event.description" class="rm2-event__note">{{ event.description }}</p>
+          <p class="rm2-event__venue">{{ event.venueName }}</p><p>{{ event.address }}</p><p v-if="event.description" class="rm2-event__note">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
           <a class="rm2-button" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} <span aria-hidden="true">↗</span></a>
         </article>
       </div>
@@ -128,7 +136,7 @@ const people = computed(() => [
         <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--tr" />
         <BotanicalOrnament kind="rosette" class="rm2-panel__head" />
         <div class="rm2-heading"><h2>{{ content.rsvp.title }}</h2><p v-if="content.rsvp.introduction">{{ content.rsvp.introduction }}</p></div>
-        <p v-if="content.rsvp.enabled" class="rm2-preview-note">{{ view.locale === 'id' ? 'Pratinjau formulir · RSVP online belum tersedia.' : 'Form preview · Online RSVP is not available yet.' }}</p>
+        <p v-if="isDraft" class="rm2-preview-note" data-editor-only>{{ view.locale === 'id' ? 'Pratinjau formulir · RSVP online belum tersedia.' : 'Form preview · Online RSVP is not available yet.' }}</p>
         <RsvpPreview :content="content" />
         <BotanicalOrnament class="rm2-panel__tail" />
         <BotanicalOrnament kind="corner" class="rm2-corner rm2-corner--bl" />
@@ -155,6 +163,7 @@ const people = computed(() => [
       <div v-if="content.closing.image" class="rm2-closing__photo"><ThemeImage :image="content.closing.image" /></div>
       <p class="rm2-lead">{{ content.closing.message }}</p>
       <p v-if="content.closing.thankYou">{{ content.closing.thankYou }}</p>
+      <FamilyAcknowledgments :content="content" />
       <p v-if="!content.closing.thankYou?.includes(content.opening.coupleNames)" class="rm2-closing__names">{{ content.opening.coupleNames }}</p>
       <BotanicalOrnament class="rm2-closing__flourish" />
     </footer>

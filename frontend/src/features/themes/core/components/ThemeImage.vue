@@ -6,7 +6,8 @@
  */
 import { computed, ref, watch } from 'vue'
 
-import { focalPosition, isSafeImageSrc } from '@/features/wedding/format'
+import { isDisplayableImageSrc } from '@/features/wedding/draft'
+import { focalPosition } from '@/features/wedding/format'
 import type { ImageAsset } from '@/features/wedding/types'
 
 const props = withDefaults(
@@ -24,7 +25,7 @@ watch(
   () => (failed.value = false),
 )
 
-const usable = computed(() => !failed.value && isSafeImageSrc(props.image?.src))
+const usable = computed(() => !failed.value && isDisplayableImageSrc(props.image?.src))
 </script>
 
 <template>

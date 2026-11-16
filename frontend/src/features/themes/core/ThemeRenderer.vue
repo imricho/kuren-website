@@ -12,6 +12,7 @@ import { computed, defineAsyncComponent, h, watch, type Component } from 'vue'
 import type { WeddingContent } from '@/features/wedding/types'
 
 import { provideThemeEmbedded } from './composables/useHeroHeading'
+import { provideRenderContext, sanitizeGuestName, type RenderMode } from './composables/useRenderMode'
 import { useThemeFonts } from './composables/useThemeFonts'
 import { DEFAULT_THEME_ID, getTheme } from './registry'
 import type { RenderableTemplate } from './types'
@@ -28,11 +29,22 @@ const props = withDefaults(
     viewportHeight?: string
     /** Rendered inside another page (studio/editor) that owns the page's h1. */
     embedded?: boolean
+    /**
+     * `draft` (default): editor/preview — editor-only notes may show, interactive
+     * features are inert. `public`: the published invitation for guests.
+     */
+    mode?: RenderMode
+    /** Guest name for the opening greeting (public page, from `?to=`); sanitised again here. */
+    guestName?: string
   }>(),
-  { viewportHeight: '100svh', embedded: false },
+  { viewportHeight: '100svh', embedded: false, mode: 'draft', guestName: undefined },
 )
 
 provideThemeEmbedded(props.embedded)
+provideRenderContext({
+  mode: () => props.mode,
+  guestName: () => (props.mode === 'public' ? sanitizeGuestName(props.guestName) : undefined),
+})
 
 const emit = defineEmits<{ fallback: [requestedId: string | null | undefined] }>()
 
@@ -76,7 +88,7 @@ useThemeFonts(() => theme.value.fonts?.href)
 </script>
 
 <template>
-  <div class="wedding-site" :data-theme="theme.id" :style="{ '--site-vh': viewportHeight }">
+  <div class="wedding-site" :data-theme="theme.id" :data-render-mode="mode" :style="{ '--site-vh': viewportHeight }">
     <component :is="themeComponent" :content="content" :config="theme.config" />
   </div>
 </template>

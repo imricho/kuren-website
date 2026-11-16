@@ -1,6 +1,9 @@
 /**
- * Protects unsaved edits: asks before leaving the route (in-app navigation) and
- * lets the browser warn on reload/close while anything is dirty.
+ * Protects unsaved work. On in-app navigation it first flushes pending
+ * autosaves (so a quick edit followed by a click on another section is simply
+ * saved), and only asks if something is still unsaved: edits that are invalid,
+ * failed, waiting for the connection, in conflict, or a new item not yet added.
+ * The browser also warns on reload/close while anything is unsaved.
  *
  * The question is shown by the <ConfirmHost> mounted in the editor layout.
  */
@@ -16,9 +19,11 @@ export function useUnsavedChangesGuard(isDirty?: () => boolean) {
   const store = useWeddingStore()
   const confirm = useConfirm()
   const { t } = useAppLocale()
-  const dirty = isDirty ?? (() => store.anyDirty)
+  const dirty = isDirty ?? (() => store.hasUnsavedWork)
 
   onBeforeRouteLeave(async () => {
+    if (!dirty()) return true
+    await store.saveNow()
     if (!dirty()) return true
     return confirm.ask({
       title: t('unsavedTitle'),

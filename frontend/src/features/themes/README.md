@@ -80,7 +80,7 @@ scrolls into view.
 ## Shared content contract
 
 Every renderable template receives exactly `ThemeProps` — `{ content: WeddingContent, config? }` —
-from `ThemeRenderer`, and all previews use the same `sampleWedding` (RSVP is shown as a disabled
+from `ThemeRenderer`, and all template previews and thumbnails use the complete v1.1 `universalDemo` sample (RSVP is shown as a disabled
 sample form; no RSVP processing exists). Templates differ only in
 presentation. Shared behaviour for optional, missing and disabled content:
 

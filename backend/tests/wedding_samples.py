@@ -52,6 +52,7 @@ SAMPLE_WEDDING: dict[str, Any] = {
         },
     },
     "story": {
+        "enabled": True,
         "title": "Our Story",
         "introduction": (
             "Every love story is beautiful, but ours is our favourite. Here are a few chapters so far."
@@ -124,6 +125,7 @@ SAMPLE_WEDDING: dict[str, Any] = {
         },
     ],
     "gallery": {
+        "enabled": True,
         "title": "Moments",
         "description": "A few of our favourite moments together.",
         "images": [
@@ -164,14 +166,22 @@ SAMPLE_WEDDING: dict[str, Any] = {
     },
 }
 
+#: Universal sections every NEW wedding starts with (CMS v2.0; existing weddings are not backfilled).
+NEW_WEDDING_DEFAULTS: dict[str, Any] = {"countdown": {"enabled": True, "addToCalendar": True}}
+
 EMPTY_DRAFT: dict[str, Any] = {
+    **NEW_WEDDING_DEFAULTS,
     "schemaVersion": 1,
     "locale": "en",
     "opening": {},
     "couple": {"groom": {}, "bride": {}},
-    "story": {"timeline": []},
+    "story": {"enabled": False, "timeline": []},
     "events": [],
-    "gallery": {"images": []},
-    "rsvp": {"enabled": True},
+    "gallery": {"enabled": False, "images": []},
+    "rsvp": {"enabled": False},
     "closing": {},
 }
+
+
+#: SAMPLE_WEDDING saved (legacy merge semantics) into a freshly created wedding.
+SAVED_SAMPLE: dict[str, Any] = {**NEW_WEDDING_DEFAULTS, **SAMPLE_WEDDING}

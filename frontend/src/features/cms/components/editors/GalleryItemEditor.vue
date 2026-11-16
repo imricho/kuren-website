@@ -28,14 +28,23 @@ const draft = useSectionDraft({
     if (props.item) await store.updateItem('gallery', props.item.id, payload)
     else await store.createItem('gallery', payload)
   },
-  successMessage: (): string => t(props.item ? 'itemSaved' : 'itemAdded', { name: draft.form.value.caption || t('photo') }),
+  // Saved items autosave; a new item is only created by an explicit Add.
+  autosave: !!props.item,
+  live: (payload) => ({ kind: 'item', collection: 'gallery', itemId: props.item?.id ?? null, value: payload }),
+  successMessage: (): string => t('itemAdded', { name: draft.form.value.caption || t('photo') }),
   failureMessage: () => t('itemSaveFailed'),
 })
 const { form, errors } = draft
 const id = (field: string) => fieldId(field, scope)
 
 async function submit() {
-  if (await draft.save()) emit('done')
+  if (await draft.save()) {
+    if (!props.item) emit('done') // added: close the new-item form
+  }
+}
+/** Saved item: save anything pending, then close (stays open if it couldn't be saved). */
+async function done() {
+  if (await draft.flush()) emit('done')
 }
 function cancel() {
   draft.discard()
@@ -59,6 +68,6 @@ function cancel() {
       src-required
     />
     <TextField :id="id('caption')" v-model="form.caption" :label="t('caption')" :hint="t('optional')" :error="errors.caption" />
-    <ItemEditorActions :dirty="draft.isDirty.value" :saving="draft.submitting.value" :is-new="!item" @cancel="cancel" />
+    <ItemEditorActions :saving="draft.submitting.value" :is-new="!item" @cancel="cancel" @done="done" />
   </form>
 </template>

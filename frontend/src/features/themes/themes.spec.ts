@@ -68,7 +68,7 @@ describe.each(TEMPLATES.filter(isRenderable).map((t) => [t.id]))('%s theme', (th
     expect(text).toContain(minimalWedding.closing.message)
     expect(text).not.toContain('undefined')
     expect(wrapper.findAll('img')).toHaveLength(0)
-    expect(text).toContain('RSVP is not being collected online')
+    expect(wrapper.find('[data-section="rsvp"]').exists()).toBe(false)
   })
 
   it('omits the gallery section when there are no images', async () => {

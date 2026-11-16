@@ -2,7 +2,10 @@
 /**
  * Generic editor for an ordered list of saved items (story entries, events,
  * gallery photos). The parent renders each item through slots and performs the
- * API calls through the `reorder` / `remove` props (both pessimistic).
+ * API calls through the `reorder` / `remove` props (both pessimistic, explicit).
+ * Item editors autosave; before an open item editor is closed (or another one
+ * opened), `beforeClose` lets the parent flush pending saves — it stays open if
+ * that resolves false.
  *
  * Slots: `summary` (collapsed item), `editor` (item being edited), `create` (new item form).
  */
@@ -34,6 +37,8 @@ const props = defineProps<{
   refresh?: () => Promise<unknown>
   /** Heading level text for the list (visually hidden). */
   listLabel: string
+  /** Called before an open item editor closes; resolve false to keep it open (e.g. its changes couldn't be saved). */
+  beforeClose?: (item: T) => Promise<boolean>
 }>()
 
 defineSlots<{
@@ -80,7 +85,15 @@ watch(atLimit, (limit) => {
   if (!limit) limitError.value = false
 })
 
+/** Let the open item editor save before it goes away. */
+async function releaseEditor(): Promise<boolean> {
+  const open = props.items.find((i) => i.id === editingId.value)
+  if (!open || !props.beforeClose) return true
+  return props.beforeClose(open)
+}
+
 async function startAdd() {
+  if (!(await releaseEditor())) return
   if (atLimit.value) {
     limitError.value = true
     announce(t('limitReached', { max: props.max ?? 0 }))
@@ -102,6 +115,7 @@ async function closeAdd() {
   else focusById(addButtonId)
 }
 async function toggleEdit(item: T) {
+  if (!(await releaseEditor())) return
   adding.value = false
   editingId.value = editingId.value === item.id ? null : item.id
   if (editingId.value === item.id) {

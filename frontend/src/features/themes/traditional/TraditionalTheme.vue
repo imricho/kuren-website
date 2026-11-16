@@ -5,10 +5,15 @@
  * Deliberately generic: no single regional tradition. Regional variants can
  * swap the ornament components and palette without touching the layout.
  */
-import CountdownTimer from '../core/components/CountdownTimer.vue'
+import UniversalSection from '../core/components/UniversalSection.vue'
+import GuestGreeting from '../core/components/GuestGreeting.vue'
+import GreetingPrayer from '../core/components/GreetingPrayer.vue'
+import EventExtras from '../core/components/EventExtras.vue'
+import FamilyAcknowledgments from '../core/components/FamilyAcknowledgments.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
+import { holyReciteHasContent } from '../core/visibility'
 import { vReveal } from '../core/directives/reveal'
 import { useHeroHeading } from '../core/composables/useHeroHeading'
 import type { ThemeProps } from '../core/types'
@@ -25,11 +30,12 @@ const view = useWeddingView(props)
 <template>
   <article class="t-trad" :data-variant="config?.variant ?? 'royal-maroon'" :data-ornament-density="['royal-maroon', 'loomed-lines'].includes(String(config?.variant ?? 'royal-maroon')) ? 'ornate' : 'balanced'">
     <!-- Opening -->
-    <header class="trad-hero">
+    <header data-section="opening" class="trad-hero">
       <div class="trad-frame">
         <TradCorner v-for="pos in ['tl', 'tr', 'bl', 'br']" :key="pos" :class="`trad-corner--${pos}`" />
         <div class="trad-hero__content">
           <TradCrest />
+          <GuestGreeting :content="content" />
           <p class="trad-caps trad-gold">{{ view.t.weddingOf }}</p>
           <div v-if="content.opening.coverImage" class="trad-medallion">
             <ThemeImage :image="content.opening.coverImage" eager />
@@ -44,20 +50,23 @@ const view = useWeddingView(props)
       </div>
     </header>
 
-    <div class="trad-band" aria-hidden="true" />
+    <div v-if="view.greeting || holyReciteHasContent(content.holyRecite1)" class="trad-band" aria-hidden="true" />
 
-    <section class="trad-section trad-intro">
+    <UniversalSection section="holyRecite1" :content="content" class="trad-section" />
+
+    <section v-if="view.greeting" data-section="greeting" class="trad-section trad-intro">
       <div v-reveal class="trad-col">
         <p class="trad-caps trad-maroon">{{ content.opening.weddingTitle }}</p>
-        <h2 v-if="content.opening.headline" class="trad-title">{{ content.opening.headline }}</h2>
+        <h2 v-if="view.greeting?.title" class="trad-title">{{ view.greeting?.title }}</h2>
         <TradDivider />
-        <p v-if="content.opening.introduction" class="trad-lead">{{ content.opening.introduction }}</p>
-        <CountdownTimer :content="content" />
+        <p v-if="view.greeting?.message" class="trad-lead">{{ view.greeting?.message }}</p>
+        <GreetingPrayer :prayer="view.greeting?.prayer" />
       </div>
     </section>
 
     <!-- Couple -->
-    <section class="trad-section trad-couple" aria-label="The couple">
+    <section data-section="couple" class="trad-section trad-couple" aria-label="The couple">
+      <h2 class="universal-visually-hidden">{{ view.t.couple }}</h2>
       <div class="trad-couple__grid">
         <figure v-reveal class="trad-person">
           <div v-if="content.couple.groom.image" class="trad-portrait"><ThemeImage :image="content.couple.groom.image" /></div>
@@ -81,8 +90,32 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <!-- Story -->
-    <section v-if="view.story" class="trad-section trad-story">
+    <!-- Events -->
+    <div class="trad-band" aria-hidden="true" />
+    <UniversalSection section="date" :content="content" class="trad-section" />
+
+    <section data-section="events" class="trad-section trad-events">
+      <header v-reveal class="trad-col">
+        <p class="trad-caps trad-gold">{{ view.t.saveTheDate }}</p>
+        <h2 class="trad-title trad-title--light">{{ view.date.long }}</h2>
+        <TradDivider />
+      </header>
+      <div class="trad-events__list">
+        <article v-for="event in view.events" :key="event.id" v-reveal class="trad-event">
+          <p class="trad-caps trad-gold">{{ event.typeLabel }}</p>
+          <h3 class="trad-event__title">{{ event.title }}</h3>
+          <p class="trad-event__date">{{ event.dateText }}</p>
+          <p class="trad-event__time">{{ event.timeText }}</p>
+          <TradDivider />
+          <p class="trad-event__venue">{{ event.venueName }}</p>
+          <p class="trad-event__address">{{ event.address }}</p>
+          <p v-if="event.description" class="trad-event__note">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
+          <a class="trad-button" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }}</a>
+        </article>
+      </div>
+    </section>
+
+    <section data-section="story" v-if="view.story" class="trad-section trad-story">
       <header v-reveal class="trad-col">
         <h2 class="trad-title">{{ view.story.title }}</h2>
         <TradDivider />
@@ -100,33 +133,10 @@ const view = useWeddingView(props)
         </li>
       </ol>
     </section>
-
-    <!-- Events -->
-    <div class="trad-band" aria-hidden="true" />
-    <section class="trad-section trad-events">
-      <header v-reveal class="trad-col">
-        <p class="trad-caps trad-gold">{{ view.t.saveTheDate }}</p>
-        <h2 class="trad-title trad-title--light">{{ view.date.long }}</h2>
-        <TradDivider />
-      </header>
-      <div class="trad-events__list">
-        <article v-for="event in view.events" :key="event.id" v-reveal class="trad-event">
-          <p class="trad-caps trad-gold">{{ event.typeLabel }}</p>
-          <h3 class="trad-event__title">{{ event.title }}</h3>
-          <p class="trad-event__date">{{ event.dateText }}</p>
-          <p class="trad-event__time">{{ event.timeText }}</p>
-          <TradDivider />
-          <p class="trad-event__venue">{{ event.venueName }}</p>
-          <p class="trad-event__address">{{ event.address }}</p>
-          <p v-if="event.description" class="trad-event__note">{{ event.description }}</p>
-          <a class="trad-button" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }}</a>
-        </article>
-      </div>
-    </section>
-    <div class="trad-band" aria-hidden="true" />
+    <div v-if="view.story" class="trad-band" aria-hidden="true" />
 
     <!-- Gallery -->
-    <section v-if="view.gallery" class="trad-section trad-gallery">
+    <section data-section="gallery" v-if="view.gallery" class="trad-section trad-gallery">
       <header v-reveal class="trad-col">
         <h2 class="trad-title">{{ view.gallery.title }}</h2>
         <TradDivider />
@@ -141,7 +151,7 @@ const view = useWeddingView(props)
     </section>
 
     <!-- RSVP -->
-    <section class="trad-section trad-rsvp">
+    <section v-if="content.rsvp.enabled" data-section="rsvp" class="trad-section trad-rsvp">
       <div v-reveal class="trad-panel">
         <TradCorner v-for="pos in ['tl', 'tr', 'bl', 'br']" :key="pos" :class="`trad-corner--${pos}`" />
         <div class="trad-col">
@@ -154,7 +164,11 @@ const view = useWeddingView(props)
     </section>
 
     <!-- Closing -->
-    <footer class="trad-closing">
+    <UniversalSection section="wishes" :content="content" class="trad-section" />
+    <UniversalSection section="amplopDigital" :content="content" class="trad-section" />
+    <UniversalSection section="holyRecite2" :content="content" class="trad-section" />
+
+    <footer data-section="closing" class="trad-closing">
       <div class="trad-band" aria-hidden="true" />
       <div v-reveal class="trad-col trad-closing__inner">
         <div v-if="content.closing.image" class="trad-medallion trad-medallion--small">
@@ -163,6 +177,7 @@ const view = useWeddingView(props)
         <p class="trad-lead">{{ content.closing.message }}</p>
         <TradDivider />
         <p v-if="content.closing.thankYou" class="trad-closing__thanks">{{ content.closing.thankYou }}</p>
+        <FamilyAcknowledgments :content="content" />
         <p class="trad-closing__names">{{ content.opening.coupleNames }}</p>
       </div>
     </footer>

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import SwitchField from '@/components/ui/SwitchField.vue'
 import TextAreaField from '@/components/ui/TextAreaField.vue'
 import TextField from '@/components/ui/TextField.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
 import DateField from '@/features/cms/components/DateField.vue'
 import ErrorSummary from '@/features/cms/components/ErrorSummary.vue'
-import SaveBar from '@/features/cms/components/SaveBar.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
+import SectionHiddenNote from '@/features/cms/components/SectionHiddenNote.vue'
+import SectionToggle from '@/features/cms/components/SectionToggle.vue'
 import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
 import { rsvpForm, rsvpPayload } from '@/features/cms/forms'
@@ -27,12 +27,11 @@ const draft = useSectionDraft({
   toPayload: rsvpPayload,
   validate: validateRsvp,
   save: async (payload) => void (await store.saveSection('rsvp', payload)),
-  successMessage: () => t('sectionSaved', { section: t('sectionRsvp') }),
-  failureMessage: () => t('sectionSaveFailed', { section: t('sectionRsvp') }),
+  live: (value) => ({ kind: 'section', section: 'rsvp', value }),
 })
 const { form, errors } = draft
 const labels = computed<Record<string, string>>(() => ({
-  enabled: t('showRsvp'),
+  enabled: t('showOnWebsite'),
   title: t('heading'),
   introduction: t('introduction'),
   confirmationMessage: t('confirmationMessage'),
@@ -48,13 +47,20 @@ const deadlineAfterWedding = computed(
 
 <template>
   <form class="space-y-8" novalidate data-testid="rsvp-form" @submit.prevent="draft.save()">
-    <SectionHeader section="rsvp" :description="t('rsvpIntro')" />
+    <SectionHeader section="rsvp" :description="t('rsvpIntro')">
+      <template #toggle>
+        <SectionToggle v-model="form.enabled" section="rsvp" />
+      </template>
+    </SectionHeader>
+    <SectionHiddenNote v-if="!form.enabled" />
+    <p class="rounded-md bg-canvas px-3 py-2 text-sm text-ink-700 ring-1 ring-line" role="note" data-testid="rsvp-offline-note">
+      {{ t('rsvpOfflineNote') }}
+    </p>
     <ErrorSummary :errors="draft.errorList.value" :labels="labels" />
     <p v-if="draft.formError.value" class="text-sm text-danger-600" data-testid="form-error">{{ draft.formError.value }}</p>
 
-    <fieldset class="min-w-0 space-y-5 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6">
+    <fieldset v-show="form.enabled" class="min-w-0 space-y-5 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6">
       <legend class="px-1 font-display text-xl font-semibold">{{ t('sectionRsvp') }}</legend>
-      <SwitchField :id="fieldId('enabled')" v-model="form.enabled" :label="t('showRsvp')" :hint="t('showRsvpHint')" />
       <TextField :id="fieldId('title')" v-model="form.title" :label="t('heading')" :hint="t('rsvpHeadingHint')" :error="errors.title" :needed-hint="t('neededBeforePublishing')" />
       <TextAreaField :id="fieldId('introduction')" v-model="form.introduction" :label="t('introduction')" :rows="3" :error="errors.introduction" />
       <TextAreaField
@@ -82,7 +88,5 @@ const deadlineAfterWedding = computed(
         />
       </div>
     </fieldset>
-
-    <SaveBar :dirty="draft.isDirty.value" :saving="draft.submitting.value" @discard="draft.discard()" />
   </form>
 </template>

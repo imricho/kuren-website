@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Wedding, WeddingEvent, WeddingGalleryImage, WeddingStoryEntry
 from tests.wedding_helpers import API, create_wedding
-from tests.wedding_samples import SAMPLE_WEDDING
+from tests.wedding_samples import SAMPLE_WEDDING, SAVED_SAMPLE
 
 SECTIONS = ("opening", "couple", "story", "gallery", "rsvp", "closing")
 COLLECTIONS = {"stories": ("met", {"title": "x"}), "events": ("akad", {"title": "x"}),
@@ -65,7 +65,7 @@ def test_foreign_item_ids_are_404_under_own_wedding(
         assert response.status_code == 422
     # A's items survived
     content = auth_client.get(f"{API}/{a_wedding}/content").json()
-    assert content == SAMPLE_WEDDING
+    assert content == SAVED_SAMPLE
 
 
 def test_same_client_ids_in_two_weddings_stay_separate(

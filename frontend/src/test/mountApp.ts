@@ -12,7 +12,14 @@ import ClosingPage from '@/pages/wedding/ClosingPage.vue'
 import CouplePage from '@/pages/wedding/CouplePage.vue'
 import EventsPage from '@/pages/wedding/EventsPage.vue'
 import GalleryPage from '@/pages/wedding/GalleryPage.vue'
+import AmplopDigitalPage from '@/pages/wedding/AmplopDigitalPage.vue'
+import GreetingPage from '@/pages/wedding/GreetingPage.vue'
+import HolyRecitePage from '@/pages/wedding/HolyRecitePage.vue'
+import WeddingDatePage from '@/pages/wedding/WeddingDatePage.vue'
+import WishesPage from '@/pages/wedding/WishesPage.vue'
 import OpeningPage from '@/pages/wedding/OpeningPage.vue'
+import PublishPage from '@/pages/wedding/PublishPage.vue'
+import PublicInvitationPage from '@/pages/PublicInvitationPage.vue'
 import RsvpPage from '@/pages/wedding/RsvpPage.vue'
 import StoryPage from '@/pages/wedding/StoryPage.vue'
 import WeddingEditorLayout from '@/pages/wedding/WeddingEditorLayout.vue'
@@ -38,9 +45,18 @@ export function createTestRouter() {
           { path: 'gallery', name: 'wedding-gallery', component: GalleryPage },
           { path: 'rsvp', name: 'wedding-rsvp', component: RsvpPage },
           { path: 'closing', name: 'wedding-closing', component: ClosingPage },
+          // CMS v2.0 sections (same names/paths/meta as src/router/index.ts).
+          { path: 'holy-recite-1', name: 'wedding-holy-recite-1', component: HolyRecitePage, meta: { recite: 1 } },
+          { path: 'greeting', name: 'wedding-greeting', component: GreetingPage },
+          { path: 'date', name: 'wedding-date', component: WeddingDatePage },
+          { path: 'wishes', name: 'wedding-wishes', component: WishesPage },
+          { path: 'gifts', name: 'wedding-gifts', component: AmplopDigitalPage },
+          { path: 'holy-recite-2', name: 'wedding-holy-recite-2', component: HolyRecitePage, meta: { recite: 2 } },
+          { path: 'publish', name: 'wedding-publish', component: PublishPage },
         ],
       },
       { path: '/wedding/preview', name: 'wedding-preview', component: WeddingPreviewPage },
+      { path: '/i/:slug', name: 'public-invitation', component: PublicInvitationPage, props: true, meta: { publicPage: true } },
     ],
   })
 }

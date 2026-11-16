@@ -6,7 +6,7 @@
  * `toPreviewContent` turns a draft into content every theme can render, filling
  * gaps with clearly labelled placeholders and reporting what it filled.
  */
-import { eventTypeLabel, isSafeImageSrc } from './format'
+import { eventTypeLabel, isSafeImageSrc, MEDIA_IMAGE_PATH } from './format'
 import {
   WEDDING_SCHEMA_VERSION,
   type EventType,
@@ -14,6 +14,12 @@ import {
   type WeddingContent,
   type WeddingEvent,
   type WeddingLocale,
+  type AmplopDigitalSection,
+  type CountdownSection,
+  type GreetingSection,
+  type GuestGreeting,
+  type HolyReciteSection,
+  type WishesSection,
 } from './types'
 import { isGuestCount, isInstagramUrl } from './validation'
 
@@ -38,6 +44,7 @@ export interface OpeningDraft {
   introduction?: string
   coverImage?: ImageAsset
   weddingDate?: string
+  guestGreeting?: GuestGreeting
 }
 
 export interface CoupleDraft {
@@ -54,6 +61,7 @@ export interface StoryEntryDraft {
 }
 
 export interface StoryMetaDraft {
+  enabled?: boolean
   title?: string
   introduction?: string
 }
@@ -73,6 +81,8 @@ export interface EventDraft {
   address?: string
   mapsUrl?: string
   description?: string
+  dressCode?: { enabled: boolean; text?: string }
+  livestream?: { enabled: boolean; url?: string; label?: string }
 }
 
 export interface GalleryItemDraft {
@@ -84,6 +94,7 @@ export interface GalleryItemDraft {
 }
 
 export interface GalleryMetaDraft {
+  enabled?: boolean
   title?: string
   description?: string
 }
@@ -105,9 +116,12 @@ export interface ClosingDraft {
   message?: string
   thankYou?: string
   image?: ImageAsset
+  familyAcknowledgments?: string
 }
 
-export interface WeddingDraft {
+export type UniversalContent = Pick<WeddingContent, 'contentVersion' | 'holyRecite1' | 'holyRecite2' | 'greeting' | 'countdown' | 'wishes' | 'amplopDigital'>
+
+export interface WeddingDraft extends UniversalContent {
   schemaVersion: typeof WEDDING_SCHEMA_VERSION
   locale: WeddingLocale
   opening: OpeningDraft
@@ -127,6 +141,13 @@ export interface SectionPayloads {
   gallery: GalleryMetaDraft
   rsvp: RsvpDraft
   closing: ClosingDraft
+  // Universal (v1.1+) sections: PUT /sections/{id} replaces the whole section.
+  holyRecite1: HolyReciteSection
+  holyRecite2: HolyReciteSection
+  greeting: GreetingSection
+  countdown: CountdownSection
+  wishes: WishesSection
+  amplopDigital: AmplopDigitalSection
 }
 export type SectionName = keyof SectionPayloads
 
@@ -162,6 +183,7 @@ export function normalizeDraft(raw: Partial<WeddingDraft> | null | undefined): W
   if (!raw) return base
   return {
     ...base,
+    ...universalContent(raw),
     opening: { ...raw.opening },
     couple: { groom: { ...raw.couple?.groom }, bride: { ...raw.couple?.bride } },
     story: { ...raw.story, timeline: [...(raw.story?.timeline ?? [])] },
@@ -170,6 +192,23 @@ export function normalizeDraft(raw: Partial<WeddingDraft> | null | undefined): W
     rsvp: { ...raw.rsvp, enabled: raw.rsvp?.enabled ?? true },
     closing: { ...raw.closing },
   }
+}
+
+const UNIVERSAL_KEYS = ['contentVersion', 'holyRecite1', 'holyRecite2', 'greeting', 'countdown', 'wishes', 'amplopDigital'] as const
+
+/**
+ * Copy the shared optional content without dropping disabled stored values.
+ * Sections are copied one level deep (forms keep their own deep working copies,
+ * and nothing downstream mutates content), so live preview stays cheap.
+ */
+export function universalContent(value: UniversalContent): UniversalContent {
+  const out: UniversalContent = {}
+  for (const key of UNIVERSAL_KEYS) {
+    const section = value[key]
+    if (section === undefined) continue
+    ;(out as Record<string, unknown>)[key] = typeof section === 'object' && section !== null ? { ...section } : section
+  }
+  return out
 }
 
 // --- Preview -----------------------------------------------------------------
@@ -242,8 +281,15 @@ export function deriveCoupleNames(couple: CoupleDraft, joiner = '&'): string | u
   return groom && bride ? `${groom} ${joiner} ${bride}` : undefined
 }
 
+/** Uploaded image path served by the API: `/media/<uuid>.(jpg|png|webp)` (docs/api/weddings.md, migration 0007). */
+export function isUploadedImageSrc(value: string | undefined): value is string {
+  return !!value && MEDIA_IMAGE_PATH.test(value)
+}
+/** Image sources themes may render (safe http(s), bundled samples, our own uploads). */
+export const isDisplayableImageSrc = isSafeImageSrc
+
 function safeImage(image: ImageAsset | undefined): ImageAsset | undefined {
-  if (!image || !isSafeImageSrc(image.src) || !text(image.alt)) return undefined
+  if (!image || !isDisplayableImageSrc(image.src) || !text(image.alt)) return undefined
   return image.focalPoint ? { src: image.src, alt: image.alt, focalPoint: image.focalPoint } : { src: image.src, alt: image.alt }
 }
 
@@ -264,19 +310,150 @@ function compact<T extends object>(value: T): T {
 }
 
 /**
- * Turn a (possibly incomplete) draft into content that ALWAYS passes
- * `validateWeddingContent`, plus a list of the required values that were filled
- * with placeholders. Placeholder text is in `uiLocale` (the editor's language)
- * so couples can recognise it; dates, built-in theme labels and default section
- * titles ("Our Story", "Gallery") use the draft's (website) locale.
+ * How content is prepared for a theme:
+ *  - `draft` (editor and full-screen preview): fills required gaps with labelled
+ *    placeholders (in the editor's language) so the couple sees where content goes.
+ *  - `public` (published invitation): NEVER inserts placeholder, sample or editor
+ *    text; drops disabled or empty optional sections and disabled child features.
+ */
+export type PreviewMode = 'draft' | 'public'
+export interface PreviewOptions {
+  mode?: PreviewMode
+}
+
+/** Trim the ends of a free-text value only (inner line breaks/spaces are kept). */
+const keep = text
+
+const ACCOUNT_NUMBER = /^[0-9]+(?:[ -][0-9]+)*$/
+/** Complete bank row: all three values present and a well-formed account number. */
+export function isCompleteBankAccount(a: { bankName?: string; accountHolder?: string; accountNumber?: string } | undefined): boolean {
+  if (!a) return false
+  const number = text(a.accountNumber)
+  return !!text(a.bankName) && !!text(a.accountHolder) && !!number && number.length <= 40 && ACCOUNT_NUMBER.test(number)
+}
+
+/** https URL (≤2048) for livestream links. */
+export function isHttpsUrl(value: string | undefined): value is string {
+  if (!value || value.length > 2048 || /[\x00-\x20\\]/.test(value)) return false
+  try {
+    return new URL(value).protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function holyRecitePublic(section: HolyReciteSection | undefined): HolyReciteSection | undefined {
+  if (!section?.enabled) return undefined
+  const out = compact({
+    enabled: true as const,
+    title: keep(section.title),
+    tradition: keep(section.tradition),
+    book: keep(section.book),
+    reference: keep(section.reference),
+    passage: keep(section.passage),
+    originalScript: keep(section.originalScript),
+    originalLanguage: keep(section.originalLanguage),
+    translation: keep(section.translation),
+    translationLanguage: keep(section.translationLanguage),
+    attribution: keep(section.attribution),
+  })
+  return out.passage || out.originalScript || out.translation ? out : undefined
+}
+
+function greetingPublic(section: GreetingSection | undefined): GreetingSection | undefined {
+  // Never set → legacy fallback (opening headline/introduction), exactly as in the editor preview.
+  if (!section) return undefined
+  if (!section.enabled) return { enabled: false }
+  const out = compact({ enabled: true, title: keep(section.title), message: keep(section.message), prayer: keep(section.prayer) })
+  return out.title || out.message || out.prayer ? out : { enabled: false }
+}
+
+function wishesPublic(section: WishesSection | undefined): WishesSection | undefined {
+  if (!section?.enabled) return undefined
+  return compact({ enabled: true, title: keep(section.title), introduction: keep(section.introduction) })
+}
+
+function amplopPublic(section: AmplopDigitalSection | undefined): AmplopDigitalSection | undefined {
+  if (!section?.enabled) return undefined
+  const bankAccounts = section.bankAccountsEnabled
+    ? (section.bankAccounts ?? []).filter(isCompleteBankAccount).map((a) =>
+        compact({ id: a.id, bankName: text(a.bankName)!, accountHolder: text(a.accountHolder)!, accountNumber: text(a.accountNumber)! }),
+      )
+    : []
+  const qrisImage = section.qrisEnabled ? safeImage(section.qrisImage) : undefined
+  const gifts = section.physicalGifts
+  const physicalGifts =
+    gifts?.enabled && (text(gifts.recipient) || text(gifts.address))
+      ? compact({ enabled: true, recipient: keep(gifts.recipient), address: keep(gifts.address), note: keep(gifts.note), phone: keep(gifts.phone) })
+      : undefined
+  if (!bankAccounts.length && !qrisImage && !physicalGifts) return undefined
+  return compact({
+    enabled: true,
+    title: keep(section.title),
+    message: keep(section.message),
+    bankAccountsEnabled: bankAccounts.length > 0,
+    bankAccounts,
+    qrisEnabled: !!qrisImage,
+    qrisImage,
+    physicalGifts,
+  })
+}
+
+/** Universal sections for a published invitation (absent = off, see `greeting`/`countdown`). */
+function universalPublic(draft: UniversalContent): UniversalContent {
+  const countdown = draft.countdown
+  return compact({
+    contentVersion: draft.contentVersion,
+    holyRecite1: holyRecitePublic(draft.holyRecite1),
+    holyRecite2: holyRecitePublic(draft.holyRecite2),
+    // Never-set greeting/countdown keep the legacy v1.1 behaviour (same as the editor preview);
+    // the published snapshot carries an explicit {enabled:false} marker when switched off.
+    greeting: greetingPublic(draft.greeting),
+    // Add to Calendar is its own option of the Wedding Date section (independent of the timer).
+    countdown: countdown
+      ? compact({ enabled: countdown.enabled === true, addToCalendar: countdown.addToCalendar === true ? true : undefined })
+      : undefined,
+    wishes: wishesPublic(draft.wishes),
+    amplopDigital: amplopPublic(draft.amplopDigital),
+  }) as UniversalContent
+}
+
+function eventExtras(e: EventDraft, isPublic: boolean): Pick<WeddingEvent, 'dressCode' | 'livestream'> {
+  const dressText = keep(e.dressCode?.text)
+  const liveUrl = isHttpsUrl(text(e.livestream?.url)) ? text(e.livestream?.url) : undefined
+  if (isPublic) {
+    return compact({
+      dressCode: e.dressCode?.enabled && dressText ? { enabled: true, text: dressText } : undefined,
+      livestream: e.livestream?.enabled && liveUrl ? compact({ enabled: true, url: liveUrl, label: keep(e.livestream.label) }) : undefined,
+    })
+  }
+  return compact({
+    dressCode: e.dressCode ? compact({ enabled: e.dressCode.enabled === true, text: dressText }) : undefined,
+    livestream: e.livestream ? compact({ enabled: e.livestream.enabled === true, url: liveUrl, label: keep(e.livestream.label) }) : undefined,
+  })
+}
+
+/**
+ * Turn a (possibly incomplete) draft into content every theme can render, plus
+ * a list of the required values that were missing.
+ *
+ * Draft mode (default) ALWAYS passes `validateWeddingContent`: gaps are filled
+ * with placeholders in `uiLocale` (the editor's language) so couples can
+ * recognise them; dates, built-in theme labels and default section titles
+ * ("Our Story", "Gallery") use the draft's (website) locale.
+ *
+ * Public mode renders a published snapshot for guests: no placeholders, ever.
+ * Incomplete events are dropped and disabled/empty optional content removed.
  */
 export function toPreviewContent(
   draft: WeddingDraft,
   uiLocale: WeddingLocale = 'en',
   today: Date = new Date(),
+  options: PreviewOptions = {},
 ): { content: WeddingContent; missing: MissingItem[] } {
+  const isPublic = options.mode === 'public'
   const missing: MissingItem[] = []
-  const ph = (key: PlaceholderKey) => placeholderText(key, uiLocale)
+  const ph = (key: PlaceholderKey) => (isPublic ? '' : placeholderText(key, uiLocale))
   const locale: WeddingLocale = draft.locale === 'id' ? 'id' : 'en'
   const o = draft.opening ?? {}
   const couple: CoupleDraft = { groom: draft.couple?.groom ?? {}, bride: draft.couple?.bride ?? {} }
@@ -301,22 +478,27 @@ export function toPreviewContent(
   const bride = person(couple.bride, 'bride')
 
   // Opening
+  let coupleNames = text(o.coupleNames) ?? deriveCoupleNames(couple)
+  if (!coupleNames) coupleNames = isPublic ? [groom.name, bride.name].filter(Boolean).join(' & ') : ph('yourNames') // missing names are reported under couple
   let weddingTitle = text(o.weddingTitle)
   if (!weddingTitle) {
     missing.push({ section: 'opening', field: 'weddingTitle' })
-    weddingTitle = ph('weddingTitle')
+    weddingTitle = isPublic ? coupleNames : ph('weddingTitle')
   }
-  let coupleNames = text(o.coupleNames) ?? deriveCoupleNames(couple)
-  if (!coupleNames) coupleNames = ph('yourNames') // the missing names are already reported under couple
   const firstEventDate = (draft.events ?? []).map((e) => e.date).find(isIsoDate)
   let weddingDate = isIsoDate(o.weddingDate) ? o.weddingDate : undefined
   if (!weddingDate) {
     missing.push({ section: 'opening', field: 'weddingDate' })
+    // Publishing requires a date; a snapshot without one still needs a renderable date.
     weddingDate = firstEventDate ?? standInDate(today)
   }
 
-  // Events (at least one)
-  const events: WeddingEvent[] = (draft.events ?? []).map((e, i) => {
+  // Events (draft: at least one, gaps filled; public: complete events only)
+  const events: WeddingEvent[] = (draft.events ?? []).flatMap((e, i) => {
+    if (isPublic && !(isIsoDate(e.date) && isTime(e.startTime) && text(e.venueName) && text(e.address))) {
+      missing.push({ section: 'events', field: `${i}` })
+      return []
+    }
     const need = <T>(value: T | undefined, field: string, fallback: T): T => {
       if (value === undefined) {
         missing.push({ section: 'events', field: `${i}.${field}` })
@@ -326,18 +508,21 @@ export function toPreviewContent(
     }
     const startTime = need(isTime(e.startTime) ? e.startTime : undefined, 'startTime', '10:00')
     const endTime = isTime(e.endTime) && e.endTime > startTime ? e.endTime : undefined
-    return compact({
-      id: e.id || `event-${i}`,
-      type: e.type ?? 'other',
-      title: need(text(e.title), 'title', eventTypeLabel(e.type ?? 'other', uiLocale)),
-      date: need(isIsoDate(e.date) ? e.date : undefined, 'date', weddingDate!),
-      startTime,
-      endTime,
-      venueName: need(text(e.venueName), 'venueName', ph('venue')),
-      address: need(text(e.address), 'address', ph('address')),
-      mapsUrl: text(e.mapsUrl),
-      description: text(e.description),
-    }) as WeddingEvent
+    return [
+      compact({
+        id: e.id || `event-${i}`,
+        type: e.type ?? 'other',
+        title: need(text(e.title), 'title', eventTypeLabel(e.type ?? 'other', isPublic ? locale : uiLocale)),
+        date: need(isIsoDate(e.date) ? e.date : undefined, 'date', weddingDate!),
+        startTime,
+        endTime,
+        venueName: need(text(e.venueName), 'venueName', ph('venue')),
+        address: need(text(e.address), 'address', ph('address')),
+        mapsUrl: text(e.mapsUrl),
+        description: text(e.description),
+        ...eventExtras(e, isPublic),
+      }) as WeddingEvent,
+    ]
   })
   // Unique ids (defensive; the API guarantees this).
   const seen = new Set<string>()
@@ -347,15 +532,16 @@ export function toPreviewContent(
   })
   if (events.length === 0) {
     missing.push({ section: 'events', field: 'events' })
-    events.push({
-      id: 'placeholder-event',
-      type: 'other',
-      title: ph('eventDetails'),
-      date: weddingDate,
-      startTime: '10:00',
-      venueName: ph('venue'),
-      address: ph('address'),
-    })
+    if (!isPublic)
+      events.push({
+        id: 'placeholder-event',
+        type: 'other',
+        title: ph('eventDetails'),
+        date: weddingDate,
+        startTime: '10:00',
+        venueName: ph('venue'),
+        address: ph('address'),
+      })
   }
 
   // Story: only entries with a title and description are shown.
@@ -373,9 +559,12 @@ export function toPreviewContent(
 
   const r = draft.rsvp ?? { enabled: true }
   let rsvpTitle = text(r.title)
+  let rsvpEnabled = r.enabled !== false
   if (!rsvpTitle) {
     missing.push({ section: 'rsvp', field: 'title' })
     rsvpTitle = ph('rsvpTitle')
+    // A published RSVP section without a heading would be an orphan: hide it.
+    if (isPublic) rsvpEnabled = false
   }
 
   const c = draft.closing ?? {}
@@ -385,7 +574,16 @@ export function toPreviewContent(
     message = ph('closingMessage')
   }
 
+  const guestGreeting = o.guestGreeting
+    ? isPublic
+      ? o.guestGreeting.enabled
+        ? compact({ enabled: true, label: keep(o.guestGreeting.label) })
+        : undefined
+      : compact({ enabled: o.guestGreeting.enabled === true, label: keep(o.guestGreeting.label) })
+    : undefined
+
   const content: WeddingContent = {
+    ...(isPublic ? universalPublic(draft) : universalContent(draft)),
     schemaVersion: WEDDING_SCHEMA_VERSION,
     locale,
     opening: compact({
@@ -395,20 +593,26 @@ export function toPreviewContent(
       introduction: text(o.introduction),
       coverImage: safeImage(o.coverImage),
       weddingDate,
+      guestGreeting,
     }),
     couple: { groom, bride },
-    story: compact({ title: text(draft.story?.title) ?? (locale === 'id' ? 'Kisah Kami' : 'Our Story'), introduction: text(draft.story?.introduction), timeline }),
+    story: compact({ enabled: draft.story?.enabled, title: text(draft.story?.title) ?? (locale === 'id' ? 'Kisah Kami' : 'Our Story'), introduction: text(draft.story?.introduction), timeline }),
     events,
-    gallery: compact({ title: text(draft.gallery?.title) ?? (locale === 'id' ? 'Galeri' : 'Gallery'), description: text(draft.gallery?.description), images: gallery }),
+    gallery: compact({ enabled: draft.gallery?.enabled, title: text(draft.gallery?.title) ?? (locale === 'id' ? 'Galeri' : 'Gallery'), description: text(draft.gallery?.description), images: gallery }),
     rsvp: compact({
       title: rsvpTitle,
       introduction: text(r.introduction),
-      enabled: r.enabled !== false,
+      enabled: rsvpEnabled,
       deadline: isIsoDate(r.deadline) ? r.deadline : undefined,
       confirmationMessage: text(r.confirmationMessage),
       maxGuestsPerResponse: isGuestCount(r.maxGuestsPerResponse) ? r.maxGuestsPerResponse : undefined,
     }),
-    closing: compact({ message, thankYou: text(c.thankYou), image: safeImage(c.image) }),
+    closing: compact({ message, thankYou: text(c.thankYou), image: safeImage(c.image), familyAcknowledgments: keep(c.familyAcknowledgments) }),
   }
   return { content, missing }
+}
+
+/** Every placeholder string in both editor languages (tests: public content must contain none). */
+export function allPlaceholderTexts(): string[] {
+  return Object.values(PLACEHOLDERS).flatMap((dict) => Object.values(dict))
 }

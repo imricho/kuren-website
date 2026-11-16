@@ -14,16 +14,21 @@ from sqlalchemy import (
     Time,
     UniqueConstraint,
     Uuid,
+    func,
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
 
 WEDDING_STATUSES = ("draft", "published")
 WEDDING_LOCALES = ("en", "id")
 EVENT_TYPES = ("engagement", "akad", "holy_matrimony", "ceremony", "reception", "other")
+ASSET_KINDS = ("image", "qris")
+#: Public slugs: lowercase ASCII words joined by single hyphens.
+SLUG_REGEX = r"[a-z0-9]+(-[a-z0-9]+)*"
+SLUG_MAX_LENGTH = 80
 SCHEMA_VERSION = 1
 
 
@@ -47,6 +52,7 @@ class Wedding(TimestampMixin, Base):
     __table_args__ = (
         CheckConstraint(_in_list("status", WEDDING_STATUSES), name="status"),
         CheckConstraint(_in_list("locale", WEDDING_LOCALES), name="locale"),
+        CheckConstraint(f"slug ~ '^{SLUG_REGEX}$'", name="slug_format"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -58,19 +64,89 @@ class Wedding(TimestampMixin, Base):
         String(16), nullable=False, default="draft", server_default="draft"
     )
     locale: Mapped[str] = mapped_column(String(5), nullable=False, default="en", server_default="en")
+    # Content revision for optimistic concurrency: bumped by every content write
+    # (sections, collections, whole-content replace), not by theme/locale changes.
+    revision: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     schema_version: Mapped[int] = mapped_column(
         SmallInteger, nullable=False, default=SCHEMA_VERSION, server_default=str(SCHEMA_VERSION)
     )
+    universal_content: Mapped[dict[str, Any]] = _json_section()
     opening: Mapped[dict[str, Any]] = _json_section()
     couple: Mapped[dict[str, Any]] = _json_section()
     story_meta: Mapped[dict[str, Any]] = _json_section()
     gallery_meta: Mapped[dict[str, Any]] = _json_section()
     rsvp: Mapped[dict[str, Any]] = _json_section()
     closing: Mapped[dict[str, Any]] = _json_section()
+    #: Mirrors the live publication's `published_at` (None while unpublished).
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    #: Public URL slug, assigned on first publish and never changed afterwards.
+    slug: Mapped[str | None] = mapped_column(String(SLUG_MAX_LENGTH), unique=True, nullable=True)
+    #: The live snapshot (None = not published). `status` is kept in sync with it.
+    published_publication_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("wedding_publications.id", ondelete="SET NULL", use_alter=True),
+        nullable=True,
+    )
+    publication: Mapped["WeddingPublication | None"] = relationship(
+        foreign_keys=[published_publication_id], viewonly=True, lazy="select"
+    )
+
+    @property
+    def has_unpublished_changes(self) -> bool:
+        pub = self.publication
+        if pub is None:
+            return False
+        return self.revision != pub.revision or self.theme_id != pub.theme_id
 
     def __repr__(self) -> str:
         return f"<Wedding id={self.id} owner_id={self.owner_id}>"
+
+
+class WeddingPublication(Base):
+    """An immutable, allow-listed snapshot of a wedding's content at publish time.
+
+    Rows are kept after unpublish/republish (history); the wedding points at the live one.
+    """
+
+    __tablename__ = "wedding_publications"
+    __table_args__ = (CheckConstraint(_in_list("locale", WEDDING_LOCALES), name="locale"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    wedding_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("weddings.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    #: The wedding's content revision that was published.
+    revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    theme_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    locale: Mapped[str] = mapped_column(String(5), nullable=False)
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    published_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class WeddingAsset(Base):
+    """An uploaded, re-encoded image stored under `settings.media_root` as `filename`."""
+
+    __tablename__ = "wedding_assets"
+    __table_args__ = (
+        CheckConstraint(_in_list("kind", ASSET_KINDS), name="kind"),
+        CheckConstraint("width > 0 AND height > 0 AND bytes > 0", name="dimensions_positive"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    wedding_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("weddings.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    filename: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    content_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    width: Mapped[int] = mapped_column(Integer, nullable=False)
+    height: Mapped[int] = mapped_column(Integer, nullable=False)
+    bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class _WeddingItem(TimestampMixin):
@@ -122,6 +198,10 @@ class WeddingEvent(_WeddingItem, Base):
     address: Mapped[str | None] = mapped_column(String(500), nullable=True)
     maps_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: Optional per-event extras with their own toggles: {"dressCode": {...}, "livestream": {...}}.
+    extras: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb")
+    )
 
 
 class WeddingGalleryImage(_WeddingItem, Base):

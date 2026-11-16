@@ -26,7 +26,7 @@ export interface ImageForm {
 }
 
 export const s = (value: string | undefined | null): string => value ?? ''
-const opt = (value: string): string | undefined => {
+export const opt = (value: string): string | undefined => {
   const trimmed = value.trim()
   return trimmed === '' ? undefined : trimmed
 }
@@ -55,6 +55,9 @@ export interface OpeningForm {
   introduction: string
   coverImage: ImageForm
   locale: WeddingLocale
+  /** "Kepada Yth." line before the guest name from the link's ?to= parameter. */
+  guestGreetingEnabled: boolean
+  guestGreetingLabel: string
 }
 export function openingForm(o: OpeningDraft, couple: CoupleDraft, locale: WeddingLocale): OpeningForm {
   return {
@@ -67,7 +70,14 @@ export function openingForm(o: OpeningDraft, couple: CoupleDraft, locale: Weddin
     introduction: s(o.introduction),
     coverImage: imageForm(o.coverImage),
     locale,
+    guestGreetingEnabled: o.guestGreeting?.enabled === true,
+    guestGreetingLabel: s(o.guestGreeting?.label),
   }
+}
+/** Guest greeting payload: omitted while it was never used (off and no label); kept (data) when switched off. */
+export function guestGreetingPayload(f: Pick<OpeningForm, 'guestGreetingEnabled' | 'guestGreetingLabel'>) {
+  const label = opt(f.guestGreetingLabel)
+  return f.guestGreetingEnabled || label ? clean({ enabled: f.guestGreetingEnabled, label }) : undefined
 }
 export function openingPayload(f: OpeningForm): OpeningDraft {
   return clean({
@@ -77,6 +87,7 @@ export function openingPayload(f: OpeningForm): OpeningDraft {
     introduction: opt(f.introduction),
     coverImage: imagePayload(f.coverImage),
     weddingDate: opt(f.weddingDate),
+    guestGreeting: guestGreetingPayload(f),
   })
 }
 
@@ -117,9 +128,16 @@ export const couplePayload = (c: CoupleForm): CoupleDraft => ({ groom: personPay
 export interface StoryMetaForm {
   title: string
   introduction: string
+  /** "Show on website" (default on). */
+  enabled: boolean
 }
-export const storyMetaForm = (m: StoryMetaDraft): StoryMetaForm => ({ title: s(m.title), introduction: s(m.introduction) })
-export const storyMetaPayload = (m: StoryMetaForm): StoryMetaDraft => clean({ title: opt(m.title), introduction: opt(m.introduction) })
+export const storyMetaForm = (m: StoryMetaDraft): StoryMetaForm => ({
+  title: s(m.title),
+  introduction: s(m.introduction),
+  enabled: m.enabled !== false,
+})
+export const storyMetaPayload = (m: StoryMetaForm): StoryMetaDraft =>
+  clean({ title: opt(m.title), introduction: opt(m.introduction), enabled: m.enabled })
 
 export interface StoryEntryForm {
   title: string
@@ -147,6 +165,11 @@ export interface EventForm {
   address: string
   mapsUrl: string
   description: string
+  dressCodeEnabled: boolean
+  dressCodeText: string
+  livestreamEnabled: boolean
+  livestreamUrl: string
+  livestreamLabel: string
 }
 /** Type of a new custom event (most Indonesian weddings have a reception). */
 export const DEFAULT_EVENT_TYPE: EventType = 'reception'
@@ -160,6 +183,11 @@ export const eventForm = (e?: Partial<EventDraft>): EventForm => ({
   address: s(e?.address),
   mapsUrl: s(e?.mapsUrl),
   description: s(e?.description),
+  dressCodeEnabled: e?.dressCode?.enabled === true,
+  dressCodeText: s(e?.dressCode?.text),
+  livestreamEnabled: e?.livestream?.enabled === true,
+  livestreamUrl: s(e?.livestream?.url),
+  livestreamLabel: s(e?.livestream?.label),
 })
 export const eventPayload = (e: EventForm): NewItem<'events'> =>
   clean({
@@ -172,16 +200,29 @@ export const eventPayload = (e: EventForm): NewItem<'events'> =>
     address: opt(e.address),
     mapsUrl: opt(e.mapsUrl),
     description: opt(e.description),
+    // Each extra has its own switch; its details are kept while it is off.
+    dressCode:
+      e.dressCodeEnabled || opt(e.dressCodeText) ? clean({ enabled: e.dressCodeEnabled, text: opt(e.dressCodeText) }) : undefined,
+    livestream:
+      e.livestreamEnabled || opt(e.livestreamUrl) || opt(e.livestreamLabel)
+        ? clean({ enabled: e.livestreamEnabled, url: opt(e.livestreamUrl), label: opt(e.livestreamLabel) })
+        : undefined,
   })
 
 // --- Gallery -----------------------------------------------------------------------
 export interface GalleryMetaForm {
   title: string
   description: string
+  /** "Show on website" (default on). */
+  enabled: boolean
 }
-export const galleryMetaForm = (m: GalleryMetaDraft): GalleryMetaForm => ({ title: s(m.title), description: s(m.description) })
+export const galleryMetaForm = (m: GalleryMetaDraft): GalleryMetaForm => ({
+  title: s(m.title),
+  description: s(m.description),
+  enabled: m.enabled !== false,
+})
 export const galleryMetaPayload = (m: GalleryMetaForm): GalleryMetaDraft =>
-  clean({ title: opt(m.title), description: opt(m.description) })
+  clean({ title: opt(m.title), description: opt(m.description), enabled: m.enabled })
 
 export interface GalleryItemForm {
   image: ImageForm
@@ -234,7 +275,19 @@ export interface ClosingForm {
   message: string
   thankYou: string
   image: ImageForm
+  /** "Turut mengundang" names; line breaks kept. */
+  familyAcknowledgments: string
 }
-export const closingForm = (c: ClosingDraft): ClosingForm => ({ message: s(c.message), thankYou: s(c.thankYou), image: imageForm(c.image) })
+export const closingForm = (c: ClosingDraft): ClosingForm => ({
+  message: s(c.message),
+  thankYou: s(c.thankYou),
+  image: imageForm(c.image),
+  familyAcknowledgments: s(c.familyAcknowledgments),
+})
 export const closingPayload = (c: ClosingForm): ClosingDraft =>
-  clean({ message: opt(c.message), thankYou: opt(c.thankYou), image: imagePayload(c.image) })
+  clean({
+    message: opt(c.message),
+    thankYou: opt(c.thankYou),
+    image: imagePayload(c.image),
+    familyAcknowledgments: opt(c.familyAcknowledgments),
+  })

@@ -5,7 +5,7 @@
  */
 import { computed, ref } from 'vue'
 
-import { sampleWedding } from '@/features/wedding/sampleWedding'
+import { universalDemo } from '@/features/wedding/universalDemo'
 
 import { templatePath } from '../core/registry'
 import type { RenderableTemplate } from '../core/types'
@@ -57,7 +57,7 @@ const action = computed(() => localizedActions())
 
     <!-- Fills the remaining height on desktop; a fixed, screen-capped height when stacked. -->
     <div class="h-[min(760px,calc(100svh-7rem))] min-h-[420px] lg:h-auto lg:min-h-0 lg:flex-1">
-      <DevicePreview :content="sampleWedding" :theme-id="template.id" :device="device" :label="`${template.name} ${t('preview').toLowerCase()}`" />
+      <DevicePreview :content="universalDemo" :theme-id="template.id" :device="device" :label="`${template.name} ${t('preview').toLowerCase()}`" />
     </div>
   </section>
 </template>

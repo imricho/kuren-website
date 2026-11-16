@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import { dateParts, eventTypeLabel, formatDate, formatTimeRange, labels, mapsLink } from '@/features/wedding/format'
 import type { WeddingContent } from '@/features/wedding/types'
 
+import { greetingHasContent } from '../visibility'
+
 /**
  * Display-ready values derived from the shared content model, so themes
  * don't each re-implement formatting. Pure data — no markup or styling.
@@ -15,6 +17,11 @@ export function useWeddingView(props: { content: WeddingContent }) {
     const c = props.content
     const locale = c.locale ?? 'en'
     return {
+      // Absent greeting (legacy content) falls back to the opening headline/introduction.
+      // Enabled but empty → undefined, so themes render no orphan heading/ornament.
+      greeting: c.greeting
+        ? (greetingHasContent(c.greeting) ? c.greeting : undefined)
+        : (c.opening.headline || c.opening.introduction ? { enabled: true, title: c.opening.headline, message: c.opening.introduction } : undefined),
       locale,
       t: labels(locale),
       date: {
@@ -31,8 +38,8 @@ export function useWeddingView(props: { content: WeddingContent }) {
         timeText: formatTimeRange(event.startTime, event.endTime, locale),
         mapHref: mapsLink(event),
       })),
-      story: c.story && c.story.timeline.length > 0 ? c.story : undefined,
-      gallery: c.gallery && c.gallery.images.length > 0 ? c.gallery : undefined,
+      story: c.story && c.story.enabled !== false && c.story.timeline.length > 0 ? c.story : undefined,
+      gallery: c.gallery && c.gallery.enabled !== false && c.gallery.images.length > 0 ? c.gallery : undefined,
     }
   })
 }

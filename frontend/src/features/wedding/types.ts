@@ -13,6 +13,14 @@
  */
 
 export const WEDDING_SCHEMA_VERSION = 1 as const
+export const WEDDING_CONTENT_VERSION = '1.1' as const
+/** Fixed rendering order shared by themes, previews, and future editor controls. */
+export const WEDDING_SECTION_ORDER = [
+  'opening', 'holyRecite1', 'greeting', 'couple', 'weddingDate', 'events',
+  'story', 'gallery', 'rsvp', 'wishes', 'amplopDigital', 'holyRecite2', 'closing',
+] as const
+export type WeddingSectionId = (typeof WEDDING_SECTION_ORDER)[number]
+export const MANDATORY_WEDDING_SECTIONS: readonly WeddingSectionId[] = ['opening', 'couple', 'weddingDate', 'events', 'closing']
 
 /** ISO calendar date, e.g. "2027-06-12". */
 export type ISODate = string
@@ -54,6 +62,13 @@ export interface OpeningSection {
   introduction?: string
   coverImage?: ImageAsset
   weddingDate: ISODate
+  /** "Kepada Yth." line; the public page adds the guest name from `?to=`. */
+  guestGreeting?: GuestGreeting
+}
+
+export interface GuestGreeting {
+  enabled: boolean
+  label?: string
 }
 
 export interface CoupleSection {
@@ -71,6 +86,7 @@ export interface StoryEntry {
 }
 
 export interface StorySection {
+  enabled?: boolean
   title: string
   introduction?: string
   timeline: StoryEntry[]
@@ -97,6 +113,9 @@ export interface WeddingEvent {
   address: string
   mapsUrl?: string
   description?: string
+  /** Optional extras, each with its own toggle (data kept when off). */
+  dressCode?: { enabled: boolean; text?: string }
+  livestream?: { enabled: boolean; url?: string; label?: string }
 }
 
 export interface GalleryImage extends ImageAsset {
@@ -105,6 +124,7 @@ export interface GalleryImage extends ImageAsset {
 }
 
 export interface GallerySection {
+  enabled?: boolean
   title: string
   description?: string
   images: GalleryImage[]
@@ -125,11 +145,56 @@ export interface ClosingSection {
   message: string
   thankYou?: string
   image?: ImageAsset
+  /** "Turut mengundang" names; line breaks preserved. */
+  familyAcknowledgments?: string
+}
+
+/** Sacred text exactly as entered by the couple — never rewritten, invented or auto-filled. */
+export interface HolyReciteSection {
+  enabled: boolean
+  /** Optional heading. */
+  title?: string
+  /** Scripture/tradition name (free text; no religion selection is required). */
+  tradition?: string
+  book?: string
+  /** Chapter/surah/verse reference. */
+  reference?: string
+  passage?: string
+  /** Original-language passage (any script, incl. RTL). */
+  originalScript?: string
+  /** Language code of the original passage (e.g. "ar"), for screen readers and fonts. */
+  originalLanguage?: string
+  translation?: string
+  translationLanguage?: string
+  attribution?: string
+}
+export interface GreetingSection { enabled: boolean; title?: string; message?: string; prayer?: string }
+/** Wedding Date & Countdown options (the date itself is `opening.weddingDate`). */
+export interface CountdownSection { enabled: boolean; addToCalendar?: boolean }
+export interface BankAccount { id?: string; bankName: string; accountHolder: string; accountNumber: string }
+export interface PhysicalGifts { enabled: boolean; recipient?: string; address?: string; note?: string; phone?: string }
+export interface WishesSection { enabled: boolean; title?: string; introduction?: string }
+export interface AmplopDigitalSection {
+  enabled: boolean
+  title?: string
+  message?: string
+  bankAccountsEnabled: boolean
+  bankAccounts: BankAccount[]
+  qrisEnabled: boolean
+  qrisImage?: ImageAsset
+  physicalGifts?: PhysicalGifts
 }
 
 // --- Root ---------------------------------------------------------------------
 
 export interface WeddingContent {
+  contentVersion?: '1.1' | '1.2'
+  holyRecite1?: HolyReciteSection
+  holyRecite2?: HolyReciteSection
+  greeting?: GreetingSection
+  countdown?: CountdownSection
+  wishes?: WishesSection
+  amplopDigital?: AmplopDigitalSection
   schemaVersion: typeof WEDDING_SCHEMA_VERSION
   /** Language for dates and built-in labels. Defaults to English. */
   locale?: WeddingLocale

@@ -199,14 +199,14 @@
 }
 
 /* --- Intro / countdown ------------------------------------------------------------------ */
-.conv-intro .countdown {
+:is(.conv-intro, .conv-section[data-section="weddingDate"]) .countdown {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 0.75rem;
 }
-.conv-intro .countdown__unit {
+:is(.conv-intro, .conv-section[data-section="weddingDate"]) .countdown__unit {
   display: grid;
   place-content: center;
   width: clamp(62px, 17cqi, 84px);
@@ -215,12 +215,12 @@
   background: var(--conv-blush);
   border: 1px solid var(--conv-blush-deep);
 }
-.conv-intro .countdown__value {
+:is(.conv-intro, .conv-section[data-section="weddingDate"]) .countdown__value {
   font-size: clamp(1.25rem, 4.5cqi, 1.6rem);
   color: var(--conv-rose-deep);
   line-height: 1.1;
 }
-.conv-intro .countdown__label {
+:is(.conv-intro, .conv-section[data-section="weddingDate"]) .countdown__label {
   font-size: 0.55rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;

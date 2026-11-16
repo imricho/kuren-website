@@ -2,10 +2,17 @@
 /** On/off setting: a native checkbox exposed as role="switch" (announced as "on"/"off"). */
 import { computed, useId } from 'vue'
 
-const props = defineProps<{ label: string; hint?: string; id?: string }>()
+const props = defineProps<{
+  label: string
+  hint?: string
+  id?: string
+  /** Extra element id(s) describing the switch (e.g. what happens while it is off). */
+  describedBy?: string
+}>()
 const model = defineModel<boolean>({ required: true })
 const generated = useId()
 const id = computed(() => props.id ?? generated)
+const describedBy = computed(() => [props.hint ? `${id.value}-msg` : '', props.describedBy ?? ''].filter(Boolean).join(' ') || undefined)
 </script>
 
 <template>
@@ -17,7 +24,7 @@ const id = computed(() => props.id ?? generated)
         type="checkbox"
         role="switch"
         :aria-checked="model"
-        :aria-describedby="hint ? `${id}-msg` : undefined"
+        :aria-describedby="describedBy"
         class="peer h-7 w-12 cursor-pointer appearance-none rounded-full bg-ink-500 transition-colors checked:bg-rose-600 hover:bg-ink-700 checked:hover:bg-rose-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 motion-reduce:transition-none"
       />
       <span

@@ -7,8 +7,9 @@ import { useAppLocale } from '@/composables/useAppLocale'
 import GalleryItemEditor from '@/features/cms/components/editors/GalleryItemEditor.vue'
 import ErrorSummary from '@/features/cms/components/ErrorSummary.vue'
 import ListEditor from '@/features/cms/components/ListEditor.vue'
-import SaveBar from '@/features/cms/components/SaveBar.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
+import SectionHiddenNote from '@/features/cms/components/SectionHiddenNote.vue'
+import SectionToggle from '@/features/cms/components/SectionToggle.vue'
 import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
 import { galleryMetaForm, galleryMetaPayload } from '@/features/cms/forms'
@@ -27,11 +28,11 @@ const draft = useSectionDraft({
   toPayload: galleryMetaPayload,
   validate: validateGalleryMeta,
   save: async (payload) => void (await store.saveSection('gallery', payload)),
-  successMessage: () => t('sectionSaved', { section: t('sectionGallery') }),
-  failureMessage: () => t('sectionSaveFailed', { section: t('sectionGallery') }),
+  live: (value) => ({ kind: 'section', section: 'gallery', value }),
 })
 const { form, errors } = draft
 const labels = computed<Record<string, string>>(() => ({
+  enabled: t('showOnWebsite'),
   title: t('sectionTitleLabel'),
   description: t('description'),
 }))
@@ -42,19 +43,23 @@ const name = (g: GalleryItemDraft, i: number) => g.caption?.trim() || t('photoN'
 
 <template>
   <div class="space-y-8">
-    <SectionHeader section="gallery" :description="t('galleryIntro')" />
+    <SectionHeader section="gallery" :description="t('galleryIntro')">
+      <template #toggle>
+        <SectionToggle v-model="form.enabled" section="gallery" />
+      </template>
+    </SectionHeader>
+    <SectionHiddenNote v-if="!form.enabled" />
 
-    <form class="space-y-4" novalidate data-testid="gallery-meta-form" @submit.prevent="draft.save()">
+    <form v-show="form.enabled" class="space-y-4" novalidate data-testid="gallery-meta-form" @submit.prevent="draft.save()">
       <ErrorSummary :errors="draft.errorList.value" :labels="labels" />
       <fieldset class="min-w-0 space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6">
         <legend class="px-1 font-display text-xl font-semibold">{{ t('sectionHeading') }}</legend>
         <TextField :id="fieldId('title')" v-model="form.title" :label="t('sectionTitleLabel')" :hint="t('galleryTitleHint')" :error="errors.title" />
         <TextAreaField :id="fieldId('description')" v-model="form.description" :label="t('description')" :rows="3" :error="errors.description" />
       </fieldset>
-      <SaveBar :dirty="draft.isDirty.value" :saving="draft.submitting.value" @discard="draft.discard()" />
     </form>
 
-    <section aria-labelledby="gallery-photos" class="space-y-4">
+    <section v-show="form.enabled" aria-labelledby="gallery-photos" class="space-y-4">
       <h2 id="gallery-photos" class="text-2xl font-semibold">{{ t('galleryPhotos') }}</h2>
       <ListEditor
         :items="images"
@@ -66,6 +71,7 @@ const name = (g: GalleryItemDraft, i: number) => g.caption?.trim() || t('photoN'
         :max="60"
         :reorder="(ids) => store.reorder('gallery', ids)"
         :refresh="() => store.refreshCollection('gallery')"
+        :before-close="(item) => store.flushDraft(`gallery:${item.id}`)"
         :remove="(item) => store.deleteItem('gallery', item.id)"
       >
         <template #summary="{ item, index }">

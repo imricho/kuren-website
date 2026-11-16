@@ -3,11 +3,11 @@
 import uuid
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends, Header, Request
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
-from app.core.errors import NotAuthenticatedError, NotFoundError, PermissionDeniedError
+from app.core.errors import BadRequestError, NotAuthenticatedError, NotFoundError, PermissionDeniedError
 from app.db.session import get_db
 from app.models import User, Wedding
 from app.services import auth_service, wedding_service
@@ -70,3 +70,30 @@ def get_owned_wedding(wedding_id: str, user: CurrentUser, db: DbSession) -> Wedd
 
 
 OwnedWedding = Annotated[Wedding, Depends(get_owned_wedding)]
+
+
+def parse_if_match(value: str | None) -> int | None:
+    """`If-Match: "<revision>"` (weak `W/` prefix tolerated). Absent or `*` = no precondition."""
+    if value is None or value.strip() in ("", "*"):
+        return None
+    raw = value.strip()
+    if raw.startswith("W/"):
+        raw = raw[2:]
+    raw = raw.strip('"')
+    if not raw.isdigit() or len(raw) > 12:
+        raise BadRequestError("Invalid If-Match header.")
+    return int(raw)
+
+
+def get_writable_wedding(
+    wedding: OwnedWedding,
+    db: DbSession,
+    if_match: Annotated[str | None, Header(alias="If-Match")] = None,
+) -> Wedding:
+    """An owned wedding, locked for this request's write, whose content revision
+    matches the client's `If-Match` (409 `edit_conflict` otherwise)."""
+    wedding_service.lock_for_write(db, wedding, parse_if_match(if_match))
+    return wedding
+
+
+WritableWedding = Annotated[Wedding, Depends(get_writable_wedding)]

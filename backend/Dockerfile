@@ -16,6 +16,8 @@ RUN if [ "$INSTALL_DEV" = "true" ]; then pip install -r requirements-dev.txt; \
 
 RUN useradd --create-home --uid 1000 app
 COPY --chown=app:app . .
+# Uploaded images (a named volume is mounted here in docker-compose.yml).
+RUN mkdir -p /app/media && chown app:app /app/media
 USER app
 
 EXPOSE 8000

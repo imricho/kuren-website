@@ -21,7 +21,11 @@ export default defineConfig({
     // /api to FastAPI. Session cookies therefore work without CORS.
     proxy: {
       '/api': { target: apiTarget, changeOrigin: true },
+      // Uploaded images (served by FastAPI from the media volume).
+      '/media': { target: apiTarget, changeOrigin: true },
     },
+    // Bind-mounted source in Docker on macOS can miss file events; poll there.
+    watch: process.env.VITE_USE_POLLING === '1' ? { usePolling: true, interval: 300 } : undefined,
   },
   test: {
     environment: 'jsdom',

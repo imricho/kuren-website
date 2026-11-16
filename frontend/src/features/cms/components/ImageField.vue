@@ -1,12 +1,19 @@
 <script setup lang="ts">
 /**
- * Image by URL: address + live thumbnail (with a load-error state), required
- * alt text once an address is set, and an optional focal point.
+ * Image by upload or URL: "Upload photo" (JPEG/PNG/WebP ≤ 5 MB → POST /assets;
+ * a local preview shows while uploading; on success `src` becomes the returned
+ * /media/… path, on failure the previous value is kept and an error is shown),
+ * address + live thumbnail (with a load-error state), required alt text once
+ * an address is set, and an optional focal point.
  *
  * In development only, a picker offers the sample photos in /public/sample-wedding
  * (it fills in their real paths; nothing is uploaded or simulated).
  */
-import { computed, nextTick, ref, useId, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
+
+import { ApiError } from '@/api/http'
+import { ACCEPT_ATTRIBUTE, assetsApi, checkUploadFile, type AssetKind } from '@/api/assets'
+import { useWeddingStore } from '@/stores/wedding'
 
 import { FOCUS_RING } from '@/components/ui/styles'
 import TextField from '@/components/ui/TextField.vue'
@@ -34,13 +41,33 @@ const props = withDefaults(
     samples?: boolean
     /** The image address itself is required (gallery photos). */
     srcRequired?: boolean
+    /** Offer "Upload photo" with this asset kind; false = URL only. */
+    upload?: AssetKind | false
+    /** Show the alt-text field (false when the page sets alt itself, e.g. QRIS). */
+    altField?: boolean
+    /** Thumbnail fit: 'contain' never crops (QRIS). */
+    fit?: 'cover' | 'contain'
   }>(),
-  { errors: () => ({}), focal: true, samples: true, srcRequired: false, srcPath: undefined, altPath: undefined, focalPath: undefined, idScope: undefined, hint: undefined },
+  {
+    errors: () => ({}),
+    focal: true,
+    samples: true,
+    srcRequired: false,
+    srcPath: undefined,
+    altPath: undefined,
+    focalPath: undefined,
+    idScope: undefined,
+    hint: undefined,
+    upload: 'image',
+    altField: true,
+    fit: 'cover',
+  },
 )
 
 const model = defineModel<ImageForm>({ required: true })
 const { t } = useAppLocale()
 const uid = useId()
+const store = useWeddingStore()
 
 const srcKey = computed(() => props.srcPath ?? `${props.path}.src`)
 const altKey = computed(() => props.altPath ?? `${props.path}.alt`)
@@ -96,10 +123,71 @@ function useSample(event: Event) {
   ;(event.target as HTMLSelectElement).value = ''
 }
 function removeImage() {
+  uploadError.value = null
+  uploadStatus.value = ''
   model.value = { src: '', alt: '', focalPoint: null }
   // The remove button disappears; keep focus in the field.
   nextTick(() => document.getElementById(fieldId(srcKey.value, props.idScope))?.focus())
 }
+
+// --- Upload ---------------------------------------------------------------------------
+const fileInput = ref<HTMLInputElement | null>(null)
+const uploading = ref(false)
+const uploadError = ref<string | null>(null)
+const uploadStatus = ref('')
+/** Object URL of the file being uploaded (shown instead of the saved image meanwhile). */
+const localPreview = ref<string | null>(null)
+
+function setLocalPreview(file: File | null) {
+  if (localPreview.value && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(localPreview.value)
+  localPreview.value = file && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : null
+}
+onBeforeUnmount(() => setLocalPreview(null))
+
+function chooseFile() {
+  // aria-disabled (not disabled) while uploading, so focus stays on this button (WCAG 2.4.3).
+  if (uploading.value) return
+  fileInput.value?.click()
+}
+
+async function onFileChosen(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = '' // choosing the same file again still fires change
+  if (!file || uploading.value || !props.upload) return
+  uploadError.value = null
+  uploadStatus.value = ''
+  const problem = checkUploadFile(file)
+  if (problem) {
+    uploadError.value = t(problem === 'tooLarge' ? 'uploadTooLarge' : 'uploadWrongType')
+    return
+  }
+  const weddingId = store.record?.id
+  if (!weddingId) {
+    uploadError.value = t('uploadFailed')
+    return
+  }
+  uploading.value = true
+  uploadStatus.value = t('uploading')
+  setLocalPreview(file)
+  try {
+    const asset = await assetsApi.upload(weddingId, file, props.upload)
+    // Keep the couple's alt text and focal point; only the address changes.
+    model.value = { ...model.value, src: asset.src }
+    uploadStatus.value = t('uploadDone')
+  } catch (err) {
+    uploadStatus.value = ''
+    if (err instanceof ApiError && err.status === 413) uploadError.value = t('uploadTooLarge')
+    else if (err instanceof ApiError && (err.code === 'unsupported_image' || err.status === 415)) uploadError.value = t('uploadUnsupported')
+    else if (err instanceof ApiError && err.code === 'limit_reached') uploadError.value = t('uploadLimit')
+    else uploadError.value = t('uploadFailed')
+  } finally {
+    uploading.value = false
+    setLocalPreview(null)
+  }
+}
+
+const thumbSrc = computed(() => localPreview.value ?? (showThumb.value ? trimmed.value : null))
 
 const focalOpen = ref(!!model.value.focalPoint)
 const focalPanelId = `${uid}-focal`
@@ -124,13 +212,14 @@ watch(
         data-testid="image-thumb"
       >
         <img
-          v-if="showThumb && !loadError"
-          :src="trimmed"
-          :alt="model.alt || ''"
-          class="size-full object-cover"
-          :style="model.focalPoint ? { objectPosition: `${model.focalPoint.x}% ${model.focalPoint.y}%` } : undefined"
-          @error="loadError = true"
-          @load="loadError = false"
+          v-if="thumbSrc && (localPreview || !loadError)"
+          :src="thumbSrc"
+          :alt="localPreview ? '' : model.alt || ''"
+          :class="['size-full', fit === 'contain' ? 'object-contain' : 'object-cover', uploading && 'opacity-60']"
+          :style="fit === 'cover' && model.focalPoint ? { objectPosition: `${model.focalPoint.x}% ${model.focalPoint.y}%` } : undefined"
+          data-testid="image-thumb-img"
+          @error="!localPreview && (loadError = true)"
+          @load="!localPreview && (loadError = false)"
         />
         <p v-else-if="showThumb && loadError" class="px-3 text-center text-xs text-danger-600" role="status" data-testid="image-load-error">
           {{ t('imageLoadError') }}
@@ -139,6 +228,35 @@ watch(
       </div>
 
       <div class="min-w-0 flex-1 space-y-3">
+        <div v-if="upload" class="flex flex-wrap items-center gap-2">
+          <input
+            ref="fileInput"
+            type="file"
+            :accept="ACCEPT_ATTRIBUTE"
+            class="sr-only"
+            tabindex="-1"
+            aria-hidden="true"
+            data-testid="image-file-input"
+            @change="onFileChosen"
+          />
+          <button
+            type="button"
+            :class="[
+              'inline-flex min-h-11 items-center rounded-md border border-ink-500/85 bg-surface px-3 text-sm font-medium text-ink-700 hover:bg-rose-50 aria-disabled:cursor-wait aria-disabled:opacity-70 sm:min-h-9',
+              FOCUS_RING,
+            ]"
+            :aria-disabled="uploading || undefined"
+            :aria-busy="uploading || undefined"
+            :aria-describedby="uploadError ? `${uid}-upload-msg ${uid}-upload-error` : `${uid}-upload-msg`"
+            data-action="upload-image"
+            @click="chooseFile"
+          >
+            {{ uploading ? t('uploading') : trimmed !== '' ? t('replacePhoto') : t('uploadPhoto') }}
+          </button>
+          <span :id="`${uid}-upload-msg`" class="sr-only">{{ t('uploadWrongType') }}</span>
+          <span class="sr-only" role="status" data-testid="upload-status">{{ uploadStatus }}</span>
+        </div>
+        <p v-if="uploadError" :id="`${uid}-upload-error`" class="text-xs text-danger-600" role="alert" data-testid="upload-error">{{ uploadError }}</p>
         <TextField
           :id="fieldId(srcKey, idScope)"
           v-model="src"
@@ -150,7 +268,7 @@ watch(
           autocomplete="off"
         />
         <TextField
-          v-if="trimmed !== ''"
+          v-if="altField && trimmed !== ''"
           :id="fieldId(altKey, idScope)"
           v-model="alt"
           :label="t('altText')"
@@ -209,7 +327,14 @@ watch(
           </button>
           <div v-show="focalOpen" :id="focalPanelId" class="mt-2 rounded-md bg-canvas p-3">
             <p class="mb-2 text-xs text-ink-500">{{ t('focalPointHint') }}</p>
-            <div class="flex flex-wrap items-end gap-3" :id="fieldId(focalKey, idScope)" tabindex="-1">
+            <div
+              :id="fieldId(focalKey, idScope)"
+              class="flex flex-wrap items-end gap-3"
+              tabindex="-1"
+              role="group"
+              :aria-label="t('focalPoint')"
+              :aria-describedby="errors[focalKey] ? `${fieldId(focalKey, idScope)}-msg` : undefined"
+            >
               <label class="text-xs text-ink-700">
                 {{ t('focalX') }}
                 <input
@@ -219,6 +344,8 @@ watch(
                   step="1"
                   :class="['mt-1 block min-h-11 w-24 rounded-md border border-ink-500/85 bg-surface px-2 sm:min-h-9', FOCUS_RING]"
                   :value="model.focalPoint?.x ?? ''"
+                  :aria-invalid="errors[focalKey] ? true : undefined"
+                  :aria-describedby="errors[focalKey] ? `${fieldId(focalKey, idScope)}-msg` : undefined"
                   @input="setFocal('x', ($event.target as HTMLInputElement).value)"
                 />
               </label>
@@ -231,6 +358,8 @@ watch(
                   step="1"
                   :class="['mt-1 block min-h-11 w-24 rounded-md border border-ink-500/85 bg-surface px-2 sm:min-h-9', FOCUS_RING]"
                   :value="model.focalPoint?.y ?? ''"
+                  :aria-invalid="errors[focalKey] ? true : undefined"
+                  :aria-describedby="errors[focalKey] ? `${fieldId(focalKey, idScope)}-msg` : undefined"
                   @input="setFocal('y', ($event.target as HTMLInputElement).value)"
                 />
               </label>
@@ -243,7 +372,7 @@ watch(
                 {{ t('focalReset') }}
               </button>
             </div>
-            <p v-if="errors[focalKey]" class="mt-1 text-xs text-danger-600">{{ errors[focalKey] }}</p>
+            <p v-if="errors[focalKey]" :id="`${fieldId(focalKey, idScope)}-msg`" class="mt-1 text-xs text-danger-600">{{ errors[focalKey] }}</p>
           </div>
         </div>
       </div>

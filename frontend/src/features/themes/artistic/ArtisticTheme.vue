@@ -4,7 +4,11 @@
  * Asymmetric grids, oversized display type, collage-style images, one vivid
  * accent. Body text stays at comfortable sizes and contrast for readability.
  */
-import CountdownTimer from '../core/components/CountdownTimer.vue'
+import UniversalSection from '../core/components/UniversalSection.vue'
+import GuestGreeting from '../core/components/GuestGreeting.vue'
+import GreetingPrayer from '../core/components/GreetingPrayer.vue'
+import EventExtras from '../core/components/EventExtras.vue'
+import FamilyAcknowledgments from '../core/components/FamilyAcknowledgments.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -23,7 +27,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
 <template>
   <article class="t-art" :data-variant="config?.variant ?? 'gallery-bold'">
     <!-- Opening -->
-    <header class="art-hero">
+    <header data-section="opening" class="art-hero">
       <p class="art-hero__vertical" aria-hidden="true">{{ view.date.short }}</p>
       <h1 v-bind="heroHeading" class="art-hero__names">
         <span class="art-hero__first">{{ content.couple.groom.name.split(' ')[0] }}</span>
@@ -35,6 +39,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
         <div class="art-hero__photo"><ThemeImage :image="content.opening.coverImage" eager /></div>
       </div>
       <div class="art-hero__meta">
+        <GuestGreeting :content="content" />
         <p class="art-mono">{{ view.t.weddingOf }}</p>
         <p class="art-hero__date">{{ view.date.full }}</p>
         <svg class="art-squiggle" viewBox="0 0 160 20" aria-hidden="true">
@@ -43,19 +48,22 @@ const pad = (n: number) => String(n).padStart(2, '0')
       </div>
     </header>
 
-    <section class="art-section art-intro">
+    <UniversalSection section="holyRecite1" :content="content" class="art-section" />
+
+    <section v-if="view.greeting" data-section="greeting" class="art-section art-intro">
       <div class="art-intro__grid">
-        <h2 v-if="content.opening.headline" v-reveal class="art-statement">{{ content.opening.headline }}</h2>
+        <h2 v-if="view.greeting?.title" v-reveal class="art-statement">{{ view.greeting?.title }}</h2>
         <div v-reveal class="art-intro__aside">
           <p class="art-mono">{{ content.opening.weddingTitle }}</p>
-          <p v-if="content.opening.introduction" class="art-body art-body--large">{{ content.opening.introduction }}</p>
+          <p v-if="view.greeting?.message" class="art-body art-body--large">{{ view.greeting?.message }}</p>
+          <GreetingPrayer :prayer="view.greeting?.prayer" />
         </div>
       </div>
-      <CountdownTimer :content="content" />
     </section>
 
     <!-- Couple -->
-    <section class="art-section art-couple" aria-label="The couple">
+    <section data-section="couple" class="art-section art-couple" aria-label="The couple">
+      <h2 class="universal-visually-hidden">{{ view.t.couple }}</h2>
       <figure
         v-for="(person, i) in [content.couple.groom, content.couple.bride]"
         :key="i"
@@ -73,27 +81,10 @@ const pad = (n: number) => String(n).padStart(2, '0')
       </figure>
     </section>
 
-    <!-- Story -->
-    <section v-if="view.story" class="art-section art-story">
-      <header v-reveal class="art-heading">
-        <h2 class="art-title">{{ view.story.title }}</h2>
-        <p v-if="view.story.introduction" class="art-body">{{ view.story.introduction }}</p>
-      </header>
-      <ol class="art-chapters">
-        <li v-for="(entry, i) in view.story.timeline" :key="entry.id" v-reveal class="art-chapter">
-          <span class="art-chapter__num" aria-hidden="true">{{ pad(i + 1) }}</span>
-          <div v-if="entry.image" class="art-chapter__photo"><ThemeImage :image="entry.image" /></div>
-          <div class="art-chapter__text">
-            <p v-if="entry.date" class="art-mono art-accent">{{ entry.date }}</p>
-            <h3 class="art-chapter__title">{{ entry.title }}</h3>
-            <p class="art-body">{{ entry.description }}</p>
-          </div>
-        </li>
-      </ol>
-    </section>
-
     <!-- Events -->
-    <section class="art-section art-events">
+    <UniversalSection section="date" :content="content" class="art-section" />
+
+    <section data-section="events" class="art-section art-events">
       <header v-reveal class="art-heading">
         <p class="art-mono">{{ view.t.saveTheDate }}</p>
         <h2 class="art-title">{{ view.date.long }}</h2>
@@ -116,15 +107,33 @@ const pad = (n: number) => String(n).padStart(2, '0')
                 </dd>
               </div>
             </dl>
-            <p v-if="event.description" class="art-body">{{ event.description }}</p>
+            <p v-if="event.description" class="art-body">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
             <a class="art-link" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} ↗</a>
           </div>
         </div>
       </div>
     </section>
 
+    <section data-section="story" v-if="view.story" class="art-section art-story">
+      <header v-reveal class="art-heading">
+        <h2 class="art-title">{{ view.story.title }}</h2>
+        <p v-if="view.story.introduction" class="art-body">{{ view.story.introduction }}</p>
+      </header>
+      <ol class="art-chapters">
+        <li v-for="(entry, i) in view.story.timeline" :key="entry.id" v-reveal class="art-chapter">
+          <span class="art-chapter__num" aria-hidden="true">{{ pad(i + 1) }}</span>
+          <div v-if="entry.image" class="art-chapter__photo"><ThemeImage :image="entry.image" /></div>
+          <div class="art-chapter__text">
+            <p v-if="entry.date" class="art-mono art-accent">{{ entry.date }}</p>
+            <h3 class="art-chapter__title">{{ entry.title }}</h3>
+            <p class="art-body">{{ entry.description }}</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
     <!-- Gallery -->
-    <section v-if="view.gallery" class="art-section art-gallery">
+    <section data-section="gallery" v-if="view.gallery" class="art-section art-gallery">
       <header v-reveal class="art-heading">
         <h2 class="art-title">{{ view.gallery.title }}</h2>
         <p v-if="view.gallery.description" class="art-body">{{ view.gallery.description }}</p>
@@ -141,7 +150,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
     </section>
 
     <!-- RSVP -->
-    <section class="art-section art-rsvp">
+    <section v-if="content.rsvp.enabled" data-section="rsvp" class="art-section art-rsvp">
       <div class="art-rsvp__grid">
         <h2 v-reveal class="art-rsvp__big">{{ content.rsvp.title }}</h2>
         <div v-reveal class="art-rsvp__form">
@@ -152,11 +161,16 @@ const pad = (n: number) => String(n).padStart(2, '0')
     </section>
 
     <!-- Closing -->
-    <footer class="art-section art-closing">
+    <UniversalSection section="wishes" :content="content" class="art-section" />
+    <UniversalSection section="amplopDigital" :content="content" class="art-section" />
+    <UniversalSection section="holyRecite2" :content="content" class="art-section" />
+
+    <footer data-section="closing" class="art-section art-closing">
       <div v-if="content.closing.image" class="art-closing__photo"><ThemeImage :image="content.closing.image" /></div>
       <div v-reveal class="art-closing__text">
         <p class="art-statement art-statement--small">{{ content.closing.message }}</p>
         <p v-if="content.closing.thankYou" class="art-mono art-accent">{{ content.closing.thankYou }}</p>
+        <FamilyAcknowledgments :content="content" />
         <p class="art-closing__names">{{ content.opening.coupleNames }}</p>
       </div>
     </footer>

@@ -9,7 +9,7 @@ import { computed } from 'vue'
 import { labels, weddingStart } from '@/features/wedding/format'
 import type { WeddingContent } from '@/features/wedding/types'
 
-import { useCountdown } from '../composables/useCountdown'
+import { useCountdown, prefersReducedMotion } from '../composables/useCountdown'
 
 const props = defineProps<{ content: WeddingContent }>()
 
@@ -19,8 +19,10 @@ const units = computed(() => [
   { key: 'days', value: remaining.value.days, label: t.value.days },
   { key: 'hours', value: remaining.value.hours, label: t.value.hours },
   { key: 'minutes', value: remaining.value.minutes, label: t.value.minutes },
-  { key: 'seconds', value: remaining.value.seconds, label: t.value.seconds },
+  // No ticking seconds for visitors who prefer reduced motion (WCAG 2.2.2).
+  ...(reduceMotion ? [] : [{ key: 'seconds', value: remaining.value.seconds, label: t.value.seconds }]),
 ])
+const reduceMotion = prefersReducedMotion()
 </script>
 
 <template>

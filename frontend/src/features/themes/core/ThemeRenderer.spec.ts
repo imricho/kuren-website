@@ -48,6 +48,31 @@ describe('ThemeRenderer', () => {
     },
   )
 
+  it.each(['international', 'traditional', 'ethnic', 'conventional', 'artistic', 'minimalist', 'rustic', 'royal-maroon-v2'])(
+    'the %s renderer marks every section for the live editor to scroll to',
+    async (id) => {
+      const wrapper = await renderTheme(sampleWedding, id)
+      const keys = wrapper.findAll('[data-section]').map((el) => el.attributes('data-section'))
+      expect(keys).toEqual(['opening', 'greeting', 'couple', 'weddingDate', 'events', 'story', 'gallery', 'rsvp', 'closing'])
+    },
+  )
+
+  it('hidden story and gallery sections are not rendered (and have no scroll target)', async () => {
+    const { toPreviewContent, normalizeDraft } = await import('@/features/wedding/draft')
+    const draft = normalizeDraft({
+      ...JSON.parse(JSON.stringify(sampleWedding)),
+      story: { ...sampleWedding.story, enabled: false },
+      gallery: { ...sampleWedding.gallery, enabled: false },
+    } as never)
+    const content = toPreviewContent(draft, 'en').content
+    expect(content.story?.enabled).toBe(false)
+    expect(content.gallery?.enabled).toBe(false)
+    const wrapper = await renderTheme(content, 'royal-maroon-v2')
+    expect(wrapper.find('[data-section="story"]').exists()).toBe(false)
+    expect(wrapper.find('[data-section="gallery"]').exists()).toBe(false)
+    expect(wrapper.find('[data-section="events"]').exists()).toBe(true)
+  })
+
   it('renders the parents line under each partner when provided', async () => {
     const content = {
       ...sampleWedding,

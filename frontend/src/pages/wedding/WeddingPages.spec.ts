@@ -28,14 +28,22 @@ describe('editor layout', () => {
     expect(nav.get('a[aria-current="page"]').attributes('data-section')).toBe('events')
     // One compact list (chips on phones, a column on desktop) — no disclosure toggle.
     expect(nav.find('[data-testid="section-nav-toggle"]').exists()).toBe(false)
-    expect(nav.findAll('a[data-section]')).toHaveLength(9)
-    expect(nav.get('a[data-section="theme"]').attributes('href')).toBe('/themes')
-    // Markers only where meaningful: a check for complete, "Needs details" for required-but-incomplete, nothing for optional.
-    expect(nav.find('a[data-section="opening"] [data-status="complete"]').exists()).toBe(true)
+    // Five group tabs; the chips show only the current route's group (Events & Location → Events).
+    expect(nav.findAll('[role="tab"]').map((tab) => tab.attributes('data-group'))).toEqual(['wedding', 'events', 'moments', 'guests', 'finishing'])
+    expect(nav.get('[role="tab"][aria-selected="true"]').attributes('data-group')).toBe('events')
+    expect(nav.findAll('a[data-section]').map((a) => a.attributes('data-section'))).toEqual(['events'])
     expect(nav.get('a[data-section="events"] [data-status="needed"]').text()).toBe('Needs details')
+    // Our Wedding: markers only where meaningful (a check for complete, nothing for optional).
+    await nav.get('[data-group="wedding"]').trigger('click')
+    expect(nav.findAll('a[data-section]').map((a) => a.attributes('data-section'))).toEqual(['opening', 'holyRecite1', 'greeting', 'couple', 'weddingDate'])
+    expect(nav.find('a[data-section="opening"] [data-status="complete"]').exists()).toBe(true)
+    // Universal sections default off: "Hidden".
+    expect(nav.get('a[data-section="holyRecite1"] [data-status="hidden"]').text()).toBe('Hidden')
+    await nav.get('[data-group="moments"]').trigger('click')
     expect(nav.get('a[data-section="story"]').text()).toBe('Our story')
     expect(nav.find('[data-status="optional"]').exists()).toBe(false)
-    expect(wrapper.findAll('h1')).toHaveLength(1)
+    // One level-1 heading: the embedded preview announces the theme's hero <h1> as level 2.
+    expect(wrapper.findAll('h1').filter((el) => el.attributes('aria-level') === undefined)).toHaveLength(1)
   })
 
   it('shows a retry when loading fails', async () => {
@@ -60,10 +68,12 @@ describe('Opening page', () => {
     expect(form.findAll('[data-needed]').map((n) => n.text())).toContain('Needed before publishing')
     expect(form.text()).toContain('Language your guests see')
     expect(form.findAll('fieldset legend').map((l) => l.text())).toEqual(expect.arrayContaining(['The couple', 'The wedding', 'Cover photo']))
-    expect(form.get('[data-testid="save-bar"]').attributes('data-state')).toBe('clean')
+    // Autosave: no Save/Discard bar in the form.
+    expect(form.find('[data-testid="save-bar"]').exists()).toBe(false)
+    expect(useWeddingStore().saveState).toBe('saved')
   })
 
-  it('saves opening + couple names + language, then toasts', async () => {
+  it('saves opening + couple names + language on Enter (Save now), without a toast', async () => {
     const api = installFakeWeddingApi({ content: { couple: { groom: { name: 'Old', nickname: 'Dim' }, bride: {} } } })
     const { wrapper } = await mountApp('/wedding/opening')
     await wrapper.get('#f-couple-groom-name').setValue('Dimas Pratama')
@@ -71,8 +81,7 @@ describe('Opening page', () => {
     await wrapper.get('#f-weddingTitle').setValue('Pernikahan Dimas & Ayu')
     await wrapper.get('#f-weddingDate').setValue('2027-09-04')
     await wrapper.get('#f-locale').setValue('id')
-    expect(wrapper.get('[data-testid="save-bar"]').attributes('data-state')).toBe('dirty')
-    expect(wrapper.text()).toContain('Unsaved changes')
+    expect(useWeddingStore().saveState).toBe('unsaved')
     expect(wrapper.text()).toContain('Leave empty to show “Dim & Ayu”.')
 
     await wrapper.get('form').trigger('submit')
@@ -86,8 +95,8 @@ describe('Opening page', () => {
       bride: { name: 'Ayu Lestari' },
     })
     expect(api.callsTo('PATCH', '/weddings/w1')[0]!.body).toEqual({ locale: 'id' })
-    expect(wrapper.get('[data-testid="toast-status"]').text()).toContain('Opening saved')
-    expect(wrapper.get('[data-testid="save-bar"]').attributes('data-state')).toBe('clean')
+    expect(wrapper.get('[data-testid="toast-status"]').text()).toBe('')
+    expect(useWeddingStore().saveState).toBe('saved')
     expect(useWeddingStore().completeness.sections.opening.status).toBe('complete')
   })
 
@@ -133,29 +142,40 @@ describe('Opening page', () => {
     await wrapper.get('#f-weddingTitle').setValue('Our wedding')
     await wrapper.get('#f-couple-groom-name').setValue('Dimas')
     await wrapper.get('#f-locale').setValue('id')
-    api.failNext('PUT /weddings/w1/sections/couple', { status: 500, message: 'Server error.' })
+    // A non-transient failure (403) is not retried automatically: Failed, with a manual Retry.
+    api.failNext('PUT /weddings/w1/sections/couple', { status: 403, message: 'Nope.' })
     await wrapper.get('form').trigger('submit')
     await flushPromises()
-    expect(useWeddingStore().content!.opening.weddingTitle).toBe('Our wedding')
+    const store = useWeddingStore()
+    expect(store.content!.opening.weddingTitle).toBe('Our wedding')
     expect(api.callsTo('PATCH', '/weddings/w1')).toHaveLength(0) // stopped at the failure
-    expect(wrapper.get('[data-testid="toast-errors"]').text()).toContain(
-      'Opening details saved, but your names couldn’t be saved. Press Save again to retry.',
-    )
-    expect(wrapper.get('[data-testid="save-bar"]').attributes('data-state')).toBe('dirty')
+    expect(store.saveState).toBe('failed')
+    expect(store.isSectionDirty('opening')).toBe(true)
 
     // Retry: the opening is not sent again, only the names and the language.
-    await wrapper.get('form').trigger('submit')
+    await store.retry()
     await flushPromises()
     expect(api.callsTo('PUT', '/weddings/w1/sections/opening')).toHaveLength(1)
     expect(api.callsTo('PUT', '/weddings/w1/sections/couple')).toHaveLength(2)
     expect(api.callsTo('PATCH', '/weddings/w1')[0]!.body).toEqual({ locale: 'id' })
-    expect(wrapper.get('[data-testid="save-bar"]').attributes('data-state')).toBe('clean')
+    expect(store.saveState).toBe('saved')
   })
 
-  it('asks before leaving with unsaved changes', async () => {
-    installFakeWeddingApi()
+  it('saves pending edits when leaving; asks only if something could not be saved', async () => {
+    const api = installFakeWeddingApi()
     const { wrapper, router } = await mountApp('/wedding/opening')
+    // A valid edit is simply saved on the way out.
     await wrapper.get('#f-headline').setValue('Two hearts')
+    await router.push({ name: 'wedding-couple' })
+    await flushPromises()
+    expect(router.currentRoute.value.name).toBe('wedding-couple')
+    expect(wrapper.find('dialog[open]').exists()).toBe(false)
+    expect(api.state.content.opening.headline).toBe('Two hearts')
+
+    // An invalid edit can't be saved: ask.
+    await router.push({ name: 'wedding-opening' })
+    await flushPromises()
+    await wrapper.get('#f-weddingTitle').setValue('x'.repeat(121))
     void router.push({ name: 'wedding-couple' })
     await flushPromises()
     const dialog = wrapper.get('dialog')
@@ -163,6 +183,7 @@ describe('Opening page', () => {
     await dialog.get('[data-action="cancel"]').trigger('click')
     await flushPromises()
     expect(router.currentRoute.value.name).toBe('wedding-opening')
+    expect(document.activeElement?.id).toBe('f-weddingTitle') // the flush attempt pointed at the problem
 
     void router.push({ name: 'wedding-couple' })
     await flushPromises()
@@ -188,19 +209,15 @@ describe('section nav dirty badge', () => {
     expect(link().find('[data-testid="unsaved-badge"]').exists()).toBe(false)
   })
 
-  it('save state text is not a live region (the toast is the single announcement)', async () => {
-    installFakeWeddingApi()
+  it('Enter in a field saves right away, without a toast', async () => {
+    const api = installFakeWeddingApi()
     const { wrapper } = await mountApp('/wedding/closing')
     await wrapper.get('#f-message').setValue('Terima kasih')
-    expect(wrapper.get('[data-testid="save-state"]').attributes('role')).toBeUndefined()
-    expect(wrapper.get('[data-testid="save-bar"]').find('[role="status"], [aria-live]').exists()).toBe(false)
-    const save = wrapper.get('[data-testid="save-bar"] button[type="submit"]')
-    ;(save.element as HTMLButtonElement).focus()
     await wrapper.get('form').trigger('submit')
     await flushPromises()
-    expect(wrapper.get('[data-testid="toast-status"]').text()).toContain('Closing saved')
-    // Focus stays on the save button after saving.
-    expect(document.activeElement).toBe(wrapper.get('[data-testid="save-bar"] button[type="submit"]').element)
+    expect(api.callsTo('PUT', '/weddings/w1/sections/closing')).toHaveLength(1)
+    expect(wrapper.get('[data-testid="toast-status"]').text()).toBe('')
+    expect(useWeddingStore().saveState).toBe('saved')
   })
 })
 
@@ -386,7 +403,7 @@ describe('RSVP page', () => {
     const { wrapper } = await mountApp('/wedding/rsvp')
     const sw = wrapper.get('input[role="switch"]')
     expect((sw.element as HTMLInputElement).checked).toBe(true)
-    expect(wrapper.text()).toContain('Guests can’t reply online yet; this controls what your website shows.')
+    expect(wrapper.get('[data-testid="rsvp-offline-note"]').text()).toBe('Guests can’t reply online yet — your invitation shows the deadline and your message.')
     await wrapper.get('#f-deadline').setValue('2027-07-01')
     expect(wrapper.get('[data-testid="deadline-warning"]').text()).toContain('after your wedding date')
     await wrapper.get('#f-maxGuestsPerResponse').setValue('25')
@@ -407,7 +424,7 @@ describe('Wedding preview page', () => {
     expect(wrapper.get('.wedding-site').attributes('data-theme')).toBe('ethnic')
     expect(wrapper.text()).toContain('Dimas & Ayu')
     expect(wrapper.get('[data-testid="preview-theme-name"]').text()).toBe('Woven Indigo')
-    expect(wrapper.get('[data-testid="notice-saved"]').text()).toBe('Shows your saved content.')
+    expect(wrapper.get('[data-testid="notice-saved"]').text()).toBe('Shows your latest edits.')
     expect(wrapper.find('[data-testid="notice-no-theme"]').exists()).toBe(false)
     const placeholders = wrapper.get('[data-testid="notice-placeholders"]')
     expect(placeholders.findAll('a').map((a) => a.text())).toEqual(['Opening', 'Events', 'RSVP', 'Closing'])
@@ -431,7 +448,7 @@ describe('Wedding preview page', () => {
     expect(wrapper.get('[data-testid="back-to-editing"]').attributes('href')).toBe('/wedding')
   })
 
-  it('does not show unsaved edits', async () => {
+  it('shows in-progress edits (the same live content as the editor preview)', async () => {
     installFakeWeddingApi({ themeId: 'ethnic', content: { closing: { message: 'Saved closing words' } } })
     const { wrapper, router } = await mountApp('/wedding/closing')
     await wrapper.get('#f-message').setValue('Unsaved closing words')
@@ -439,7 +456,205 @@ describe('Wedding preview page', () => {
     await router.push({ name: 'wedding-preview' })
     await flushPromises()
     await vi.waitFor(() => expect(wrapper.find('.wedding-site > article').exists()).toBe(true))
-    expect(wrapper.text()).toContain('Saved closing words')
-    expect(wrapper.text()).not.toContain('Unsaved closing words')
+    expect(wrapper.get('.wedding-site').text()).toContain('Unsaved closing words')
+    expect(wrapper.get('.wedding-site').text()).not.toContain('Saved closing words')
+  })
+})
+
+// --- Live draft + autosave (Agent B) ------------------------------------------------
+
+describe('live draft: the preview follows the forms', () => {
+  it('typing on Opening updates livePreviewContent synchronously (title, names, language, cover image)', async () => {
+    installFakeWeddingApi({ content: { couple: { groom: { name: 'Dimas' }, bride: { name: 'Ayu' } } } })
+    const { wrapper } = await mountApp('/wedding/opening')
+    const store = useWeddingStore()
+    const title = wrapper.get('#f-weddingTitle').element as HTMLInputElement
+    title.value = 'Pernikahan Kami'
+    title.dispatchEvent(new Event('input'))
+    // No await: the live preview is computed from the working copy right away.
+    expect(store.livePreviewContent!.opening.weddingTitle).toBe('Pernikahan Kami')
+    expect(store.previewContent!.opening.weddingTitle).not.toBe('Pernikahan Kami')
+    expect(store.livePreviewMissing.some((m) => m.field === 'weddingTitle')).toBe(false)
+
+    await wrapper.get('#f-couple-bride-name').setValue('Ayu Lestari')
+    expect(store.livePreviewContent!.couple.bride.name).toBe('Ayu Lestari')
+    await wrapper.get('#f-weddingDate').setValue('2027-09-04')
+    expect(store.livePreviewContent!.opening.weddingDate).toBe('2027-09-04')
+    await wrapper.get('#f-locale').setValue('id')
+    expect(store.livePreviewContent!.locale).toBe('id')
+
+    await wrapper.get('#f-coverImage-src').setValue('https://example.com/cover.jpg')
+    await wrapper.get('#f-coverImage-alt').setValue('The two of us')
+    expect(store.livePreviewContent!.opening.coverImage).toEqual({ src: 'https://example.com/cover.jpg', alt: 'The two of us' })
+    await wrapper.get('#f-coverImage-src').setValue('javascript:alert(1)')
+    expect(store.livePreviewContent!.opening.coverImage).toBeUndefined()
+  })
+
+  it('event edits (date, venue) reflect in the preview; a new event shows once it has content', async () => {
+    installFakeWeddingApi({ content: { events: [{ id: 'a', type: 'akad', title: 'Akad', date: '2027-01-02' }] } })
+    const { wrapper } = await mountApp('/wedding/events')
+    const store = useWeddingStore()
+    await wrapper.get('[data-action="edit"]').trigger('click')
+    await wrapper.get('#ev-a-date').setValue('2027-03-04')
+    await wrapper.get('#ev-a-venueName').setValue('Masjid Raya')
+    expect(store.livePreviewContent!.events[0]).toMatchObject({ id: 'a', date: '2027-03-04', venueName: 'Masjid Raya' })
+    expect(store.content!.events[0]!.date).toBe('2027-01-02')
+    await wrapper.get('[data-action="done-item"]').trigger('click')
+    await flushPromises()
+    expect(store.content!.events[0]!.date).toBe('2027-03-04') // Done saved it
+
+    await wrapper.get('[data-action="add"]').trigger('click')
+    expect(store.livePreviewContent!.events).toHaveLength(1) // empty new form: not shown
+    await wrapper.get('[data-preset="reception"]').trigger('click')
+    expect(store.livePreviewContent!.events.map((e) => e.title)).toEqual(['Akad', 'Reception'])
+  })
+
+  it('hiding Our story / Gallery hides the section in the preview, keeps the content and autosaves it', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      const api = installFakeWeddingApi({
+        content: { story: { title: 'Kisah', timeline: [{ id: 's1', title: 'Met', description: 'At school' }] } },
+      })
+      const { wrapper, router } = await mountApp('/wedding/story')
+      const store = useWeddingStore()
+      expect(store.livePreviewContent!.story?.timeline).toHaveLength(1)
+      const sw = wrapper.get('#f-enabled')
+      expect(sw.attributes('role')).toBe('switch')
+      expect(wrapper.get('label[for="f-enabled"]').text()).toBe('Show on website')
+      expect((sw.element as HTMLInputElement).checked).toBe(true)
+      expect(wrapper.find('[data-testid="section-hidden-note"]').exists()).toBe(false)
+      await sw.setValue(false)
+      expect(store.livePreviewContent!.story?.enabled).toBe(false)
+      expect(wrapper.get('[data-testid="section-hidden-note"]').text()).toBe('Hidden from your invitation — your content is kept')
+      await vi.advanceTimersByTimeAsync(1000)
+      await flushPromises()
+      expect(api.callsTo('PUT', '/weddings/w1/sections/story')[0]!.body).toEqual({ title: 'Kisah', enabled: false })
+      expect(store.content!.story.timeline).toHaveLength(1)
+      expect(store.previewContent!.story?.enabled).toBe(false)
+
+      await router.push({ name: 'wedding-gallery' })
+      await flushPromises()
+      expect(store.livePreviewContent!.gallery).toBeDefined()
+      await wrapper.get('#f-enabled').setValue(false)
+      expect(store.livePreviewContent!.gallery?.enabled).toBe(false)
+      await vi.advanceTimersByTimeAsync(1000)
+      await flushPromises()
+      expect(api.callsTo('PUT', '/weddings/w1/sections/gallery')[0]!.body).toEqual({ enabled: false })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
+describe('autosave on the pages', () => {
+  beforeEach(() => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }))
+  afterEach(() => vi.useRealTimers())
+
+  it('saves a section once after 1000 ms idle, with If-Match, and no toast', async () => {
+    const api = installFakeWeddingApi({ revision: 3 })
+    const { wrapper } = await mountApp('/wedding/closing')
+    const store = useWeddingStore()
+    await wrapper.get('#f-message').setValue('Terima')
+    await vi.advanceTimersByTimeAsync(500)
+    await wrapper.get('#f-message').setValue('Terima kasih')
+    expect(store.saveState).toBe('unsaved')
+    await vi.advanceTimersByTimeAsync(1000)
+    await flushPromises()
+    const puts = api.callsTo('PUT', '/weddings/w1/sections/closing')
+    expect(puts).toEqual([{ method: 'PUT', path: '/weddings/w1/sections/closing', body: { message: 'Terima kasih' }, ifMatch: '"3"' }])
+    expect(store.saveState).toBe('saved')
+    expect(store.isSectionDirty('closing')).toBe(false)
+    expect(wrapper.get('[data-testid="toast-status"]').text()).toBe('')
+  })
+
+  it('autosaves an open item editor; Done flushes and closes it', async () => {
+    const api = installFakeWeddingApi({ content: { events: [{ id: 'a', type: 'akad', title: 'Akad' }] } })
+    const { wrapper } = await mountApp('/wedding/events')
+    await wrapper.get('[data-action="edit"]').trigger('click')
+    await wrapper.get('#ev-a-venueName').setValue('Masjid Raya')
+    await vi.advanceTimersByTimeAsync(1000)
+    await flushPromises()
+    expect(api.callsTo('PUT', '/weddings/w1/events/a')[0]).toMatchObject({ body: { type: 'akad', title: 'Akad', venueName: 'Masjid Raya' }, ifMatch: '"1"' })
+    await wrapper.get('#ev-a-address').setValue('Jl. Merdeka 1')
+    await wrapper.get('[data-action="done-item"]').trigger('click')
+    await flushPromises()
+    expect(api.callsTo('PUT', '/weddings/w1/events/a')).toHaveLength(2)
+    expect(wrapper.find('[data-testid="event-editor"]').exists()).toBe(false)
+    // Closing the editor by its toggle also saves first.
+    await wrapper.get('[data-action="edit"]').trigger('click')
+    await wrapper.get('#ev-a-description').setValue('Dress code: batik')
+    await wrapper.get('[data-action="edit"]').trigger('click')
+    await flushPromises()
+    expect(api.callsTo('PUT', '/weddings/w1/events/a')).toHaveLength(3)
+    expect(wrapper.find('[data-testid="event-editor"]').exists()).toBe(false)
+  })
+
+  it('a new item is never autosaved, and a double Add creates exactly one record', async () => {
+    const api = installFakeWeddingApi()
+    const { wrapper } = await mountApp('/wedding/events')
+    await wrapper.get('[data-action="add"]').trigger('click')
+    await wrapper.get('#ev-new-title').setValue('Resepsi')
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(api.callsTo('POST', '/weddings/w1/events')).toHaveLength(0)
+    const editor = wrapper.get('[data-testid="event-editor"]')
+    api.holdResponses()
+    await editor.trigger('submit')
+    await editor.trigger('submit')
+    await wrapper.get('[data-action="save-item"]').trigger('click')
+    api.release()
+    await flushPromises()
+    expect(api.callsTo('POST', '/weddings/w1/events')).toHaveLength(1)
+    expect(api.callsTo('POST', '/weddings/w1/events')[0]!.ifMatch).toBe('"1"')
+    expect(api.state.content.events).toHaveLength(1)
+    const store = useWeddingStore()
+    expect(store.items('events')).toHaveLength(1)
+    expect(store.livePreviewContent!.events.map((e) => e.title)).toEqual(['Resepsi']) // no temporary duplicate
+    expect(wrapper.get('[data-testid="toast-status"]').text()).toContain('“Resepsi” added')
+  })
+
+  it('reorder and delete stay explicit and send If-Match', async () => {
+    const api = installFakeWeddingApi({ content: { events: [{ id: 'a', type: 'akad', title: 'Akad' }, { id: 'b', type: 'reception', title: 'Resepsi' }] } })
+    const { wrapper } = await mountApp('/wedding/events')
+    await wrapper.get('[data-reorder="b-up"]').trigger('click')
+    await flushPromises()
+    expect(api.callsTo('PUT', '/weddings/w1/events/order')[0]!.ifMatch).toBe('"1"')
+    await wrapper.findAll('[data-action="delete"]')[0]!.trigger('click')
+    await flushPromises()
+    await wrapper.get('dialog [data-action="confirm"]').trigger('click')
+    await flushPromises()
+    expect(api.callsTo('DELETE', '/weddings/w1/events/b')[0]!.ifMatch).toBe('"2"')
+    expect(useWeddingStore().revision).toBe(3)
+  })
+
+  it('a 404 (item gone / not yours) is Failed without retries, and the edits are kept', async () => {
+    const api = installFakeWeddingApi({ content: { events: [{ id: 'a', type: 'akad', title: 'Akad' }] } })
+    const { wrapper } = await mountApp('/wedding/events')
+    await wrapper.get('[data-action="edit"]').trigger('click')
+    api.failNext('PUT /weddings/w1/events/a', { status: 404, code: 'not_found' })
+    await wrapper.get('#ev-a-venueName').setValue('Gedung')
+    await vi.advanceTimersByTimeAsync(1000)
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(api.callsTo('PUT', '/weddings/w1/events/a')).toHaveLength(1)
+    expect(useWeddingStore().saveState).toBe('failed')
+    expect((wrapper.get('#ev-a-venueName').element as HTMLInputElement).value).toBe('Gedung')
+  })
+
+  it('a conflict on a page keeps the edits and stops autosaving until resolved', async () => {
+    const api = installFakeWeddingApi({ content: { closing: { message: 'Old' } } })
+    const { wrapper } = await mountApp('/wedding/closing')
+    const store = useWeddingStore()
+    api.editElsewhere((c) => (c.closing = { message: 'From the laptop' }))
+    await wrapper.get('#f-message').setValue('From the phone')
+    await vi.advanceTimersByTimeAsync(1000)
+    await flushPromises()
+    expect(store.saveState).toBe('conflict')
+    await wrapper.get('#f-thankYou').setValue('Thanks!')
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(api.callsTo('PUT', '/weddings/w1/sections/closing')).toHaveLength(1)
+    await store.keepMine({ confirm: false })
+    await flushPromises()
+    expect(api.state.content.closing).toEqual({ message: 'From the phone', thankYou: 'Thanks!' })
+    expect(store.saveState).toBe('saved')
   })
 })

@@ -137,14 +137,18 @@ def _validate_instagram_url(value: str | None) -> str | None:
     return value
 
 
-# Same-origin images are only allowed from the bundled sample assets, so a src can
-# never point at an arbitrary same-origin path such as an API endpoint.
+# Same-origin images are only allowed from the bundled sample assets or uploaded media,
+# so a src can never point at an arbitrary same-origin path such as an API endpoint.
 _SAME_ORIGIN_IMAGE = re.compile(r"/sample-wedding/[A-Za-z0-9_.-]+")
-_IMAGE_SRC_ERROR = "must be an http(s) URL or a path under /sample-wedding/"
+#: An uploaded asset: `/media/<lowercase uuid>.<ext>` (see media_service).
+MEDIA_SRC = re.compile(r"/media/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.(jpg|png|webp)")
+_IMAGE_SRC_ERROR = "must be an http(s) URL, an uploaded /media/ image or a path under /sample-wedding/"
 
 
 def _validate_image_src(value: str) -> str:
     if value.startswith("/") and not value.startswith("//"):
+        if MEDIA_SRC.fullmatch(value):
+            return value
         if not _SAME_ORIGIN_IMAGE.fullmatch(value) or ".." in value:
             raise ValueError(_IMAGE_SRC_ERROR)
         return value
@@ -154,6 +158,43 @@ def _validate_image_src(value: str) -> str:
         raise ValueError(_IMAGE_SRC_ERROR) from None
 
 
+def _pattern(regex: str, message: str) -> Any:
+    compiled = re.compile(regex)
+
+    def check(value: str | None) -> str | None:
+        if value is not None and not compiled.fullmatch(value):
+            raise ValueError(message)
+        return value
+
+    return check
+
+
+# Digits with optional single spaces/hyphens. Rejects letters and invisible
+# bidi/control characters that could visually reorder a number.
+AccountNumber = Annotated[
+    str,
+    StringConstraints(min_length=1, max_length=40, strict=True),
+    AfterValidator(_pattern(r"[0-9]+(?:[ -][0-9]+)*", "use digits only (spaces or hyphens allowed)")),
+]
+PhoneNumber = Annotated[
+    str | None,
+    BeforeValidator(_blank_to_none),
+    AfterValidator(_pattern(r"\+?[0-9]+(?:[ -][0-9]+)*", "use digits, spaces, hyphens and an optional leading +")),
+    Field(default=None, max_length=30),
+]
+# Language of a text block (BCP 47 subset, e.g. "ar", "id", "zh-Hant"), used for `lang=`.
+LangTag = Annotated[
+    str | None,
+    BeforeValidator(_blank_to_none),
+    AfterValidator(_pattern(r"[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*", "must be a language code such as ar, id or en")),
+    Field(default=None, max_length=35),
+]
+HttpsUrl = Annotated[
+    str | None,
+    BeforeValidator(_blank_to_none),
+    AfterValidator(lambda v: None if v is None else _check_http_url(v, https_only=True)),
+    Field(default=None),
+]
 MapsUrl = Annotated[str | None, BeforeValidator(_blank_to_none), AfterValidator(_validate_http_url), Field(default=None)]
 InstagramUrl = Annotated[
     str | None, BeforeValidator(_blank_to_none), AfterValidator(_validate_instagram_url), Field(default=None)
@@ -226,6 +267,15 @@ class WeddingUpdate(RequestModel):
         return value
 
 
+class PublicationSummary(ResponseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
+
+    published_at: datetime
+    #: Content revision that was published.
+    revision: int
+    theme_id: str
+
+
 class WeddingRead(ResponseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
@@ -234,8 +284,32 @@ class WeddingRead(ResponseModel):
     locale: Locale
     status: Literal["draft", "published"]
     published_at: datetime | None
+    #: Content revision; send it back as `If-Match: "<revision>"` on content writes.
+    revision: int
+    #: Public URL slug (assigned on first publish, then stable); null before.
+    slug: str | None
+    #: Published, and the draft content revision or theme differs from the live snapshot.
+    has_unpublished_changes: bool
+    #: The live publication, or null when not published.
+    publication: PublicationSummary | None
     created_at: datetime
     updated_at: datetime
+
+
+class PublicWeddingOut(ResponseModel):
+    theme_id: str
+    locale: Locale
+    #: The allow-listed snapshot, in draft shape.
+    content: dict[str, Any]
+    published_at: datetime
+
+
+class AssetOut(ResponseModel):
+    id: uuid.UUID
+    src: str
+    width: int
+    height: int
+    kind: Literal["image", "qris"]
 
 
 # --- Sections ---------------------------------------------------------------------------
@@ -245,6 +319,13 @@ def _none_to_empty(value: Any) -> Any:
     return {} if value is None else value
 
 
+class GuestGreeting(RequestModel):
+    """Opening line for a named guest, e.g. "Kepada Yth." + the `?to=` name in the link."""
+
+    enabled: bool = Field(default=False, strict=True)
+    label: Str120
+
+
 class OpeningSection(RequestModel):
     wedding_title: Str120
     couple_names: Str120
@@ -252,6 +333,7 @@ class OpeningSection(RequestModel):
     introduction: Str2000
     cover_image: ImageAsset | None = None
     wedding_date: OptDate
+    guest_greeting: GuestGreeting | None = None
 
 
 class PersonDraft(RequestModel):
@@ -271,14 +353,20 @@ class CoupleSection(RequestModel):
     bride: PersonField = Field(default_factory=PersonDraft)
 
 
+_ShowFlag = Annotated[bool, BeforeValidator(lambda v: True if v is None else v), Field(strict=True)]
+
+
 class StoryMeta(RequestModel):
     title: Str120
     introduction: Str2000
+    #: "Show on website". Optional sections can be hidden without losing their content.
+    enabled: _ShowFlag = True
 
 
 class GalleryMeta(RequestModel):
     title: Str120
     description: Str2000
+    enabled: _ShowFlag = True
 
 
 class RsvpSection(RequestModel):
@@ -294,6 +382,8 @@ class ClosingSection(RequestModel):
     message: Str2000
     thank_you: Str200
     image: ImageAsset | None = None
+    #: "Turut mengundang" — family acknowledgments, line breaks preserved.
+    family_acknowledgments: Str2000
 
 
 SECTION_MODELS: dict[str, type[RequestModel]] = {
@@ -315,6 +405,17 @@ class StoryEntryIn(RequestModel):
     image: ImageAsset | None = None
 
 
+class DressCode(RequestModel):
+    enabled: bool = Field(default=False, strict=True)
+    text: Str200
+
+
+class Livestream(RequestModel):
+    enabled: bool = Field(default=False, strict=True)
+    url: HttpsUrl
+    label: Str120
+
+
 class EventIn(RequestModel):
     type: Annotated[EventType, BeforeValidator(lambda v: "other" if v is None else v)] = "other"
     title: Str120
@@ -325,6 +426,8 @@ class EventIn(RequestModel):
     address: Str500
     maps_url: MapsUrl
     description: Str2000
+    dress_code: DressCode | None = None
+    livestream: Livestream | None = None
 
     @field_validator("end_time")
     @classmethod
@@ -372,7 +475,100 @@ class GalleryContentIn(GalleryMeta):
     images: list[GalleryItemWithId] = Field(max_length=200)
 
 
+class OptionalSection(RequestModel):
+    enabled: bool = Field(default=False, strict=True)
+
+
+class HolyReciteSection(OptionalSection):
+    """Sacred text exactly as the couple entered it (never rewritten or invented)."""
+
+    title: Str120
+    tradition: Str120
+    book: Str120
+    reference: Str200
+    passage: Str2000
+    original_script: Str2000
+    original_language: LangTag
+    translation: Str2000
+    translation_language: LangTag
+    attribution: Str200
+
+
+class MessageSection(OptionalSection):
+    title: Str120
+    message: Str2000
+
+
+class GreetingSection(MessageSection):
+    prayer: Str2000
+
+
+class CountdownSection(OptionalSection):
+    """Wedding Date & Countdown options; the date itself lives in `opening.weddingDate`."""
+
+    add_to_calendar: bool = Field(default=False, strict=True)
+
+
+class WishesSection(OptionalSection):
+    title: Str120
+    introduction: Str2000
+
+
+class BankAccount(RequestModel):
+    id: Annotated[str | None, StringConstraints(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")] = None
+    bank_name: Annotated[str, StringConstraints(min_length=1, max_length=120)]
+    account_holder: Annotated[str, StringConstraints(min_length=1, max_length=120)]
+    # Never coerce numbers: leading zeroes are meaningful account data.
+    account_number: AccountNumber
+
+
+class PhysicalGifts(OptionalSection):
+    recipient: Str120
+    address: Str500
+    note: Str500
+    phone: PhoneNumber
+
+
+class AmplopDigitalSection(MessageSection):
+    bank_accounts_enabled: bool = Field(default=False, strict=True)
+    bank_accounts: list[BankAccount] = Field(default_factory=list, max_length=20)
+    qris_enabled: bool = Field(default=False, strict=True)
+    qris_image: ImageAsset | None = None
+    physical_gifts: PhysicalGifts | None = None
+
+    @field_validator("bank_accounts")
+    @classmethod
+    def _unique_account_ids(cls, accounts: list[BankAccount]) -> list[BankAccount]:
+        ids = [a.id for a in accounts if a.id is not None]
+        if len(ids) != len(set(ids)):
+            raise ValueError("bank account ids must be unique")
+        return accounts
+
+
+UNIVERSAL_FIELDS = (
+    "content_version", "holy_recite1", "holy_recite2", "greeting", "countdown", "wishes", "amplop_digital",
+)
+
+
+#: Universal (v1.1+) sections stored in `weddings.universal_content`, keyed by camelCase id.
+UNIVERSAL_SECTION_MODELS: dict[str, type[RequestModel]] = {
+    "holyRecite1": HolyReciteSection,
+    "holyRecite2": HolyReciteSection,
+    "greeting": GreetingSection,
+    "countdown": CountdownSection,
+    "wishes": WishesSection,
+    "amplopDigital": AmplopDigitalSection,
+}
+
+
 class WeddingDraftIn(RequestModel):
+    content_version: Literal["1.1", "1.2"] | None = None
+    holy_recite1: HolyReciteSection | None = None
+    holy_recite2: HolyReciteSection | None = None
+    greeting: GreetingSection | None = None
+    countdown: CountdownSection | None = None
+    wishes: WishesSection | None = None
+    amplop_digital: AmplopDigitalSection | None = None
     schema_version: Literal[1] | None = None
     locale: Locale | None = None
     opening: OpeningSection
@@ -398,6 +594,11 @@ class ImageAssetOut(ResponseModel):
     focal_point: FocalPointOut | None = None
 
 
+class GuestGreetingOut(ResponseModel):
+    enabled: bool = False
+    label: str | None = None
+
+
 class OpeningOut(ResponseModel):
     wedding_title: str | None = None
     couple_names: str | None = None
@@ -405,6 +606,7 @@ class OpeningOut(ResponseModel):
     introduction: str | None = None
     cover_image: ImageAssetOut | None = None
     wedding_date: str | None = None
+    guest_greeting: GuestGreetingOut | None = None
 
 
 class PersonOut(ResponseModel):
@@ -424,11 +626,13 @@ class CoupleOut(ResponseModel):
 class StoryMetaOut(ResponseModel):
     title: str | None = None
     introduction: str | None = None
+    enabled: bool = True
 
 
 class GalleryMetaOut(ResponseModel):
     title: str | None = None
     description: str | None = None
+    enabled: bool = True
 
 
 class RsvpOut(ResponseModel):
@@ -444,6 +648,7 @@ class ClosingOut(ResponseModel):
     message: str | None = None
     thank_you: str | None = None
     image: ImageAssetOut | None = None
+    family_acknowledgments: str | None = None
 
 
 class StoryEntryOut(ResponseModel):
@@ -452,6 +657,17 @@ class StoryEntryOut(ResponseModel):
     date: str | None = None
     description: str | None = None
     image: ImageAssetOut | None = None
+
+
+class DressCodeOut(ResponseModel):
+    enabled: bool = False
+    text: str | None = None
+
+
+class LivestreamOut(ResponseModel):
+    enabled: bool = False
+    url: str | None = None
+    label: str | None = None
 
 
 class EventOut(ResponseModel):
@@ -465,6 +681,8 @@ class EventOut(ResponseModel):
     address: str | None = None
     maps_url: str | None = None
     description: str | None = None
+    dress_code: DressCodeOut | None = None
+    livestream: LivestreamOut | None = None
 
 
 class GalleryItemOut(ResponseModel):
@@ -483,7 +701,80 @@ class GalleryOut(GalleryMetaOut):
     images: list[GalleryItemOut]
 
 
+class OptionalSectionOut(ResponseModel):
+    enabled: bool = False
+
+
+class HolyReciteOut(OptionalSectionOut):
+    title: str | None = None
+    tradition: str | None = None
+    book: str | None = None
+    reference: str | None = None
+    passage: str | None = None
+    original_script: str | None = None
+    original_language: str | None = None
+    translation: str | None = None
+    translation_language: str | None = None
+    attribution: str | None = None
+
+
+class GreetingOut(OptionalSectionOut):
+    title: str | None = None
+    message: str | None = None
+    prayer: str | None = None
+
+
+class CountdownOut(OptionalSectionOut):
+    add_to_calendar: bool = False
+
+
+class WishesOut(OptionalSectionOut):
+    title: str | None = None
+    introduction: str | None = None
+
+
+class BankAccountOut(ResponseModel):
+    id: str | None = None
+    bank_name: str
+    account_holder: str
+    account_number: str
+
+
+class PhysicalGiftsOut(OptionalSectionOut):
+    recipient: str | None = None
+    address: str | None = None
+    note: str | None = None
+    phone: str | None = None
+
+
+class AmplopDigitalOut(OptionalSectionOut):
+    title: str | None = None
+    message: str | None = None
+    bank_accounts_enabled: bool = False
+    bank_accounts: list[BankAccountOut] = Field(default_factory=list)
+    qris_enabled: bool = False
+    qris_image: ImageAssetOut | None = None
+    physical_gifts: PhysicalGiftsOut | None = None
+
+
+UNIVERSAL_SECTION_OUT_MODELS: dict[str, type[ResponseModel]] = {
+    "holyRecite1": HolyReciteOut,
+    "holyRecite2": HolyReciteOut,
+    "greeting": GreetingOut,
+    "countdown": CountdownOut,
+    "wishes": WishesOut,
+    "amplopDigital": AmplopDigitalOut,
+}
+
+
 class WeddingDraftOut(ResponseModel):
+    content_version: Literal["1.1", "1.2"] | None = None
+    holy_recite1: HolyReciteOut | None = None
+    holy_recite2: HolyReciteOut | None = None
+    greeting: GreetingOut | None = None
+    countdown: CountdownOut | None = None
+    wishes: WishesOut | None = None
+    amplop_digital: AmplopDigitalOut | None = None
     schema_version: Literal[1]
     locale: Locale
     opening: OpeningOut

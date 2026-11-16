@@ -97,3 +97,20 @@ def other_client(client: TestClient) -> Iterator[TestClient]:
     with TestClient(app, base_url="http://testserver") as second:
         _register_and_login(second, "couple-b@example.com", "Couple B")
         yield second
+
+
+@pytest.fixture(autouse=True)
+def media_root(tmp_path, monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-untyped-def]
+    """Uploads go to a per-test directory, never the real media volume."""
+    root = tmp_path / "media"
+    monkeypatch.setattr(settings, "media_root", str(root))
+    return root
+
+
+@pytest.fixture(autouse=True)
+def _reset_public_rate_limit() -> Iterator[None]:
+    from app.core.rate_limit import public_limiter
+
+    public_limiter.reset()
+    yield
+    public_limiter.reset()

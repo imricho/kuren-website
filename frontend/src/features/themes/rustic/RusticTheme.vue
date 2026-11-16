@@ -1,6 +1,10 @@
 <script setup lang="ts">
 /** Field Notes: a garden-led invitation with organic pacing and original botanical linework. */
-import CountdownTimer from '../core/components/CountdownTimer.vue'
+import UniversalSection from '../core/components/UniversalSection.vue'
+import GuestGreeting from '../core/components/GuestGreeting.vue'
+import GreetingPrayer from '../core/components/GreetingPrayer.vue'
+import EventExtras from '../core/components/EventExtras.vue'
+import FamilyAcknowledgments from '../core/components/FamilyAcknowledgments.vue'
 import RsvpPreview from '../core/components/RsvpPreview.vue'
 import ThemeImage from '../core/components/ThemeImage.vue'
 import { useWeddingView } from '../core/composables/useWeddingView'
@@ -16,12 +20,13 @@ const view = useWeddingView(props)
 
 <template>
   <article class="t-rustic" :data-variant="config?.variant ?? 'field-notes'">
-    <header class="rn-hero" :class="{ 'rn-hero--photo': content.opening.coverImage }">
+    <header data-section="opening" class="rn-hero" :class="{ 'rn-hero--photo': content.opening.coverImage }">
       <div v-if="content.opening.coverImage" class="rn-hero__photo"><ThemeImage :image="content.opening.coverImage" eager /></div>
       <div v-else class="rn-hero__landscape" aria-hidden="true"><span /><span /><span /></div>
       <div class="rn-hero__veil" aria-hidden="true" />
       <div class="rn-hero__topline"><span>FIELD NOTES</span><span>{{ view.date.short }}</span></div>
       <div class="rn-hero__copy">
+        <GuestGreeting :content="content" />
         <p class="rn-kicker">{{ view.t.weddingOf }}</p>
         <h1 v-bind="heroHeading"><span>{{ content.couple.groom.name.split(' ')[0] }}</span><i>&amp;</i><span>{{ content.couple.bride.name.split(' ')[0] }}</span></h1>
         <p class="rn-hero__date">{{ view.date.full }}</p>
@@ -33,16 +38,19 @@ const view = useWeddingView(props)
       <div class="rn-hero__bottomline"><span>{{ content.opening.coupleNames }}</span><span>TOGETHER, IN EVERY SEASON</span></div>
     </header>
 
-    <section class="rn-section rn-intro">
+    <UniversalSection section="holyRecite1" :content="content" class="rn-section" />
+
+    <section v-if="view.greeting" data-section="greeting" class="rn-section rn-intro">
       <div v-reveal class="rn-intro__copy">
         <p class="rn-kicker">{{ content.opening.weddingTitle }}</p>
-        <h2 v-if="content.opening.headline">{{ content.opening.headline }}</h2>
-        <p v-if="content.opening.introduction" class="rn-body">{{ content.opening.introduction }}</p>
+        <h2 v-if="view.greeting?.title">{{ view.greeting?.title }}</h2>
+        <p v-if="view.greeting?.message" class="rn-body">{{ view.greeting?.message }}</p>
+        <GreetingPrayer :prayer="view.greeting?.prayer" />
       </div>
-      <CountdownTimer :content="content" />
     </section>
 
-    <section class="rn-section rn-couple" aria-label="The couple">
+    <section data-section="couple" class="rn-section rn-couple" aria-label="The couple">
+      <h2 class="universal-visually-hidden">{{ view.t.couple }}</h2>
       <div class="rn-section-heading" v-reveal>
         <p class="rn-kicker">THE PEOPLE WE CELEBRATE</p>
         <h2>A gathering of two stories</h2>
@@ -60,7 +68,31 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section v-if="view.story" class="rn-section rn-story">
+    <UniversalSection section="date" :content="content" class="rn-section" />
+
+    <section data-section="events" class="rn-section rn-events">
+      <header v-reveal class="rn-section-heading">
+        <p class="rn-kicker">{{ view.t.saveTheDate }}</p>
+        <h2>{{ view.date.long }}</h2>
+        <p class="rn-body">A day to gather, linger and celebrate.</p>
+      </header>
+      <div class="rn-events__list">
+        <article v-for="(event, i) in view.events" :key="event.id" v-reveal class="rn-event">
+          <div class="rn-event__date"><span>{{ event.dateParts.dayPadded }}</span><small>{{ event.dateParts.monthShort }}</small></div>
+          <div class="rn-event__details">
+            <p class="rn-kicker">{{ event.typeLabel }} · {{ event.timeText }}</p>
+            <h3>{{ event.title }}</h3>
+            <p class="rn-event__venue">{{ event.venueName }}</p>
+            <p class="rn-body">{{ event.address }}</p>
+            <p v-if="event.description" class="rn-body">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
+            <a class="rn-link" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} <span aria-hidden="true">↗</span></a>
+          </div>
+          <span class="rn-event__index" aria-hidden="true">0{{ i + 1 }}</span>
+        </article>
+      </div>
+    </section>
+
+    <section data-section="story" v-if="view.story" class="rn-section rn-story">
       <header v-reveal class="rn-section-heading rn-section-heading--center">
         <p class="rn-kicker">CHAPTERS ALONG THE WAY</p>
         <h2>{{ view.story.title }}</h2>
@@ -79,29 +111,7 @@ const view = useWeddingView(props)
       </ol>
     </section>
 
-    <section class="rn-section rn-events">
-      <header v-reveal class="rn-section-heading">
-        <p class="rn-kicker">{{ view.t.saveTheDate }}</p>
-        <h2>{{ view.date.long }}</h2>
-        <p class="rn-body">A day to gather, linger and celebrate.</p>
-      </header>
-      <div class="rn-events__list">
-        <article v-for="(event, i) in view.events" :key="event.id" v-reveal class="rn-event">
-          <div class="rn-event__date"><span>{{ event.dateParts.dayPadded }}</span><small>{{ event.dateParts.monthShort }}</small></div>
-          <div class="rn-event__details">
-            <p class="rn-kicker">{{ event.typeLabel }} · {{ event.timeText }}</p>
-            <h3>{{ event.title }}</h3>
-            <p class="rn-event__venue">{{ event.venueName }}</p>
-            <p class="rn-body">{{ event.address }}</p>
-            <p v-if="event.description" class="rn-body">{{ event.description }}</p>
-            <a class="rn-link" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} <span aria-hidden="true">↗</span></a>
-          </div>
-          <span class="rn-event__index" aria-hidden="true">0{{ i + 1 }}</span>
-        </article>
-      </div>
-    </section>
-
-    <section v-if="view.gallery" class="rn-section rn-gallery">
+    <section data-section="gallery" v-if="view.gallery" class="rn-section rn-gallery">
       <header v-reveal class="rn-section-heading">
         <p class="rn-kicker">LITTLE THINGS, KEPT CLOSE</p>
         <h2>{{ view.gallery.title }}</h2>
@@ -115,7 +125,7 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <section class="rn-section rn-rsvp">
+    <section v-if="content.rsvp.enabled" data-section="rsvp" class="rn-section rn-rsvp">
       <div class="rn-rsvp__ornament" aria-hidden="true">
         <svg viewBox="0 0 200 200" focusable="false"><path d="M20 180 C70 144 71 87 120 28 M61 132 C38 124 32 103 45 91 C63 103 68 116 61 132ZM85 96 C65 83 66 61 82 52 C99 65 98 83 85 96ZM113 58 C103 37 116 20 135 18 C143 36 133 53 113 58ZM78 111 C99 115 110 132 101 148 C82 145 73 128 78 111Z" fill="none" stroke="currentColor" stroke-width="1.3" /></svg>
       </div>
@@ -127,12 +137,17 @@ const view = useWeddingView(props)
       </div>
     </section>
 
-    <footer class="rn-closing">
+    <UniversalSection section="wishes" :content="content" class="rn-section" />
+    <UniversalSection section="amplopDigital" :content="content" class="rn-section" />
+    <UniversalSection section="holyRecite2" :content="content" class="rn-section" />
+
+    <footer data-section="closing" class="rn-closing">
       <div v-if="content.closing.image" class="rn-closing__photo"><ThemeImage :image="content.closing.image" /></div>
       <div v-reveal class="rn-closing__copy">
         <p class="rn-kicker">{{ view.date.short }}</p>
         <p class="rn-closing__message">{{ content.closing.message }}</p>
         <p v-if="content.closing.thankYou" class="rn-closing__thanks">{{ content.closing.thankYou }}</p>
+        <FamilyAcknowledgments :content="content" />
         <p class="rn-closing__names">{{ content.opening.coupleNames }}</p>
       </div>
     </footer>

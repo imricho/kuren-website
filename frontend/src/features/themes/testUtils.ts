@@ -9,7 +9,7 @@ import ThemeRenderer from './core/ThemeRenderer.vue'
 export async function renderTheme(
   content: WeddingContent,
   themeId: string | null | undefined,
-  options: { embedded?: boolean } = {},
+  options: { embedded?: boolean; mode?: 'draft' | 'public'; guestName?: string } = {},
 ) {
   const wrapper = mount(ThemeRenderer, { props: { content, themeId, ...options }, attachTo: document.body })
   await vi.waitFor(() => expect(wrapper.find('.wedding-site > article').exists()).toBe(true))

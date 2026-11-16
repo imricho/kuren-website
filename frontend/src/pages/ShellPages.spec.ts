@@ -38,7 +38,10 @@ async function mountAt(path: string, content?: Partial<WeddingDraft>, themeId: s
       { path: '/login', name: 'login', component: Stub('login') },
       { path: '/themes', name: 'themes', component: Stub('themes') },
       { path: '/wedding/preview', name: 'wedding-preview', component: Stub('preview') },
-      ...['opening', 'couple', 'story', 'events', 'gallery', 'rsvp', 'closing'].map((s) => ({
+      ...[
+        'opening', 'couple', 'story', 'events', 'gallery', 'rsvp', 'closing',
+        'holy-recite-1', 'greeting', 'date', 'wishes', 'gifts', 'holy-recite-2', 'publish',
+      ].map((s) => ({
         path: `/wedding/${s}`,
         name: `wedding-${s}`,
         component: Stub(s),

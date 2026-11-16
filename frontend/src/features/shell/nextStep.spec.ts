@@ -29,10 +29,11 @@ describe('nextStep', () => {
     expect(nextStep(computeCompleteness(d, THEME))).toMatchObject({ key: 'events', to: { name: 'wedding-events' } })
   })
 
-  it('skips optional sections (story, gallery)', () => {
+  it('skips optional sections (story, gallery, RSVP)', () => {
     const d = complete()
     d.rsvp = { enabled: true }
-    expect(nextStep(computeCompleteness(d, THEME)).key).toBe('rsvp')
+    // RSVP is optional in the universal 13-section model, so it never blocks.
+    expect(nextStep(computeCompleteness(d, THEME)).key).toBe('preview')
   })
 
   it('offers the preview once every required section is complete', () => {

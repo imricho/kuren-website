@@ -6,7 +6,6 @@ import TextField from '@/components/ui/TextField.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
 import ErrorSummary from '@/features/cms/components/ErrorSummary.vue'
 import ImageField from '@/features/cms/components/ImageField.vue'
-import SaveBar from '@/features/cms/components/SaveBar.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
 import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
@@ -23,8 +22,7 @@ const draft = useSectionDraft({
   toPayload: couplePayload,
   validate: validateCouple,
   save: async (payload) => void (await store.saveSection('couple', payload)),
-  successMessage: () => t('sectionSaved', { section: t('sectionCouple') }),
-  failureMessage: () => t('sectionSaveFailed', { section: t('sectionCouple') }),
+  live: (value) => ({ kind: 'section', section: 'couple', value }),
 })
 const { form, errors } = draft
 useUnsavedChangesGuard()
@@ -108,7 +106,5 @@ const labels = computed<Record<string, string>>(() => {
       />
       <ImageField v-model="form[p.role].image" :path="`${p.role}.image`" :label="t('photo')" :errors="errors" />
     </fieldset>
-
-    <SaveBar :dirty="draft.isDirty.value" :saving="draft.submitting.value" @discard="draft.discard()" />
   </form>
 </template>

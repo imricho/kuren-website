@@ -161,3 +161,6 @@
   .rm2-mat:not(:first-child) > .rm2-photo-corner { width: 3.5rem; height: 3.5rem; }
   .rm2-closing { padding-block: 6rem; }
 }
+
+/* Match the native heading medallion in the shared content sections. */
+.rm2 .universal-section__decoration > .rm2-art { width: 3.25rem; height: 3.25rem; }

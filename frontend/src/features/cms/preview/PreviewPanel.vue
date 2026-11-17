@@ -19,7 +19,7 @@ import { STAGE_GUTTER, type PreviewDevice, type PreviewZoom } from './frameBox'
 import PreviewFrame from './PreviewFrame.vue'
 import PreviewToolbar from './PreviewToolbar.vue'
 
-const props = withDefaults(defineProps<{ compact?: boolean; visible?: boolean }>(), { compact: false, visible: true })
+const props = withDefaults(defineProps<{ compact?: boolean; visible?: boolean; toolbarTarget?: string }>(), { compact: false, visible: true })
 
 const store = useWeddingStore()
 const route = useRoute()
@@ -48,13 +48,15 @@ defineExpose({ frame })
 
 <template>
   <div class="flex min-w-0 flex-col bg-rose-50/40 lg:h-full lg:min-h-0" data-testid="live-preview" :data-theme-id="themeId">
-    <PreviewToolbar
-      v-model:device="device"
-      v-model:zoom="zoom"
-      :theme-name="themeName"
-      :full-screen-to="fullScreenTo"
-      :compact="compact"
-    />
+    <Teleport defer :to="toolbarTarget ?? 'body'" :disabled="!toolbarTarget || compact">
+      <PreviewToolbar
+        v-model:device="device"
+        v-model:zoom="zoom"
+        :theme-name="themeName"
+        :full-screen-to="fullScreenTo"
+        :compact="compact"
+      />
+    </Teleport>
     <p
       v-if="store.loadState === 'ready' && !hasTheme"
       role="note"

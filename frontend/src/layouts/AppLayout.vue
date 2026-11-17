@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import BrandMark from '@/components/BrandMark.vue'
+import '@/styles/cms.css'
 import AppLanguageSwitch from '@/components/AppLanguageSwitch.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
 import { useMediaQuery } from '@/composables/useMediaQuery'
@@ -16,7 +16,7 @@ import { useWeddingStore } from '@/stores/wedding'
 
 const auth = useAuthStore()
 const wedding = useWeddingStore()
-const { t } = useAppLocale()
+const { t, locale } = useAppLocale()
 const router = useRouter()
 const route = useRoute()
 const signingOut = ref(false)
@@ -36,8 +36,25 @@ const isActive = (name: string) =>
       ? route.path === '/wedding' || route.path.startsWith('/wedding/')
       : route.name === name
 
+
+// Every shortcut opens an existing CMS page; no guest totals or analytics are fabricated.
+const sidebarItems = [
+  { path: '/dashboard', name: 'dashboard', label: 'dashboard', icon: 'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9' },
+  { path: '/wedding', name: 'wedding', label: 'myWebsite', icon: 'm15 4 5 5M4 20l4-1L21 6l-5-5L3 14v6Z' },
+  { path: '/wedding/rsvp', name: 'wedding-rsvp', label: 'sectionRsvp', icon: 'M5 4h14v17H5ZM8 2v4m8-4v4M8 13l3 3 5-6' },
+  { path: '/wedding/wishes', name: 'wedding-wishes', label: 'sectionWishes', icon: 'M3 4h18v13H10l-5 4v-4H3ZM7 8h10M7 12h7' },
+  { path: '/wedding/gifts', name: 'wedding-gifts', label: 'sectionAmplopDigital', icon: 'M3 7h18v14H3ZM3 7V4h14v3M15 11h6v6h-6Z' },
+  { path: '/wedding/publish', name: 'wedding-publish', label: 'sectionPublish', divider: true, icon: 'm3 10 18-7-7 18-3-8-8-3Zm8 3L21 3' },
+  { path: '/account', name: 'account', label: 'account', icon: 'M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8ZM4 21v-3a8 8 0 0 1 16 0v3' },
+] as const
+const visibleSidebarItems = computed(() => sidebarItems.filter(item => router.hasRoute(item.name)))
+const isSidebarActive = (path: string) => path === '/wedding'
+  ? isActive('wedding') && !sidebarItems.some(item => item.path !== '/wedding' && item.path === route.path)
+  : route.path === path
+
 // Tailwind's `sm` breakpoint: from here the nav and language switch sit inline in the header.
 const isDesktop = useMediaQuery('(min-width: 640px)')
+const hasInlineLanguage = useMediaQuery('(min-width: 1000px)')
 const menuItems = computed<MenuNavItem[]>(() =>
   isDesktop.value
     ? []
@@ -85,57 +102,44 @@ async function signOut() {
 </script>
 
 <template>
-  <div class="min-h-dvh">
-    <header class="sticky top-0 z-10 border-b border-line bg-canvas/85 backdrop-blur">
-      <!-- One compact row at every width: on phones the nav and language switch live in the account menu. -->
-      <div class="mx-auto flex h-14 max-w-6xl items-center gap-x-4 px-4 sm:h-16 sm:gap-x-6 sm:px-6">
-        <RouterLink
-          :to="{ name: 'dashboard' }"
-          :aria-label="BRAND_NAME"
-          class="shrink-0 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
-        >
-          <BrandMark />
+  <div class="kuren-cms">
+    <a class="cms-skip-link" href="#cms-main">{{ locale === 'id' ? 'Lewati ke konten utama' : 'Skip to main content' }}</a>
+    <header class="cms-header">
+      <div class="cms-header-inner">
+        <RouterLink :to="{ name: 'dashboard' }" :aria-label="BRAND_NAME" class="cms-brand">
+          <svg viewBox="0 0 36 42" fill="none" aria-hidden="true"><path d="M15 39c0-14 3-24 12-34M17 29C5 29 3 21 4 15c10 0 15 6 13 14Zm3-11C11 16 11 6 16 2c7 5 8 11 4 16Zm4-4c1-10 7-12 10-11 0 8-4 13-10 11Zm-9 21C5 38 1 33 1 28c8-2 14 0 14 7Zm6-11c8-7 13-5 14-1-6 6-10 7-14 1Z" stroke="currentColor" stroke-width="1.2"/></svg>
+          <span>Kuren</span>
         </RouterLink>
-
-        <nav class="hidden items-center gap-x-1 sm:flex" :aria-label="t('mainNav')" data-testid="main-nav">
-          <RouterLink
-            v-for="item in navItems"
-            :key="item.name"
-            :to="{ name: item.name }"
-            class="rounded-md px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors hover:text-ink-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
-            :class="isActive(item.name) ? 'bg-rose-50 text-ink-900' : 'text-ink-700'"
-            :aria-current="isActive(item.name) ? 'page' : undefined"
-          >
+        <nav class="cms-top-nav" :aria-label="t('mainNav')" data-testid="main-nav">
+          <RouterLink v-for="item in navItems" :key="item.name" :to="{ name: item.name }"
+            class="cms-top-link" :class="{ 'is-active': isActive(item.name) }"
+            :aria-current="isActive(item.name) ? 'page' : undefined">
             {{ t(item.label) }}
           </RouterLink>
         </nav>
-
-        <div class="ml-auto flex items-center gap-2 sm:gap-3">
-          <div class="hidden sm:block"><AppLanguageSwitch /></div>
-          <AccountMenu
-            :name="auth.user?.full_name ?? ''"
-            :email="auth.user?.email ?? ''"
-            :initials="initials"
-            :items="menuItems"
-            :show-language="!isDesktop"
-            :signing-out="signingOut"
-            @sign-out="signOut"
-          />
+        <div class="cms-header-actions">
+          <div class="cms-desktop-language"><AppLanguageSwitch /></div>
+          <AccountMenu :name="auth.user?.full_name ?? ''" :email="auth.user?.email ?? ''" :initials="initials"
+            :items="menuItems" :show-language="!hasInlineLanguage" :signing-out="signingOut" @sign-out="signOut" />
         </div>
       </div>
     </header>
 
-    <!-- The theme studio uses the full width and (on desktop) the full remaining height. -->
-    <main
-      :class="
-        route.meta.layout === 'studio'
-          ? 'lg:h-[calc(100dvh-4rem)] lg:overflow-hidden'
-          : 'mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10'
-      "
-    >
+    <aside class="cms-sidebar" :aria-label="locale === 'id' ? 'Navigasi ruang kerja' : 'Workspace navigation'">
+      <nav>
+        <RouterLink v-for="item in visibleSidebarItems" :key="item.path" :to="item.path"
+          class="cms-sidebar-link" :class="{ 'is-active': isSidebarActive(item.path), 'cms-sidebar-divider': 'divider' in item && item.divider }"
+          :aria-current="isSidebarActive(item.path) ? 'page' : undefined">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path :d="item.icon" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          <span>{{ t(item.label) }}</span>
+        </RouterLink>
+      </nav>
+      <p class="cms-sidebar-caption">{{ locale === 'id' ? 'Cerita Anda, dirangkai dengan indah.' : 'Your story, beautifully told.' }}</p>
+    </aside>
+
+    <main id="cms-main" tabindex="-1" class="cms-workspace" :class="route.meta.layout === 'studio' ? 'cms-workspace--studio' : 'cms-workspace--page'">
       <RouterView />
     </main>
-    <!-- Shared confirmation (unsaved-changes guard, sign-out). -->
     <ConfirmHost />
   </div>
 </template>

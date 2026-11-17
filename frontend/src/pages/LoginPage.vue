@@ -51,7 +51,7 @@ function onSubmit() {
 
     <p class="mt-8 text-center text-sm text-ink-700">
       {{ t('newHere') }}
-      <RouterLink :to="{ name: 'register' }" class="inline-flex min-h-11 items-center font-medium text-rose-700 underline-offset-2 hover:underline">
+      <RouterLink :to="{ name: 'register', query: route.query.redirect ? { redirect: route.query.redirect } : undefined }" class="inline-flex min-h-11 items-center font-medium text-rose-700 underline-offset-2 hover:underline">
         {{ t('createAnAccount') }}
       </RouterLink>
     </p>

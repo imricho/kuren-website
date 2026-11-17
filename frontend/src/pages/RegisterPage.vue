@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAppLocale } from '@/composables/useAppLocale'
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
 import FormAlert from '@/components/ui/FormAlert.vue'
@@ -9,11 +9,13 @@ import TextField from '@/components/ui/TextField.vue'
 import { useForm } from '@/composables/useForm'
 import { translateApiError } from '@/features/shell/apiErrors'
 import { useAuthStore } from '@/stores/auth'
+import { safeRedirect } from '@/router'
 
 const { t } = useAppLocale()
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 // Server messages are English-only; show localized ones instead (features/shell/apiErrors).
 const { submitting, formError, fieldErrors, submit } = useForm({ translateError: (err) => translateApiError(err, 'register', t) })
 
@@ -24,7 +26,7 @@ const password = ref('')
 function onSubmit() {
   return submit(async () => {
     await auth.register({ full_name: fullName.value, email: email.value, password: password.value })
-    await router.replace({ name: 'dashboard' })
+    await router.replace(safeRedirect(route.query.redirect))
   })
 }
 </script>
@@ -58,7 +60,7 @@ function onSubmit() {
 
     <p class="mt-8 text-center text-sm text-ink-700">
       {{ t('alreadyAccount') }}
-      <RouterLink :to="{ name: 'login' }" class="inline-flex min-h-11 items-center font-medium text-rose-700 underline-offset-2 hover:underline">{{ t('signIn') }}</RouterLink>
+      <RouterLink :to="{ name: 'login', query: route.query.redirect ? { redirect: route.query.redirect } : undefined }" class="inline-flex min-h-11 items-center font-medium text-rose-700 underline-offset-2 hover:underline">{{ t('signIn') }}</RouterLink>
     </p>
   </div>
 </template>

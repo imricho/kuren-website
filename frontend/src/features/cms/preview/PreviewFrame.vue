@@ -157,7 +157,7 @@ defineExpose({ scroller, box })
         data-testid="preview-frame"
       >
         <p id="preview-visual-only" class="sr-only">{{ t('previewVisualOnly') }}</p>
-        <div inert data-testid="preview-content">
+        <div inert aria-hidden="true" data-testid="preview-content">
           <ThemeRenderer :key="attempt" :content="content" :theme-id="themeId" viewport-height="100cqh" embedded />
         </div>
       </div>

@@ -11,7 +11,7 @@ import { useAppLocale } from '@/composables/useAppLocale'
 
 import { clampWidth, EDITOR_WIDTH, type WidthBounds } from './editorWidth'
 
-const props = defineProps<{ bounds: WidthBounds; controls: string }>()
+const props = defineProps<{ bounds: WidthBounds; controls: string; reverse?: boolean }>()
 const width = defineModel<number>({ required: true })
 const { t } = useAppLocale()
 const dragging = ref(false)
@@ -25,10 +25,10 @@ function onKeydown(e: KeyboardEvent) {
   const current = clampWidth(width.value, props.bounds)
   switch (e.key) {
     case 'ArrowLeft':
-      set(current - step)
+      set(current + (props.reverse ? step : -step))
       break
     case 'ArrowRight':
-      set(current + step)
+      set(current + (props.reverse ? -step : step))
       break
     case 'Home':
       set(props.bounds.min)
@@ -50,7 +50,9 @@ function percentAt(clientX: number): number | null {
   const container = el.value?.parentElement
   if (!container) return null
   const rect = container.getBoundingClientRect()
-  return rect.width > 0 ? ((clientX - rect.left) / rect.width) * 100 : null
+  if (!(rect.width > 0)) return null
+  const fromLeft = ((clientX - rect.left) / rect.width) * 100
+  return props.reverse ? 100 - fromLeft : fromLeft
 }
 // A click without dragging toggles between the narrowest and widest editor, so the
 // divider also works with a single pointer action (WCAG 2.5.7).

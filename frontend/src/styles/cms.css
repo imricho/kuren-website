@@ -1,0 +1,188 @@
+/* CMS-only palette. Invitation themes keep their own color/typography rules. */
+.kuren-cms {
+  --color-canvas: #f3ecf7;
+  --color-surface: #fcf9fe;
+  --color-line: #e0d0e8;
+  --color-ink-900: #2e1538;
+  --color-ink-700: #574260;
+  --color-ink-500: #776381;
+  --color-ink-300: #b7a4c0;
+  --color-rose-50: #eee2f3;
+  --color-rose-100: #e2cde9;
+  --color-rose-500: #a47db3;
+  --color-rose-600: #72477f;
+  --color-rose-700: #57315f;
+  --shadow-soft: 0 1px 3px #3d1c4b0a, 0 5px 15px #3d1c4b0c;
+  --cms-champagne: #d8b58e;
+  --cms-shell: #321a39;
+  --cms-sidebar-width: 212px;
+  --cms-header-height: 64px;
+  min-height: 100dvh;
+  color: var(--color-ink-900);
+  background: var(--cms-shell);
+  font-family: var(--font-sans);
+}
+
+.kuren-cms :where(a, button, input, textarea, select, summary):focus-visible:not(:where(.wedding-site *)) {
+  outline: 2px solid #91609e;
+  outline-offset: 3px;
+}
+
+.cms-skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 8px;
+  left: 16px;
+  transform: translateY(-160%);
+  padding: 10px 16px;
+  border-radius: 8px;
+  color: #321a39;
+  background: #fff8ed;
+}
+.cms-skip-link:focus { transform: none; }
+
+.cms-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--cms-header-height);
+  border-bottom: 1px solid #b88ac321;
+  color: #fff8ff;
+  background: #321a39;
+}
+.cms-header-inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 0 26px;
+}
+.cms-brand {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  width: 174px;
+  color: #fff8fc;
+  text-decoration: none;
+  border-radius: 6px;
+}
+.cms-brand svg { width: 33px; height: 39px; color: #d6b88c; }
+.cms-brand span { font-family: Georgia, 'Times New Roman', serif; font-size: 32px; line-height: 1; letter-spacing: -.6px; }
+.cms-top-nav { display: flex; align-items: center; gap: 10px; }
+.cms-top-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 17px;
+  border-radius: 9px;
+  color: #fbf5fd;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background .15s ease;
+}
+.cms-top-link:hover { background: #70457870; }
+.cms-top-link.is-active { background: #704578; box-shadow: inset 0 1px 0 #ffffff0d; }
+.cms-header-actions { margin-left: auto; display: flex; align-items: center; gap: 22px; }
+.cms-desktop-language { display: block; }
+.cms-header [role='group'] { border-color: #d5bbde40; background: #ffffff08; }
+.cms-header [role='group'] button { color: #e4d5eb; }
+.cms-header [role='group'] button[aria-pressed='true'] { background: #795487; color: #fff; }
+.cms-header [data-testid='account-menu-button'] { color: #f9f2fc; }
+.cms-header [data-testid='account-menu-button'] > span { color: #fff; background: #a184b0; border: 1px solid #c4a9ce; }
+.cms-header [data-testid='account-menu-button']:hover { background: #ffffff12; }
+.cms-header [data-testid='account-menu'] { color: var(--color-ink-900); }
+.cms-header [data-testid='account-menu'] [role='group'] { background: var(--color-surface); border-color: var(--color-line); }
+.cms-header [data-testid='account-menu'] [role='group'] button { color: var(--color-ink-700); }
+.cms-header [data-testid='account-menu'] [role='group'] button[aria-pressed='true'] { background: var(--color-rose-100); color: var(--color-ink-900); }
+
+.cms-sidebar {
+  display: none;
+  position: fixed;
+  top: var(--cms-header-height);
+  bottom: 0;
+  left: 0;
+  width: var(--cms-sidebar-width);
+  padding: 19px 7px 20px;
+  flex-direction: column;
+  color: #f8effa;
+  background: var(--cms-shell);
+  overflow-y: auto;
+}
+.cms-sidebar nav { display: flex; flex-direction: column; gap: 5px; }
+.cms-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 46px;
+  padding: 10px 19px;
+  border-radius: 9px;
+  color: #f9f2fc;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  transition: background .15s ease;
+}
+.cms-sidebar-link svg { width: 22px; height: 22px; flex-shrink: 0; }
+.cms-sidebar-link:hover { background: #70457866; }
+.cms-sidebar-link.is-active { background: #704578; }
+.cms-sidebar-link.cms-sidebar-divider { margin-top: 18px; position: relative; }
+.cms-sidebar-divider::before { content: ''; position: absolute; top: -12px; left: 10px; right: 10px; border-top: 1px solid #c49bd529; }
+.cms-sidebar-caption { margin: auto 20px 0; padding-top: 28px; color: #c9b5d1; font-size: 11px; line-height: 1.7; max-width: 150px; }
+
+.cms-workspace {
+  min-width: 0;
+  min-height: calc(100dvh - var(--cms-header-height));
+  background: #f1e8f6;
+  border-radius: 16px 16px 0 0;
+  position: relative;
+}
+.cms-workspace--page { padding: 34px 28px 48px; }
+.cms-workspace--page > * { max-width: 1152px; margin-inline: auto; }
+/* Inputs retain all existing validation and focus behavior; only the surface changes. */
+.cms-workspace :where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']), textarea, select):not(:where(.wedding-site *)) {
+  border-color: #d6c0e0;
+  background-color: #fcf9fe;
+  border-radius: 8px;
+  color: #321a3c;
+}
+.cms-workspace :where(input, textarea, select)[aria-invalid='true']:not(:where(.wedding-site *)) { border-color: var(--color-danger-600); }
+.cms-workspace :where(input, textarea, select):disabled:not(:where(.wedding-site *)) { opacity: .6; }
+.cms-workspace :where(h1, h2):not(:where(.wedding-site *)) { color: #31113d; }
+
+@media (min-width: 1024px) {
+  .cms-workspace--studio { height: calc(100dvh - var(--cms-header-height)); overflow: hidden; }
+}
+@media (min-width: 1280px) {
+  .cms-sidebar { display: flex; }
+  .cms-workspace { margin-left: var(--cms-sidebar-width); }
+  .cms-top-nav .cms-top-link:last-child { display: none; }
+}
+@media (max-width: 999px) {
+  .cms-desktop-language { display: none; }
+}
+@media (min-width: 640px) and (max-width: 1000px) {
+  .cms-header-inner { padding-inline: 18px; gap: 12px; }
+  .cms-brand { width: auto; gap: 9px; }
+  .cms-brand span { font-size: 27px; }
+  .cms-brand svg { width: 27px; }
+  .cms-top-nav { gap: 2px; }
+  .cms-top-link { padding-inline: 10px; font-size: 12px; }
+  .cms-header-actions { gap: 12px; }
+}
+@media (max-width: 639px) {
+  .kuren-cms { --cms-header-height: 56px; }
+  .cms-header-inner { padding-inline: 16px; gap: 12px; }
+  .cms-brand { width: auto; gap: 9px; }
+  .cms-brand svg { width: 27px; height: 33px; }
+  .cms-brand span { font-size: 28px; }
+  .cms-top-nav, .cms-desktop-language { display: none; }
+  .cms-header-actions { gap: 0; }
+  .cms-workspace { border-radius: 13px 13px 0 0; }
+  .cms-workspace--page { padding: 26px 16px 36px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cms-top-link, .cms-sidebar-link { transition: none; }
+}

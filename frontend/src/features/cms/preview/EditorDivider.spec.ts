@@ -5,11 +5,11 @@ import { defineComponent, h, ref } from 'vue'
 import EditorDivider from './EditorDivider.vue'
 import { editorWidthBounds } from './editorWidth'
 
-function mountDivider(initial = 40, bounds = { min: 30, max: 55 }) {
+function mountDivider(initial = 40, bounds = { min: 30, max: 55 }, reverse = false) {
   const width = ref(initial)
   const Host = defineComponent({
     setup: () => () =>
-      h(EditorDivider, { modelValue: width.value, 'onUpdate:modelValue': (v: number) => (width.value = v), bounds, controls: 'editor-panel' }),
+      h(EditorDivider, { modelValue: width.value, 'onUpdate:modelValue': (v: number) => (width.value = v), bounds, reverse, controls: 'editor-panel' }),
   })
   const wrapper = mount(Host)
   return { wrapper, width, sep: () => wrapper.get('[role="separator"]') }
@@ -64,6 +64,16 @@ describe('EditorDivider', () => {
     await sep().trigger('keydown', { key: 'End' })
     await sep().trigger('dblclick')
     expect(width.value).toBe(40)
+  })
+
+  it('moves the separator in the arrow direction when the editor is on the right', async () => {
+    const { sep, width } = mountDivider(40, { min: 30, max: 49 }, true)
+    await sep().trigger('keydown', { key: 'ArrowRight' })
+    expect(width.value).toBe(38)
+    await sep().trigger('keydown', { key: 'ArrowLeft', shiftKey: true })
+    expect(width.value).toBe(48)
+    await sep().trigger('keydown', { key: 'ArrowLeft' })
+    expect(width.value).toBe(49)
   })
 
   it('keeps the editor ≥360px and the preview ≥420px', () => {

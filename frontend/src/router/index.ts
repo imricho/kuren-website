@@ -4,6 +4,7 @@ import type { AppMessageKey } from '@/composables/useAppLocale'
 import { canonicalCollection, canonicalFamily, canonicalTemplate } from '@/features/themes/picker/guards'
 import { useAuthStore } from '@/stores/auth'
 
+import { safeRedirect } from './redirect'
 import { isSameView } from './views'
 
 declare module 'vue-router' {
@@ -41,7 +42,7 @@ const ThemeStudioPage = () => import('@/pages/ThemeStudioPage.vue')
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: { name: 'dashboard' } },
+    { path: '/', name: 'home', component: () => import('@/pages/LandingPage.vue') },
     {
       path: '/',
       component: () => import('@/layouts/AuthLayout.vue'),
@@ -190,10 +191,11 @@ router.beforeEach(async (to) => {
   await auth.ensureLoaded()
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
-    return { name: 'login', query: to.fullPath !== '/dashboard' ? { redirect: to.fullPath } : undefined }
+    return { name: 'login', query: { redirect: to.fullPath } }
   }
   if (to.meta.guestOnly && auth.isAuthenticated) {
-    return { name: 'dashboard' }
+    const destination = safeRedirect(to.query.redirect)
+    return router.resolve(destination).meta.guestOnly ? { name: 'dashboard' } : destination
   }
 })
 

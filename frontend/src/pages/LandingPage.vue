@@ -8,7 +8,7 @@ import ornament from '@/features/themes/royal-maroon-v2/assets/botanical-corner.
 const auth = useAuthStore()
 const menuOpen = ref(false)
 const gallery = ['royal-maroon-v2', 'ivory-processional', 'conventional', 'international'].map(id => getTheme(id)!)
-const previewPath = (theme: typeof gallery[number]) => `/themes/${theme.familyId}/${theme.collectionId}/${templateSlug(theme)}/preview`
+const previewPath = (theme: typeof gallery[number]) => `/themes/${theme.familyId}/${theme.collectionId}/${templateSlug(theme)}/preview?from=landing`
 const join = { name: 'register' }
 const features = [
   { icon: 'screen', title: 'Editor Intuitif', text: 'Atur cerita, foto, dan acara melalui editor yang terstruktur.' },
@@ -172,7 +172,7 @@ const faqs = [
             :key="theme.id"
             class="template-card"
             :to="previewPath(theme)"
-            :aria-label="`Lihat template ${theme.name}, masuk untuk pratinjau`"
+            :aria-label="`Lihat template ${theme.name}`"
           >
             <div class="template-card__preview">
               <LandingPreview :template-id="theme.id" />
@@ -190,7 +190,7 @@ const faqs = [
             </div>
           </RouterLink>
           <RouterLink
-            to="/themes"
+            to="/templates"
             class="template-all"
           ><svg
               viewBox="0 0 32 32"

@@ -54,6 +54,10 @@ export async function canonicalTemplate(to: RouteLocationNormalized): Promise<Ro
       replace: true,
     }
   }
+  if (to.meta.publicPage && template.status !== 'available') {
+    // Public discovery only exposes templates that can actually be chosen.
+    return { name: 'public-templates', replace: true }
+  }
   if (!isRenderable(template)) {
     // Planned templates can't be previewed yet; show their collection instead.
     return {

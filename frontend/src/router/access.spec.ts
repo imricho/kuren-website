@@ -5,6 +5,9 @@ vi.mock('@/stores/auth', () => ({ useAuthStore: () => session }))
 
 import router from './index'
 
+// Navigation scroll is a browser concern; jsdom has no scrolling implementation.
+vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+
 // Exercise the real route records and global guard without mounting CMS pages.
 for (const record of router.getRoutes()) {
   if (record.components) record.components.default = { render: () => null }
@@ -13,6 +16,7 @@ for (const record of router.getRoutes()) {
 describe('public and authenticated route access', () => {
   beforeEach(async () => {
     session.isAuthenticated = false
+    session.ensureLoaded.mockClear()
     await router.push('/')
   })
 
@@ -71,6 +75,41 @@ describe('working-directory CMS route preservation', () => {
       expect(route.meta.requiresAuth).toBe(true)
       expect(route.meta.layout).toBe('studio')
       expect(route.name).not.toBe('not-found')
+    }
+  })
+})
+
+
+describe('public sample preview and protected template handoff', () => {
+  it('previews canonical and legacy samples without probing a session', async () => {
+    session.isAuthenticated = false
+    session.ensureLoaded.mockClear()
+    await router.push('/themes/royal-maroon-v2/preview')
+    expect(router.currentRoute.value.name).toBe('theme-preview')
+    expect(router.currentRoute.value.meta.publicPage).toBe(true)
+    expect(session.ensureLoaded).not.toHaveBeenCalled()
+    await router.push('/templates')
+    expect(router.currentRoute.value.name).toBe('public-templates')
+    expect(session.ensureLoaded).not.toHaveBeenCalled()
+  })
+
+  it('preserves the chosen template through login and signed-in guest form redirects', async () => {
+    session.isAuthenticated = false
+    await router.push('/use-template/royal-maroon-v2')
+    expect(router.currentRoute.value.name).toBe('login')
+    expect(router.currentRoute.value.query.redirect).toBe('/use-template/royal-maroon-v2')
+    session.isAuthenticated = true
+    await router.push('/register?redirect=%2Fuse-template%2Froyal-maroon-v2')
+    expect(router.currentRoute.value.name).toBe('use-template')
+    expect(router.currentRoute.value.params.templateId).toBe('royal-maroon-v2')
+  })
+
+  it('keeps saved wedding preview and CMS browsing private', async () => {
+    session.isAuthenticated = false
+    for (const path of ['/wedding/preview', '/themes', '/wedding/opening']) {
+      await router.push(path)
+      expect(router.currentRoute.value.name).toBe('login')
+      expect(router.currentRoute.value.query.redirect).toBe(path)
     }
   })
 })

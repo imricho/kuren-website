@@ -1,0 +1,48 @@
+import { expect, test } from './fixtures'
+
+const template = 'royal-maroon-v2'
+const preview = '/themes/traditional/ceremonial-classic/royal-maroon-v2/preview?from=landing'
+
+test('a guest can preview, log in, and edit the chosen theme without replacing existing content', async ({ page, freshUser }) => {
+  const created = await page.request.post('/api/v1/weddings', { data: { themeId: 'international', locale: 'id' } })
+  expect(created.status()).toBe(201)
+  const wedding = await created.json()
+  const seeded = await page.request.put(`/api/v1/weddings/${wedding.id}/sections/couple`, { data: { groom: { name: 'Preserved Groom' }, bride: { name: 'Preserved Bride' } } })
+  expect(seeded.ok()).toBe(true)
+  const before = await (await page.request.get(`/api/v1/weddings/${wedding.id}/content`)).json()
+  await page.context().clearCookies()
+  await page.goto(preview)
+  await expect(page.locator('.wedding-site')).toBeVisible()
+  await expect(page).toHaveURL(/\/preview\?from=landing$/)
+  await page.getByRole('link', { name: /Gunakan Template|Use Template/i }).click()
+  await expect(page).toHaveURL(/\/login\?/)
+  expect(new URL(page.url()).searchParams.get('redirect')).toBe(`/use-template/${template}`)
+  await page.locator('input[type=email]').fill(freshUser.email)
+  await page.locator('input[type=password]').fill(freshUser.password)
+  await page.locator('button[type=submit]').click()
+  await expect(page).toHaveURL(/\/wedding\/opening$/, { timeout: 15_000 })
+  await expect(page.getByTestId('live-preview')).toHaveAttribute('data-theme-id', template)
+  const after = await (await page.request.get(`/api/v1/weddings/${wedding.id}/content`)).json()
+  expect(after).toEqual(before)
+  expect((await (await page.request.get('/api/v1/weddings/me')).json()).themeId).toBe(template)
+  await page.reload()
+  await expect(page.getByTestId('live-preview')).toHaveAttribute('data-theme-id', template)
+})
+
+test('a new guest can switch to registration and reach the chosen template editor', async ({ page }) => {
+  await page.context().clearCookies()
+  await page.goto(preview)
+  await page.getByRole('link', { name: /Gunakan Template|Use Template/i }).click()
+  await expect(page).toHaveURL(/\/login\?/)
+  await page.locator('a[href*="/register"]').click()
+  await expect(page).toHaveURL(/\/register\?/)
+  await page.reload()
+  expect(new URL(page.url()).searchParams.get('redirect')).toBe(`/use-template/${template}`)
+  await page.locator('input[autocomplete=name]').fill('Public Preview Test')
+  await page.locator('input[type=email]').fill(`public-preview-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`)
+  await page.locator('input[type=password]').fill(`preview-${Math.random().toString(36).slice(2)}-test`)
+  await page.locator('button[type=submit]').click()
+  await expect(page).toHaveURL(/\/wedding\/opening$/, { timeout: 15_000 })
+  await expect(page.getByTestId('live-preview')).toHaveAttribute('data-theme-id', template)
+  expect((await (await page.request.get('/api/v1/weddings/me')).json()).themeId).toBe(template)
+})

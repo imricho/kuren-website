@@ -26,7 +26,7 @@ const reduceMotion = prefersReducedMotion()
 </script>
 
 <template>
-  <div v-if="!remaining.isPast" class="countdown" role="timer" aria-live="off">
+  <div v-if="!remaining.isPast" class="countdown" :data-unit-count="units.length" role="timer" aria-live="off">
     <div v-for="unit in units" :key="unit.key" class="countdown__unit">
       <span class="countdown__value">{{ String(unit.value).padStart(2, '0') }}</span>
       <span class="countdown__label">{{ unit.label }}</span>

@@ -7,7 +7,7 @@
  * Stays mounted while the editor's child routes change, so the theme renders
  * once and later edits only patch it.
  */
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { useAppLocale } from '@/composables/useAppLocale'
@@ -25,7 +25,7 @@ const store = useWeddingStore()
 const route = useRoute()
 const { t } = useAppLocale()
 
-const chosenDevice = ref<PreviewDevice>('phone')
+const chosenDevice = ref<PreviewDevice>('desktop')
 const zoom = ref<PreviewZoom>('fit')
 /** Mobile preview is always phone width. */
 const device = computed<PreviewDevice>({
@@ -35,6 +35,7 @@ const device = computed<PreviewDevice>({
 
 const hasTheme = computed(() => getTheme(store.themeId) !== undefined)
 const themeId = computed(() => (hasTheme.value ? store.themeId! : DEFAULT_THEME_ID))
+watch(themeId, () => { chosenDevice.value = 'desktop' })
 const themeName = computed(() => getTheme(themeId.value)?.name ?? '')
 const section = computed(() => {
   const key = sectionByRouteName(route.name)?.key

@@ -3,7 +3,7 @@
  * Right-hand preview: the previewed template (not necessarily the selected one),
  * its family/collection, device sizes, full-screen link and the single select action.
  */
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { universalDemo } from '@/features/wedding/universalDemo'
 
@@ -19,6 +19,7 @@ import SelectTemplateButton from './SelectTemplateButton.vue'
 const props = defineProps<{ template: RenderableTemplate; notice?: string | null }>()
 
 const device = ref<Device>('desktop')
+watch(() => props.template.id, () => { device.value = 'desktop' })
 const path = computed(() => templatePath(props.template.id)!)
 const { t } = useAppLocale()
 const action = computed(() => localizedActions())

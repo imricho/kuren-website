@@ -98,6 +98,9 @@ const failedQris = computed(() => !gifts.value?.qrisImage || !isDisplayableImage
 .universal-section__decoration > * { width: 3.25rem; }
 .universal-section h2 { font-family: var(--display, var(--mf-display, var(--rn-display, var(--serif, inherit)))); font-size: clamp(1.65rem, 5cqi, 2.75rem); margin-block: 0 1.5rem; }
 .universal-section p { line-height: 1.8; }
+/* Keep capped countdown rows centered on wide invitation layouts as well. */
+.universal-section[data-section="weddingDate"] .countdown { margin-inline: auto; justify-content: center; }
+.universal-section[data-section="weddingDate"] .countdown[data-unit-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .universal-text, .universal-script { white-space: pre-line; overflow-wrap: anywhere; unicode-bidi: plaintext; }
 .universal-citation { font-size: 0.9em; letter-spacing: 0.04em; opacity: 0.85; margin-block-start: 1.25rem; }
 .universal-citation cite { font-style: normal; }

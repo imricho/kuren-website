@@ -104,7 +104,7 @@ watch(
     if (!slug || isDesktop.value) return
     selectorOpen.value = false
     await nextTick()
-    previewEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    previewEl.value?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
     previewEl.value?.querySelector<HTMLElement>('#preview-heading')?.focus({ preventScroll: true })
   },
 )

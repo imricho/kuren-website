@@ -13,11 +13,11 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     /** Page is only for signed-out visitors (login/register). */
     guestOnly?: boolean
-    /** Page name for the document title ("<Page> · Kuren"), translated with t(). */
+    /** Page name for the document title ("<Page> · Temuvibe"), translated with t(). */
     titleKey?: AppMessageKey
     /** Full-width, full-height layout (theme studio, live website editor). */
     layout?: 'studio'
-    /** Guest-facing page (published invitation): no session lookup, no app chrome. */
+    /** Public page: no session lookup and no private wedding reads. */
     publicPage?: boolean
     /** Which Holy Recite the shared editor page edits. */
     recite?: 1 | 2
@@ -43,6 +43,13 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'home', component: () => import('@/pages/LandingPage.vue') },
+    { path: '/templates', name: 'public-templates', component: () => import('@/pages/TemplateGalleryPage.vue'), meta: { publicPage: true, titleKey: 'themes' } },
+    {
+      path: '/use-template/:templateId',
+      name: 'use-template',
+      component: () => import('@/pages/UseTemplatePage.vue'),
+      meta: { requiresAuth: true, titleKey: 'myWebsite' },
+    },
     {
       path: '/',
       component: () => import('@/layouts/AuthLayout.vue'),
@@ -148,7 +155,7 @@ const router = createRouter({
       name: 'theme-preview',
       component: () => import('@/pages/ThemePreviewPage.vue'),
       props: true,
-      meta: { requiresAuth: true, titleKey: 'templatePreview' },
+      meta: { publicPage: true, titleKey: 'templatePreview' },
       beforeEnter: canonicalTemplate,
     },
     {
@@ -171,7 +178,7 @@ const router = createRouter({
       path: '/themes/:themeId/preview',
       name: 'theme-preview-legacy',
       component: () => import('@/pages/ThemePreviewPage.vue'),
-      meta: { requiresAuth: true },
+      meta: { publicPage: true },
       beforeEnter: canonicalTemplate,
     },
     {
@@ -185,7 +192,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  // Guest-facing published invitations never depend on (or probe) a session.
+  // Public samples and published invitations never depend on (or probe) a session.
   if (to.meta.publicPage) return
   const auth = useAuthStore()
   await auth.ensureLoaded()

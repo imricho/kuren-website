@@ -27,14 +27,15 @@ test('mobile navigation is keyboard operable and closes after selecting a sectio
   await expect(page.locator('#template')).toBeInViewport()
 })
 
-test('real template preview keeps its canonical destination through sign-in', async ({ page }) => {
+test('real template preview is public at its canonical destination', async ({ page }) => {
   await page.goto('/')
   const template = page.locator('.template-card').first()
   const destination = await template.getAttribute('href')
-  expect(destination).toMatch(/^\/themes\/[^/]+\/[^/]+\/[^/]+\/preview$/)
+  expect(destination).toMatch(/^\/themes\/[^/]+\/[^/]+\/[^/]+\/preview(?:\?.*)?$/)
   await template.click()
-  await expect(page).toHaveURL(/\/login\?/)
-  expect(new URL(page.url()).searchParams.get('redirect')).toBe(destination)
+  await expect(page).toHaveURL(url => url.pathname + url.search === destination)
+  await expect(page.getByTestId('public-preview-toolbar')).toBeVisible()
+  await expect(page.locator('.wedding-site [data-section]')).toHaveCount(13)
 })
 
 test('provisional pricing sends visitors to registration without payment requests', async ({ page }) => {
@@ -61,8 +62,7 @@ test('320px reflow retains readable controls and decorative alternatives', async
   for (const image of await page.locator('.kuren-landing img').all()) {
     expect(await image.getAttribute('alt')).not.toBeNull()
   }
-  for (const control of await page.locator('.kuren-landing button, .kuren-landing summary, .landing-button').all()) {
-    if (await control.evaluate(element => Boolean(element.closest('[inert]')))) continue
+  for (const control of await page.locator('.kuren-landing button:not([inert] *), .kuren-landing summary:not([inert] *), .landing-button:not([inert] *)').all()) {
     if (!(await control.isVisible())) continue
     const box = await control.boundingBox()
     expect(box?.height).toBeGreaterThanOrEqual(24)

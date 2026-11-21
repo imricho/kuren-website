@@ -65,7 +65,7 @@ describe('AppLayout', () => {
 
   it('names the brand link after the brand', async () => {
     const { wrapper } = await setup()
-    expect(wrapper.get('header a').attributes('aria-label')).toBe('Kuren')
+    expect(wrapper.get('header a').attributes('aria-label')).toBe('Temuvibe')
   })
 
   describe('account menu', () => {

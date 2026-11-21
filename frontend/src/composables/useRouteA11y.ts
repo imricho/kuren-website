@@ -1,6 +1,6 @@
 /**
  * Route-change accessibility for a single-page app:
- *  - a localized document title per route ("<Page> · Kuren"), updated when the
+ *  - a localized document title per route ("<Page> · Temuvibe"), updated when the
  *    UI language changes;
  *  - after an in-app navigation (never on first load) focus moves to the new
  *    page's main heading, so keyboard and screen-reader users start at the top

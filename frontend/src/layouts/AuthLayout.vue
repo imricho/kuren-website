@@ -10,16 +10,16 @@ const { t } = useAppLocale()
   <div class="kuren-auth">
     <header class="auth-language"><AppLanguageSwitch /></header>
     <aside class="auth-story">
-      <RouterLink to="/" class="auth-brand" aria-label="Kuren"><BrandMark size="lg" /></RouterLink>
+      <RouterLink to="/" class="auth-brand" aria-label="Temuvibe"><BrandMark size="lg" /></RouterLink>
       <div class="auth-story-copy">
-        <p class="auth-eyebrow">Kuren</p>
+        <p class="auth-eyebrow">Temuvibe</p>
         <p class="auth-brand-title">{{ t('authBrandTitle') }}</p>
         <p class="auth-brand-body">{{ t('authBrandBody') }}</p>
       </div>
-      <p class="auth-copyright">&copy; {{ new Date().getFullYear() }} Kuren</p>
+      <p class="auth-copyright">&copy; {{ new Date().getFullYear() }} Temuvibe</p>
     </aside>
     <main class="auth-main">
-      <RouterLink to="/" class="auth-mobile-brand" aria-label="Kuren"><BrandMark size="lg" /></RouterLink>
+      <RouterLink to="/" class="auth-mobile-brand" aria-label="Temuvibe"><BrandMark size="lg" /></RouterLink>
       <div class="auth-form-card"><RouterView /></div>
     </main>
   </div>

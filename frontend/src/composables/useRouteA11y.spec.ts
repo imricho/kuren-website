@@ -37,15 +37,15 @@ const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms))
 describe('useRouteA11y', () => {
   afterEach(() => useAppLocale().setLocale('en'))
 
-  it('sets a localized "<Page> · Kuren" title and follows the UI language', async () => {
+  it('sets a localized "<Page> · Temuvibe" title and follows the UI language', async () => {
     const { router } = await setup()
-    expect(document.title).toBe('Dashboard · Kuren')
+    expect(document.title).toBe('Dashboard · Temuvibe')
     useAppLocale().setLocale('id')
     await flushPromises()
-    expect(document.title).toBe('Dasbor · Kuren')
+    expect(document.title).toBe('Dasbor · Temuvibe')
     await router.push('/plain')
     await flushPromises()
-    expect(document.title).toBe('Kuren · Situs pernikahan')
+    expect(document.title).toBe('Temuvibe · Situs pernikahan')
   })
 
   it('does not move focus on first load, but focuses the new h1 after navigating', async () => {

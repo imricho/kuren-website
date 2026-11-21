@@ -3,7 +3,7 @@ import type { ShellMessageKey } from '../en/shell'
 
 export const shellId = {
   // Judul dokumen
-  appTitleDefault: 'Kuren · Situs pernikahan',
+  appTitleDefault: 'Temuvibe · Situs pernikahan',
   welcomeTitle: 'Mulai',
 
   // Kerangka aplikasi / menu akun

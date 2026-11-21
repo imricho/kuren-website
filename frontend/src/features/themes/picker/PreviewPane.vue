@@ -32,7 +32,7 @@ const action = computed(() => localizedActions())
         <p class="text-xs font-medium tracking-wide text-rose-600 uppercase">
           {{ t('previewing') }}<template v-if="template.status === 'draft'"> · {{ t('draft') }}</template> · {{ t('sampleWedding') }}
         </p>
-        <h2 id="preview-heading" tabindex="-1" class="mt-1 text-3xl font-semibold outline-none">{{ template.name }}</h2>
+        <h2 id="preview-heading" tabindex="-1" class="mt-1 text-3xl font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-purple-700">{{ template.name }}</h2>
         <nav :aria-label="t('previewPaneLocation')" class="mt-1 text-sm text-ink-700">
           <RouterLink :to="familyRoute(path.family.id)" class="rounded hover:text-ink-900">{{ localizedCatalogText(path.family.id, 'name', path.family.name) }}</RouterLink>
           <span aria-hidden="true"> › </span>

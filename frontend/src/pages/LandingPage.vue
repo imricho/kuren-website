@@ -7,7 +7,7 @@ import LandingPreview from '@/features/landing/LandingPreview.vue'
 import ornament from '@/features/themes/royal-maroon-v2/assets/botanical-corner.webp'
 const auth = useAuthStore()
 const menuOpen = ref(false)
-const gallery = ['royal-maroon-v2', 'ivory-processional', 'conventional', 'international'].map(id => getTheme(id)!)
+const gallery = ['royal-maroon-v2', 'ivory-processional', 'conventional', 'international', 'artistic', 'still-form', 'wildwood-gathering', 'ethnic'].map(id => getTheme(id)!)
 const previewPath = (theme: typeof gallery[number]) => `/themes/${theme.familyId}/${theme.collectionId}/${templateSlug(theme)}/preview?from=landing`
 const join = { name: 'register' }
 const features = [
@@ -19,12 +19,12 @@ const features = [
   { icon: 'gift', title: 'Cerita & Galeri', text: 'Rangkai kisah cinta dan tampilkan foto momen istimewa.' },
 ]
 const plans = [
-  { name: 'Free', price: '0', note: 'Untuk mulai merangkai cerita.', items: ['Mengenal editor Kuren', 'Menyusun konten undangan', 'Melihat pratinjau desain'], cta: 'Mulai Gratis' },
+  { name: 'Free', price: '0', note: 'Untuk mulai merangkai cerita.', items: ['Mengenal editor Temuvibe', 'Menyusun konten undangan', 'Melihat pratinjau desain'], cta: 'Mulai Gratis' },
   { name: 'Premium', price: '99.000', note: 'Rencana harga per undangan.', items: ['Rencana koleksi template standar', 'Rencana bagian undangan lengkap', 'Rencana personalisasi undangan', 'Detail paket akan dikonfirmasi'], cta: 'Buat Akun' },
   { name: 'Signature', price: '199.000', note: 'Rencana harga per undangan.', items: ['Rencana koleksi template premium', 'Rencana pilihan desain tambahan', 'Detail layanan akan dikonfirmasi', 'Detail paket akan dikonfirmasi'], cta: 'Buat Akun' },
 ]
 const faqs = [
-  ['Apa itu Kuren?', 'Kuren adalah ruang untuk menyusun undangan pernikahan digital: memilih desain, mengisi cerita, menambahkan detail acara, dan melihat pratinjau.'],
+  ['Apa itu Temuvibe?', 'Temuvibe adalah ruang untuk menyusun undangan pernikahan digital: memilih desain, mengisi cerita, menambahkan detail acara, dan melihat pratinjau.'],
   ['Apakah saya perlu keahlian desain?', 'Tidak. Mulai dari template yang tersedia, lalu isi konten melalui editor. Anda dapat memeriksa hasilnya di pratinjau.'],
   ['Bagaimana cara membuat undangan?', 'Buat akun, lengkapi nama dan tanggal pernikahan, pilih template, lalu susun bagian undangan melalui dashboard.'],
   ['Apakah pembayaran sudah tersedia?', 'Belum. Harga Free, Premium, dan Signature masih merupakan rencana awal. Halaman ini tidak memproses pembayaran atau mengaktifkan paket berbayar.'],
@@ -46,17 +46,11 @@ const faqs = [
     <RouterLink
       to="/"
       class="landing-brand"
-      aria-label="Kuren, beranda"
-    ><svg
-        viewBox="0 0 40 44"
-        fill="none"
-        aria-hidden="true"
-      >
-        <path
-          d="M20 39V17M20 31C4 31 3 16 4 12c12 1 18 8 16 19Zm0 0c16 0 17-15 16-19-12 1-18 8-16 19ZM20 25C9 19 12 7 20 2c8 5 11 17 0 23ZM20 36C7 39 1 30 2 25c10-2 16 2 18 11Zm0 0c13 3 19-6 18-11-10-2-16 2-18 11Z"
-          stroke="currentColor"
-        />
-      </svg>Kuren</RouterLink>
+      aria-label="Temuvibe, beranda"
+    ><svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect width="32" height="32" rx="10" fill="#f3e3d3" />
+        <path d="M5 16c3-7 8-7 11 0s8 7 11 0M5 16c3 7 8 7 11 0s8-7 11 0" stroke="#532b58" stroke-width="2" stroke-linecap="round" />
+      </svg>temuvibe.</RouterLink>
     <button
       class="landing-menu-toggle"
       type="button"
@@ -92,9 +86,7 @@ const faqs = [
         <div class="hero-copy">
           <p class="landing-eyebrow">Undangan Pernikahan Digital</p>
           <h1>Undangan Pernikahan<br class="desktop-break" /> Elegan, Sesuai Cerita Anda</h1>
-          <p class="hero-description">Buat undangan pernikahan digital yang indah, personal,<br class="desktop-break" />
-            dan mudah dipersonalisasi. Pilih desain favorit, rangkai cerita,<br class="desktop-break" /> dan persiapkan
-            hari istimewa Anda.</p>
+          <p class="hero-description">Temukan desain yang terasa seperti Anda, rangkai cerita,<br class="desktop-break" /> dan hadirkan hari istimewa dalam satu undangan digital.</p>
           <div class="hero-actions">
             <RouterLink
               class="landing-button landing-button--gold"
@@ -126,12 +118,12 @@ const faqs = [
         <div
           class="hero-showcase"
           role="img"
-          aria-label="Contoh editor Kuren di laptop dan undangan Royal Maroon v2 di ponsel"
+          aria-label="Contoh editor Temuvibe di laptop dan undangan Royal Maroon v2 di ponsel"
         >
           <div class="showcase-pedestal"></div>
           <div class="showcase-laptop">
             <div class="laptop-screen">
-              <div class="mock-toolbar"><span>♧ Kuren</span><span>◉ &nbsp; ▯ &nbsp; Pratinjau</span></div>
+              <div class="mock-toolbar"><span>♧ Temuvibe</span><span>◉ &nbsp; ▯ &nbsp; Pratinjau</span></div>
               <div class="mock-workspace">
                 <div class="mock-sidebar"><strong>Royal Maroon v2⌄</strong><small>Konten Undangan</small><span
                     class="selected"
@@ -149,58 +141,6 @@ const faqs = [
             <div class="phone-notch"></div>
             <LandingPreview template-id="royal-maroon-v2" />
           </div>
-        </div>
-      </div>
-    </section>
-
-    <section
-      id="template"
-      class="landing-gallery"
-    >
-      <div class="landing-container">
-        <header class="landing-section-heading">
-          <p class="landing-kicker">Koleksi Template</p>
-          <h2>Temukan Desain yang Mewakili Kisah Anda</h2>
-          <p>Dari ornamen klasik dan floral romantis<br />hingga gaya editorial yang tenang.</p>
-        </header>
-        <div
-          id="inspirasi"
-          class="template-grid"
-        >
-          <RouterLink
-            v-for="theme in gallery"
-            :key="theme.id"
-            class="template-card"
-            :to="previewPath(theme)"
-            :aria-label="`Lihat template ${theme.name}`"
-          >
-            <div class="template-card__preview">
-              <LandingPreview :template-id="theme.id" />
-            </div>
-            <div class="template-card__caption">
-              <div>
-                <h3>{{ theme.name }}</h3>
-                <p>
-                  {{ theme.familyId === 'traditional' ? 'Classic Elegance' : theme.familyId === 'classic' ? 'Romantic Garden' : 'Modern Editorial' }}
-                </p>
-              </div><span
-                class="circle-arrow"
-                aria-hidden="true"
-              >→</span>
-            </div>
-          </RouterLink>
-          <RouterLink
-            to="/templates"
-            class="template-all"
-          ><svg
-              viewBox="0 0 32 32"
-              aria-hidden="true"
-            >
-              <path d="m3 12 13-7 13 7-13 7-13-7Zm0 6 13 7 13-7M3 24l13 7 13-7" />
-            </svg><span>Lihat <br />Semua Template</span><span
-              class="circle-arrow"
-              aria-hidden="true"
-            >→</span></RouterLink>
         </div>
       </div>
     </section>
@@ -298,6 +238,58 @@ const faqs = [
     </section>
 
     <section
+      id="template"
+      class="landing-gallery"
+    >
+      <div class="landing-container">
+        <header class="landing-section-heading">
+          <p class="landing-kicker">Koleksi Template</p>
+          <h2>Temukan Desain yang Mewakili Kisah Anda</h2>
+          <p>Dari ornamen klasik dan floral romantis<br />hingga gaya editorial yang tenang.</p>
+        </header>
+        <div
+          id="inspirasi"
+          class="template-grid"
+        >
+          <RouterLink
+            v-for="theme in gallery"
+            :key="theme.id"
+            class="template-card"
+            :to="previewPath(theme)"
+            :aria-label="`Lihat template ${theme.name}`"
+          >
+            <div class="template-card__preview">
+              <LandingPreview :template-id="theme.id" />
+            </div>
+            <div class="template-card__caption">
+              <div>
+                <h3>{{ theme.name }}</h3>
+                <p>
+                  {{ theme.tagline }}
+                </p>
+              </div><span
+                class="circle-arrow"
+                aria-hidden="true"
+              >→</span>
+            </div>
+          </RouterLink>
+          <RouterLink
+            to="/templates"
+            class="template-all"
+          ><svg
+              viewBox="0 0 32 32"
+              aria-hidden="true"
+            >
+              <path d="m3 12 13-7 13 7-13 7-13-7Zm0 6 13 7 13-7M3 24l13 7 13-7" />
+            </svg><span>Lihat Semua Template</span><span
+              class="circle-arrow"
+              aria-hidden="true"
+            >→</span></RouterLink>
+        </div>
+      </div>
+    </section>
+
+    <section
       id="harga"
       class="landing-pricing"
     ><img
@@ -371,7 +363,7 @@ const faqs = [
         alt=""
       />
       <div class="landing-container">
-        <h2>Mulai Cerita Pernikahan Anda<br />Bersama Kuren</h2>
+        <h2>Mulai Cerita Pernikahan Anda<br />Bersama Temuvibe</h2>
         <RouterLink
           :to="join"
           class="landing-button landing-button--gold"
@@ -383,12 +375,12 @@ const faqs = [
     <RouterLink
       to="/"
       class="footer-brand"
-    >Kuren</RouterLink>
+    >temuvibe.</RouterLink>
     <p>Undangan indah. Cerita Anda.</p>
     <nav aria-label="Navigasi footer"><a href="#template">Template</a><a href="#harga">Harga</a><a
         href="#bantuan">Bantuan</a>
       <RouterLink to="/login">Masuk</RouterLink>
-    </nav><small>© {{ new Date().getFullYear() }} Kuren</small>
+    </nav><small>© {{ new Date().getFullYear() }} Temuvibe</small>
   </footer>
 </div>
 </template>
@@ -817,11 +809,13 @@ const faqs = [
 
 .template-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) .73fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px;
   margin-top: 28px;
   scroll-margin-top: 20px
 }
+
+.template-all { min-height: 110px; grid-column: 1 / -1; }
 
 .template-card {
   display: block;
@@ -882,7 +876,7 @@ const faqs = [
   background: #e7dbed;
   border-radius: 14px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 20px;

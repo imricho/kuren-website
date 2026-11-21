@@ -1,355 +1,50 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { THEMES } from '@/features/themes/core/registry'
+import { THEMES, FAMILIES, COLLECTIONS } from '@/features/themes/core/registry'
 import { previewRoute } from '@/features/themes/picker/routes'
 
 const galleryPreview = (theme: typeof THEMES[number]) => ({ ...previewRoute(theme) as object, query: { from: 'gallery' } })
-const visibleCount = ref(12)
+const category = ref('all')
 const query = ref('')
-const matching = computed(() => THEMES.filter(theme => `${theme.name} ${theme.tagline}`.toLowerCase().includes(query.value.toLowerCase().trim())))
+const visibleCount = ref(12)
+const failedImages = ref<string[]>([])
+const familyName = (id: string) => FAMILIES.find(f => f.id === id)?.name ?? id
+const collectionName = (id: string) => COLLECTIONS.find(c => c.id === id)?.name ?? id
+const categories = computed(() => [{ id: 'all', name: 'Semua', count: THEMES.length }, ...FAMILIES.map(f => ({ id: f.id, name: f.name, count: THEMES.filter(t => t.familyId === f.id).length })).filter(f => f.count > 0)])
+const matching = computed(() => {
+  const term = query.value.toLocaleLowerCase().trim()
+  return THEMES.filter(theme => (category.value === 'all' || theme.familyId === category.value) && `${theme.name} ${theme.tagline} ${theme.description} ${familyName(theme.familyId)} ${collectionName(theme.collectionId)}`.toLocaleLowerCase().includes(term))
+})
 const visible = computed(() => matching.value.slice(0, visibleCount.value))
+function chooseCategory(id: string) { category.value = id; visibleCount.value = 12 }
+function imageFailed(id: string) { if (!failedImages.value.includes(id)) failedImages.value.push(id) }
 </script>
 
 <template>
-<div
-  class="public-gallery"
-  lang="id"
->
-  <a
-    class="gallery-skip"
-    href="#public-template-gallery"
-  >Lewati ke koleksi template</a>
-  <header class="public-gallery__header">
-    <RouterLink
-      to="/"
-      class="gallery-brand"
-    >Kuren</RouterLink>
-    <RouterLink
-      to="/#template"
-      class="gallery-back"
-    >← Kembali ke beranda</RouterLink>
-  </header>
-  <main
-    class="public-gallery__main"
-    id="public-template-gallery"
-    tabindex="-1"
-  >
-    <p class="gallery-kicker">Koleksi Template</p>
-    <h1>Temukan desain untuk cerita Anda</h1>
-    <p class="gallery-description">Lihat contoh undangan dari koleksi yang tersedia. Pilih “Gunakan Template”
-      saat Anda siap mulai menyusun.</p>
-    <div class="gallery-search">
-      <label for="public-template-search">Cari template</label>
-      <input
-        id="public-template-search"
-        v-model="query"
-        type="search"
-        placeholder="Nama atau gaya template"
-        @input="visibleCount = 12"
-      />
+<div class="gallery" lang="id">
+  <a class="skip" href="#collection">Lewati ke koleksi template</a>
+  <header class="header"><RouterLink to="/" class="brand">Kuren<span>✳</span></RouterLink><RouterLink to="/" class="back">← <span>Kembali ke beranda</span></RouterLink></header>
+  <section class="hero" aria-labelledby="gallery-title">
+    <div class="hero-inner"><div><p class="eyebrow"><span></span> THE KUREN COLLECTION <span></span></p><h1 id="gallery-title">Sebuah awal untuk<br><em>cerita Anda.</em></h1><p class="intro">Setiap kisah punya caranya sendiri untuk dikenang. Temukan desain undangan yang terasa seperti Anda.</p><a href="#collection" class="hero-link">JELAJAHI KOLEKSI <span>↘</span></a></div><div class="hero-mark" aria-hidden="true"><span>✳</span><small>MADE FOR<br>YOUR MOMENT</small></div></div>
+  </section>
+  <main id="collection" class="main" tabindex="-1">
+    <div class="section-heading"><div><p class="section-kicker">01 / PILIH CERITA ANDA</p><h2>Koleksi template</h2><p>Desain pilihan untuk momen yang berarti.</p></div><span class="edition">THE COLLECTION<br><b>2026 — KUREN</b></span></div>
+    <div class="filters" role="group" aria-label="Filter gaya template"><button v-for="item in categories" :key="item.id" type="button" :class="{ active: category === item.id }" :aria-pressed="category === item.id" @click="chooseCategory(item.id)">{{ item.name }} <span>{{ item.count }}</span></button></div>
+    <div class="toolbar"><p role="status"><strong>{{ matching.length }}</strong> template ditemukan</p><div class="search"><label for="public-template-search">Cari template</label><div><span aria-hidden="true">⌕</span><input id="public-template-search" v-model="query" type="search" placeholder="Cari nama atau gaya..." @input="visibleCount = 12"></div></div></div>
+    <div v-if="visible.length" class="grid">
+      <article v-for="(theme, index) in visible" :key="theme.id" class="card">
+        <RouterLink :to="galleryPreview(theme)" class="card-image" :aria-label="`Preview ${theme.name}`"><img v-if="!failedImages.includes(theme.id)" :src="theme.previewImage" alt="" loading="lazy" @error="imageFailed(theme.id)"><span v-else class="image-fallback">Pratinjau gambar tidak tersedia</span><span class="image-label">{{ collectionName(theme.collectionId) }}</span><span class="image-index">{{ String(index + 1).padStart(2, '0') }} / KUREN</span></RouterLink>
+        <div class="card-body"><div class="card-meta"><span>WEDDING</span><span>{{ familyName(theme.familyId) }}</span></div><h3>{{ theme.name }}</h3><p>{{ theme.tagline }}</p><div class="actions"><RouterLink :to="galleryPreview(theme)" :aria-label="`Preview ${theme.name}`">Preview <span aria-hidden="true">↗</span></RouterLink><RouterLink :to="{ name: 'use-template', params: { templateId: theme.id } }" :aria-label="`Gunakan ${theme.name}`">Gunakan <span aria-hidden="true">→</span></RouterLink></div></div>
+      </article>
     </div>
-    <p
-      class="gallery-count"
-      role="status"
-    >{{ matching.length }} template tersedia</p>
-    <div class="public-gallery__grid">
-      <RouterLink
-        v-for="theme in visible"
-        :key="theme.id"
-        class="public-template"
-        :to="galleryPreview(theme)"
-        :aria-label="`Lihat template ${theme.name}`"
-      >
-        <img
-          :src="theme.previewImage"
-          :alt="`Desain ${theme.name}`"
-          loading="lazy"
-          width="320"
-          height="200"
-        />
-        <div class="public-template__caption">
-          <h2>{{ theme.name }}</h2>
-          <p>{{ theme.tagline }}</p><span>Lihat Template <span aria-hidden="true">→</span></span>
-        </div>
-      </RouterLink>
-    </div>
-    <p
-      v-if="!matching.length"
-      class="gallery-empty"
-    >Belum ada template yang cocok. Coba kata kunci lain.</p>
-    <button
-      v-if="visible.length < matching.length"
-      class="gallery-more"
-      type="button"
-      @click="visibleCount += 12"
-    >Tampilkan lebih banyak</button>
+    <div v-else class="empty"><span>✳</span><h3>Belum menemukan yang cocok?</h3><p>Coba kata kunci atau pilih gaya yang lain.</p><button type="button" @click="query = ''; chooseCategory('all')">Lihat semua template</button></div>
+    <button v-if="visible.length < matching.length" class="more" type="button" @click="visibleCount += 12">Tampilkan lebih banyak <span>↓</span></button>
   </main>
-  <footer class="public-gallery__footer">
-    <RouterLink to="/">Kuren</RouterLink> · Undangan indah. Cerita Anda.
-  </footer>
+  <footer><RouterLink to="/" class="brand">Kuren<span>✳</span></RouterLink><p>Undangan indah. Cerita Anda.</p><span>MADE FOR YOUR MOMENT</span></footer>
 </div>
 </template>
 
 <style scoped>
-.gallery-skip {
-  position: fixed;
-  top: 8px;
-  left: 8px;
-  z-index: 70;
-  padding: 12px;
-  background: white;
-  color: #352039;
-  border-radius: 8px;
-  transform: translateY(-180%);
-}
-
-.gallery-skip:focus {
-  transform: none;
-}
-
-.public-gallery {
-  min-height: 100dvh;
-  color: #2e1934;
-  background: #f8f3fa;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-.public-gallery__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 20px max(24px, calc((100% - 1200px) / 2));
-  border-bottom: 1px solid #e6d9eb;
-  background: #352039;
-  color: #fff;
-}
-
-.gallery-brand {
-  font: 32px Georgia, serif;
-  color: #fff;
-  text-decoration: none;
-}
-
-.gallery-back {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-size: 14px;
-  color: #fff;
-  text-decoration: none;
-}
-
-.public-gallery__main {
-  width: calc(100% - 48px);
-  max-width: 1200px;
-  margin: auto;
-  padding: 48px 0;
-}
-
-.gallery-kicker {
-  text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: .18em;
-  color: #794c82;
-  text-align: center;
-}
-
-.public-gallery h1 {
-  font: 400 clamp(30px, 4vw, 44px)/1.15 Georgia, serif;
-  color: #32163b;
-  text-align: center;
-  margin: 12px 0;
-}
-
-.gallery-description {
-  max-width: 650px;
-  margin: 0 auto;
-  text-align: center;
-  color: #67556d;
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-.gallery-search {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 440px;
-  margin: 28px auto 0;
-}
-
-.gallery-search label {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.gallery-search input {
-  min-height: 46px;
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #ad90b5;
-  border-radius: 10px;
-  background: #fff;
-  color: #301c37;
-  font: inherit;
-  font-size: 14px;
-}
-
-.gallery-count {
-  margin: 28px 0 14px;
-  font-size: 13px;
-  color: #6c5674;
-}
-
-.public-gallery__grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 22px;
-}
-
-.public-template {
-  min-width: 0;
-  overflow: hidden;
-  border: 1px solid #e6d9eb;
-  border-radius: 14px;
-  background: #fff;
-  color: #2f1937;
-  text-decoration: none;
-  box-shadow: 0 4px 14px #47234e0b;
-}
-
-.public-template:hover {
-  box-shadow: 0 6px 20px #47234e20;
-}
-
-.public-template img {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1.6;
-  object-fit: cover;
-  background: #ede2f0;
-}
-
-.public-template__caption {
-  padding: 16px;
-}
-
-.public-template h2 {
-  font: 600 15px/1.4 Arial, Helvetica, sans-serif;
-  letter-spacing: 0;
-  color: #321a3a;
-  margin: 0;
-}
-
-.public-template p {
-  color: #6d5a73;
-  font-size: 12px;
-  line-height: 1.5;
-  margin: 6px 0 16px;
-}
-
-.public-template__caption>span {
-  font-size: 12px;
-  font-weight: 600;
-  color: #754180;
-}
-
-.gallery-more {
-  display: block;
-  min-height: 46px;
-  margin: 32px auto 0;
-  padding: 12px 24px;
-  border: 1px solid #6c3d78;
-  border-radius: 10px;
-  color: #fff;
-  background: #56305f;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.gallery-empty {
-  text-align: center;
-  padding: 30px 0;
-  font-size: 14px;
-}
-
-.public-gallery__footer {
-  padding: 24px;
-  border-top: 1px solid #e6d9eb;
-  color: #796180;
-  text-align: center;
-  font-size: 12px;
-}
-
-.public-gallery__footer a {
-  color: #583461;
-}
-
-.public-gallery a:focus-visible,
-.public-gallery button:focus-visible,
-.public-gallery input:focus-visible {
-  outline: 3px solid #a77b36;
-  outline-offset: 4px;
-}
-
-@media(max-width: 900px) {
-  .public-gallery__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-  }
-}
-
-@media(max-width: 640px) {
-  .public-gallery__header {
-    padding: 14px 20px;
-  }
-
-  .gallery-brand {
-    font-size: 28px;
-  }
-
-  .gallery-back {
-    font-size: 12px;
-  }
-
-  .public-gallery__main {
-    width: calc(100% - 32px);
-    padding: 32px 0;
-  }
-
-  .public-gallery__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .public-template__caption {
-    padding: 12px;
-  }
-
-  .public-template h2 {
-    font-size: 13px;
-  }
-
-  .public-template p {
-    font-size: 11px;
-  }
-
-  .gallery-description {
-    font-size: 13px;
-  }
-}
-
-@media(max-width: 360px) {
-  .public-gallery__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .public-template img {
-    aspect-ratio: 1.8;
-  }
-}
+.gallery{--plum:#211329;--purple:#492c54;--gold:#c8ad7b;min-height:100dvh;background:#f8f5f9;color:#281b30;font-family:Arial,sans-serif}.gallery *{box-sizing:border-box}.skip{position:fixed;top:8px;left:8px;z-index:10;background:white;padding:12px;transform:translateY(-200%)}.skip:focus{transform:none}.header{height:78px;background:var(--plum);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 max(5%,calc((100% - 1320px)/2));border-bottom:1px solid #ffffff24}.brand{font:32px Georgia,serif;color:inherit;text-decoration:none;letter-spacing:-1px}.brand span{color:var(--gold);font-size:14px;vertical-align:top;margin-left:4px}.back{color:#eee4ef;text-decoration:none;font-size:13px;min-height:44px;display:flex;align-items:center;gap:10px}.hero{background:radial-gradient(circle at 78% 40%,#51345a 0,transparent 35%),#211329;color:#fff;overflow:hidden}.hero-inner{max-width:1320px;margin:auto;padding:78px 0 85px;display:flex;justify-content:space-between;align-items:center;width:90%}.eyebrow,.section-kicker{font-size:10px;letter-spacing:.22em;font-weight:700;color:#c8ad7b}.eyebrow span{display:inline-block;width:24px;height:1px;background:#c8ad7b;vertical-align:middle;margin:0 8px}.eyebrow span:first-child{margin-left:0}.hero h1{color:#fff;font:400 clamp(43px,5.5vw,76px)/1.08 Georgia,serif;letter-spacing:-.035em;margin:25px 0}.hero h1 em{color:#d8c2dd;font-weight:400}.intro{max-width:460px;line-height:1.8;color:#d7cadb;font-size:15px}.hero-link{display:inline-flex;gap:28px;align-items:center;margin-top:22px;color:#f5e8d4;text-decoration:none;font-size:10px;letter-spacing:.16em;border-bottom:1px solid #b79a6b;padding:0 0 12px}.hero-link span{font-size:20px}.hero-mark{width:250px;height:250px;border:1px solid #d9c4a94a;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;outline:1px solid #d9c4a926;outline-offset:18px;color:#d7bd8f}.hero-mark>span{font-size:72px;line-height:1}.hero-mark small{text-align:center;font-size:9px;letter-spacing:.2em;line-height:1.7;margin-top:15px}.main{max-width:1320px;width:90%;margin:auto;padding:76px 0 100px}.section-heading{display:flex;justify-content:space-between;align-items:end}.section-heading h2{font:400 clamp(34px,4vw,48px) Georgia,serif;letter-spacing:-.03em;margin:12px 0}.section-heading p:not(.section-kicker){color:#756a79;font-size:14px}.section-kicker{color:#86643f}.edition{color:#8c7b90;font-size:9px;letter-spacing:.15em;line-height:1.8;text-align:right}.edition b{color:#523858}.filters{display:flex;gap:8px;overflow-x:auto;padding:24px 0;border-bottom:1px solid #dfd5e2;margin-top:24px}.filters button{flex:none;min-height:44px;border:1px solid #dfd4e2;background:transparent;border-radius:3px;color:#57485d;padding:0 15px;font:inherit;font-size:12px;cursor:pointer}.filters button span{margin-left:7px;opacity:.7;font-size:11px}.filters button.active{background:#39213f;border-color:#39213f;color:white}.toolbar{display:flex;flex-direction:column;align-items:stretch;gap:12px;margin:26px 0}.toolbar p{font-size:13px;color:#766779}.toolbar strong{color:#3d2645}.search{width:100%}.search label{display:block;font-size:11px;font-weight:bold;margin-bottom:7px}.search div{display:flex;align-items:center;background:white;border:1px solid #d8cbdc;padding:0 13px}.search div span{font-size:24px;color:#80698a}.search input{width:100%;min-height:46px;border:0;background:transparent;padding:0 10px;color:#281b30;font:inherit;font-size:14px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}.card{background:#fff;border:1px solid #e9e0eb;min-width:0}.card-image{display:block;position:relative;overflow:hidden;aspect-ratio:1.28;background:#eee5ef;color:white}.card-image img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .3s}.card-image:hover img{transform:scale(1.035)}.image-fallback{display:grid;place-items:center;height:100%;color:#69576e;font-size:13px}.image-label,.image-index{position:absolute;background:#281b30e8;color:#f7eddd;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:9px 11px}.image-label{top:15px;left:15px}.image-index{bottom:15px;right:15px}.card-body{padding:22px}.card-meta{display:flex;gap:10px;align-items:center;color:#80668a;font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase}.card-meta span+span{border-left:1px solid #d8cbdc;padding-left:10px}.card h3{font:400 27px Georgia,serif;margin:16px 0 8px;color:#321d39}.card p{font-size:13px;line-height:1.6;color:#75687a;min-height:42px;margin:0}.actions{display:flex;gap:10px;margin-top:22px}.actions a{min-height:45px;flex:1;display:flex;justify-content:space-between;align-items:center;padding:0 14px;border:1px solid #cdbed1;color:#492d50;text-decoration:none;font-size:12px;font-weight:700}.actions a:last-child{background:#39213f;border-color:#39213f;color:white}.actions a:hover,.more:hover{filter:brightness(1.15)}.empty{text-align:center;padding:70px 20px;border:1px solid #e3d9e6;background:white}.empty>span{font-size:28px;color:#b59b70}.empty h3{font:28px Georgia,serif}.empty p{color:#75687a}.empty button,.more{min-height:46px;padding:0 22px;background:#39213f;color:white;border:0;cursor:pointer}.more{display:block;margin:45px auto 0;padding:0 30px}.more span{margin-left:18px}footer{background:#211329;color:#f5eef5;padding:38px 5%;display:flex;align-items:center;gap:24px}footer p{font-size:12px;color:#cdbfd0}footer>span{margin-left:auto;font-size:9px;letter-spacing:.15em;color:#c8ad7b}.gallery a:focus-visible,.gallery button:focus-visible,.gallery input:focus-visible{outline:3px solid #a77b36;outline-offset:3px}@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-mark{width:180px;height:180px}}@media(max-width:600px){.header{height:68px}.hero-inner{padding:55px 0 65px}.hero-mark{display:none}.main{padding:55px 0 70px}.edition{display:none}.toolbar{align-items:stretch;flex-direction:column}.search{width:100%}.grid{grid-template-columns:1fr;gap:20px}.card-image{aspect-ratio:1.4}.section-heading h2{font-size:36px}footer{flex-wrap:wrap}footer>span{width:100%;margin:0}}@media(prefers-reduced-motion:reduce){.card-image img{transition:none}}
 </style>

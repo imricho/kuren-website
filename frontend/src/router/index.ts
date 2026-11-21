@@ -13,7 +13,7 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     /** Page is only for signed-out visitors (login/register). */
     guestOnly?: boolean
-    /** Page name for the document title ("<Page> · Kuren"), translated with t(). */
+    /** Page name for the document title ("<Page> · Temuvibe"), translated with t(). */
     titleKey?: AppMessageKey
     /** Full-width, full-height layout (theme studio, live website editor). */
     layout?: 'studio'

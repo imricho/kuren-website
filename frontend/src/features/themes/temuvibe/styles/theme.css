@@ -1,0 +1,233 @@
+/*
+ * Temuvibe — one stylesheet for four presets. Every colour, font and radius comes from
+ * the `--tv-*` tokens the renderer sets on `.t-tv` (temuvibe/presets.ts). Mobile first;
+ * wider layouts respond to the `site` container (the preview frame or the viewport).
+ */
+.t-tv {
+  --tv-space: clamp(3.5rem, 12cqi, 6.5rem);
+  --tv-gutter: clamp(1.25rem, 5cqi, 2.5rem);
+  --placeholder-bg: var(--tv-surface-alt);
+  min-height: 100%;
+  background: var(--tv-bg);
+  color: var(--tv-ink);
+  font-family: var(--tv-font-body);
+  font-size: 1rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+:where(.t-tv) :where(h1, h2, h3, p, figure, ol, ul, dl, dd) { margin: 0; }
+:where(.t-tv) :where(ol, ul) { padding: 0; list-style: none; }
+.t-tv a { color: inherit; }
+
+/* --- Type ------------------------------------------------------------------------ */
+.tv-kicker {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: var(--tv-kicker-tracking);
+  text-transform: uppercase;
+  color: var(--tv-accent-ink);
+}
+.tv-h2, .t-tv .universal-section h2 {
+  font-family: var(--tv-font-display);
+  font-weight: var(--tv-display-weight);
+  letter-spacing: var(--tv-display-tracking);
+  font-size: clamp(1.9rem, 7cqi, 3rem);
+  line-height: 1.12;
+  color: var(--tv-primary);
+  margin-block-end: 1.5rem;
+}
+.tv-h3 {
+  font-family: var(--tv-font-display);
+  font-weight: var(--tv-display-weight);
+  letter-spacing: var(--tv-display-tracking);
+  font-size: clamp(1.3rem, 4.5cqi, 1.7rem);
+  line-height: 1.2;
+  color: var(--tv-primary);
+}
+.tv-lead { font-size: 1.075rem; color: var(--tv-ink); max-width: 38rem; margin-inline: auto; }
+.tv-body { color: var(--tv-ink); }
+.tv-muted { color: var(--tv-muted); }
+.tv-small { font-size: 0.875rem; }
+.tv-pre { white-space: pre-line; unicode-bidi: plaintext; }
+.tv-center { text-align: center; }
+.tv-link { color: var(--tv-accent-ink); text-decoration: underline; text-underline-offset: 0.2em; font-weight: 600; display: inline-flex; align-items: center; min-height: 2.75rem; }
+.tv-rule { display: block; width: 4rem; height: 1px; margin: 1.5rem auto; background: var(--tv-accent); }
+.tv-badge {
+  display: inline-block; margin-inline-start: 0.5rem; padding: 0.1rem 0.55rem;
+  border: 1px solid var(--tv-accent-ink); border-radius: 999px; color: var(--tv-accent-ink);
+  font-size: 0.7rem; letter-spacing: 0.08em;
+}
+
+/* --- Layout ---------------------------------------------------------------------- */
+.tv-section { padding: var(--tv-space) var(--tv-gutter); }
+.tv-band { background: var(--tv-surface-alt); }
+.tv-inner { width: min(100%, 60rem); margin-inline: auto; min-width: 0; }
+.tv-narrow { width: min(100%, 36rem); }
+.tv-card {
+  background: var(--tv-surface);
+  border: 1px solid var(--tv-line);
+  border-radius: var(--tv-radius);
+  padding: clamp(1.25rem, 5cqi, 2rem);
+  min-width: 0;
+}
+
+/* --- Hero -------------------------------------------------------------------------- */
+.tv-hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-height: min(var(--site-vh, 100svh), 52rem);
+  align-content: center;
+  gap: 2rem;
+  padding: calc(var(--tv-space) * 0.8) var(--tv-gutter);
+  background: var(--tv-hero-bg);
+  color: var(--tv-hero-ink);
+  text-align: center;
+  overflow: hidden;
+}
+.tv-hero__frame { position: relative; z-index: 1; width: min(100%, 40rem); margin-inline: auto; display: grid; justify-items: center; gap: 0.85rem; }
+.tv-hero__kicker { color: var(--tv-hero-accent); }
+.tv-hero__title {
+  font-family: var(--tv-font-display);
+  font-weight: var(--tv-display-weight);
+  letter-spacing: var(--tv-display-tracking);
+  font-size: clamp(2.5rem, 12cqi, 5.25rem);
+  line-height: 1.05;
+  color: var(--tv-hero-ink);
+}
+.tv-hero__subtitle { font-size: 1.15rem; color: var(--tv-hero-muted); }
+.tv-hero__date { font-size: 1rem; letter-spacing: 0.04em; color: var(--tv-hero-muted); }
+.tv-hero .tv-rule { margin-block: 0.25rem; background: var(--tv-hero-accent); }
+.tv-hero .guest-greeting { color: var(--tv-hero-muted); }
+.tv-hero__media { position: relative; z-index: 1; width: min(100%, 34rem); margin-inline: auto; aspect-ratio: 4 / 5; border-radius: var(--tv-radius); overflow: hidden; }
+.tv-hero__brand { display: grid; justify-items: center; gap: 0.6rem; margin-block-end: 0.5rem; }
+.tv-hero__logo { display: block; width: 4.5rem; height: 4.5rem; padding: 0.5rem; border-radius: var(--tv-radius); background: #fff; }
+.tv-hero__logo .theme-image { object-fit: contain; }
+.tv-hero__org { min-width: 0; font-weight: 600; letter-spacing: 0.04em; color: var(--tv-hero-ink); }
+
+/* Elegant: a fine double frame in champagne gold. */
+.t-tv[data-hero='framed'] .tv-hero__frame { padding: clamp(2rem, 8cqi, 3.5rem) clamp(1.25rem, 6cqi, 3rem); }
+.t-tv[data-hero='framed'] .tv-hero__frame::before,
+.t-tv[data-hero='framed'] .tv-hero__frame::after { content: ''; position: absolute; inset: 0; border: 1px solid var(--tv-hero-accent); pointer-events: none; }
+.t-tv[data-hero='framed'] .tv-hero__frame::after { inset: 0.4rem; opacity: 0.45; }
+/* Minimal: light hero, left aligned on wide screens, a hairline under the title. */
+.t-tv[data-hero='airy'] .tv-hero { border-block-end: 1px solid var(--tv-line); }
+.t-tv[data-hero='airy'] .tv-section { padding-block: calc(var(--tv-space) * 1.15); }
+/* Festive: soft confetti light, rounded cards. Purely decorative, motion-free. */
+.tv-hero__confetti {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.55;
+  background:
+    radial-gradient(circle at 12% 18%, var(--tv-hero-accent) 0 0.45rem, transparent 0.5rem),
+    radial-gradient(circle at 86% 22%, #f3a6c3 0 0.35rem, transparent 0.4rem),
+    radial-gradient(circle at 78% 82%, var(--tv-hero-accent) 0 0.6rem, transparent 0.65rem),
+    radial-gradient(circle at 20% 78%, #f3a6c3 0 0.3rem, transparent 0.35rem),
+    radial-gradient(circle at 50% 8%, var(--tv-hero-accent) 0 0.25rem, transparent 0.3rem),
+    radial-gradient(ellipse at 50% 120%, rgb(255 255 255 / 0.14), transparent 60%);
+}
+.t-tv[data-hero='festive'] .tv-hero__title { font-style: italic; }
+/* Corporate: brand-first, left aligned, a gold underline. */
+.t-tv[data-hero='brand'] .tv-hero { text-align: start; }
+.t-tv[data-hero='brand'] .tv-hero__frame { justify-items: start; width: min(100%, 60rem); }
+.t-tv[data-hero='brand'] .tv-hero__brand { justify-items: start; grid-template-columns: auto minmax(0, 1fr); align-items: center; max-width: 100%; }
+.t-tv[data-hero='brand'] .tv-hero .tv-rule { margin-inline: 0; width: 5rem; height: 3px; }
+
+/* --- People ------------------------------------------------------------------------ */
+.tv-people__grid { display: grid; gap: 2.5rem; justify-items: center; }
+.tv-person { display: grid; gap: 0.45rem; justify-items: center; text-align: center; max-width: 24rem; }
+.tv-person__photo { width: 10rem; aspect-ratio: 1; border-radius: 50%; overflow: hidden; margin-block-end: 0.75rem; border: 1px solid var(--tv-line); }
+.t-tv[data-hero='brand'] .tv-person__photo, .t-tv[data-hero='airy'] .tv-person__photo { border-radius: var(--tv-radius); }
+
+/* --- Organisation / milestone ------------------------------------------------------ */
+.tv-org .tv-inner { display: grid; gap: 0.75rem; justify-items: center; max-width: 40rem; }
+.tv-org .tv-h2 { margin-block-end: 0.25rem; }
+.tv-org__logo { width: 7rem; height: 7rem; padding: 0.75rem; background: #fff; border: 1px solid var(--tv-line); border-radius: var(--tv-radius); }
+.tv-org__logo .theme-image { object-fit: contain; }
+.tv-milestone .tv-inner { display: grid; gap: 0.75rem; justify-items: center; }
+.tv-milestone .tv-h2 { margin-block-end: 0.5rem; }
+.tv-milestone__numeral {
+  font-family: var(--tv-font-display); font-weight: var(--tv-display-weight);
+  font-size: clamp(5rem, 24cqi, 9rem); line-height: 1; color: var(--tv-accent-ink);
+}
+.tv-facts { display: grid; gap: 0.75rem; width: min(100%, 30rem); margin-block: 0.5rem; }
+.tv-facts__row { display: grid; gap: 0.15rem; padding-block: 0.75rem; border-block-end: 1px solid var(--tv-line); }
+.tv-facts dt { font-size: 0.75rem; letter-spacing: var(--tv-kicker-tracking); text-transform: uppercase; color: var(--tv-muted); }
+.tv-facts dd { font-weight: 600; }
+
+/* --- Date ------------------------------------------------------------------------- */
+.tv-date__full { font-family: var(--tv-font-display); font-size: clamp(1.25rem, 5cqi, 1.75rem); color: var(--tv-ink); }
+.t-tv .countdown { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; width: min(100%, 26rem); margin: 2rem auto 0; }
+.t-tv .countdown[data-unit-count='3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.t-tv .countdown__unit { display: grid; gap: 0.2rem; padding: 0.85rem 0.25rem; background: var(--tv-surface); border: 1px solid var(--tv-line); border-radius: var(--tv-radius); }
+.t-tv .countdown__value { font-family: var(--tv-font-display); font-size: clamp(1.5rem, 6cqi, 2.25rem); line-height: 1; color: var(--tv-primary); font-variant-numeric: tabular-nums; }
+.t-tv .countdown__label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tv-muted); }
+.t-tv .add-to-calendar__button { color: var(--tv-primary); border-color: var(--tv-primary); }
+
+/* --- Sessions --------------------------------------------------------------------- */
+.tv-sessions__list { display: grid; gap: 1.25rem; }
+.tv-session { display: grid; gap: 0.5rem; }
+.tv-session__when { font-weight: 600; }
+.tv-session__venue { font-weight: 600; color: var(--tv-primary); }
+.tv-session[data-optional='true'] { border-style: dashed; }
+
+/* --- Agenda ----------------------------------------------------------------------- */
+.tv-agenda__list { display: grid; border-block-start: 1px solid var(--tv-line); }
+.tv-agenda__item { display: grid; gap: 0.35rem; padding-block: 1.25rem; border-block-end: 1px solid var(--tv-line); }
+.tv-agenda__time { font-weight: 700; color: var(--tv-accent-ink); font-variant-numeric: tabular-nums; min-height: 1px; }
+.tv-agenda__body { display: grid; gap: 0.35rem; min-width: 0; }
+.tv-agenda .tv-link { min-height: 0; display: inline; }
+
+/* --- Speakers --------------------------------------------------------------------- */
+.tv-speakers__grid { display: grid; gap: 1.25rem; }
+.tv-speaker { display: grid; gap: 0.5rem; align-content: start; scroll-margin-top: 1rem; }
+.tv-speaker__photo { width: 5.5rem; aspect-ratio: 1; border-radius: 50%; overflow: hidden; }
+.t-tv[data-hero='brand'] .tv-speaker__photo { border-radius: var(--tv-radius); }
+
+/* --- Story / gallery -------------------------------------------------------------- */
+.tv-story__list { display: grid; gap: 2rem; margin-block-start: 2rem; }
+.tv-story__entry { display: grid; gap: 0.5rem; padding-inline-start: 1.25rem; border-inline-start: 2px solid var(--tv-accent); }
+.tv-story__photo { aspect-ratio: 3 / 2; overflow: hidden; border-radius: var(--tv-radius); margin-block-end: 0.5rem; }
+.tv-gallery__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin-block-start: 2rem; }
+.tv-gallery__photo { aspect-ratio: 1; overflow: hidden; border-radius: var(--tv-radius); }
+.tv-gallery figcaption { font-size: 0.85rem; color: var(--tv-muted); margin-block-start: 0.4rem; }
+
+/* --- RSVP / universal / closing --------------------------------------------------- */
+.tv-rsvp__card { margin-block-start: 2rem; }
+.tv-rsvp .rsvp-status { margin-block-end: 0.75rem; }
+.tv-rsvp form[data-editor-only] { opacity: 0.8; }
+.t-tv .universal-section { color: var(--tv-ink); }
+.t-tv .universal-citation, .t-tv .closing-family__label { color: var(--tv-muted); opacity: 1; }
+.tv-closing { padding: var(--tv-space) var(--tv-gutter); background: var(--tv-hero-bg); color: var(--tv-hero-ink); }
+.tv-closing .tv-inner { display: grid; gap: 1rem; justify-items: center; max-width: 40rem; }
+.tv-closing .tv-rule { background: var(--tv-hero-accent); margin-block: 0; }
+.tv-closing .tv-body, .tv-closing .closing-family { color: var(--tv-hero-ink); }
+.tv-closing .closing-family__label { color: var(--tv-hero-muted); }
+.tv-closing__message { font-family: var(--tv-font-display); font-size: clamp(1.4rem, 5.5cqi, 2rem); line-height: 1.35; }
+.tv-closing__signature { font-family: var(--tv-font-display); font-size: 1.25rem; color: var(--tv-hero-accent); }
+.tv-closing__photo { width: min(100%, 22rem); aspect-ratio: 4 / 3; overflow: hidden; border-radius: var(--tv-radius); }
+.t-tv[data-hero='airy'] .tv-closing { border-block-start: 1px solid var(--tv-line); }
+
+/* Draft-only samples (editor preview) stay readable but clearly secondary. */
+.t-tv [data-sample='true'] { opacity: 0.75; }
+
+/* --- Wider screens (container queries against the site box) ----------------------- */
+@container site (min-width: 40rem) {
+  .tv-people__grid:not(.tv-people__grid--single) { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .tv-sessions__list:not([data-count='1']) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tv-speakers__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tv-gallery__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tv-agenda__item { grid-template-columns: 9rem minmax(0, 1fr); gap: 1.5rem; }
+}
+@container site (min-width: 64rem) {
+  .tv-hero--cover { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); align-items: center; text-align: start; }
+  .tv-hero--cover .tv-hero__frame { justify-items: start; }
+  .tv-hero--cover .tv-rule { margin-inline: 0; }
+  .t-tv[data-hero='framed'] .tv-hero--cover .tv-hero__frame { justify-items: center; text-align: center; }
+  .t-tv[data-hero='framed'] .tv-hero--cover .tv-rule { margin-inline: auto; }
+  .tv-speakers__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .t-tv[data-hero='brand'] .tv-agenda .tv-inner, .t-tv[data-hero='brand'] .tv-speakers .tv-inner { width: min(100%, 68rem); }
+}
+
+/* High-contrast / forced colours keep borders visible. */
+@media (forced-colors: active) {
+  .tv-card, .t-tv .countdown__unit { border: 1px solid CanvasText; }
+}

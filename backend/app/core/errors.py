@@ -3,8 +3,8 @@
 Every error response has the shape:
     {"error": {"code": "<machine_code>", "message": "<human message>", "details": ...}}
 
-Unexpected exceptions are logged server-side and returned as a generic 500 so
-that stack traces and internals never leak to clients.
+Unexpected exceptions are logged server-side (type and path only) and returned as a
+generic 500, so stack traces, internals and request data never leak to clients or logs.
 """
 
 import logging
@@ -15,6 +15,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 logger = logging.getLogger(__name__)
 
@@ -64,11 +65,6 @@ class NotFoundError(AppError):
     message = "The requested resource was not found."
 
 
-class WeddingExistsError(ConflictError):
-    code = "wedding_exists"
-    message = "You already have a wedding."
-
-
 class LimitReachedError(ConflictError):
     code = "limit_reached"
     message = "The maximum number of items has been reached."
@@ -78,7 +74,7 @@ class EditConflictError(ConflictError):
     """The client edited an older revision of the content (If-Match mismatch)."""
 
     code = "edit_conflict"
-    message = "This wedding was changed somewhere else. Reload to see the latest version."
+    message = "This invitation was changed somewhere else. Reload to see the latest version."
 
     def __init__(self, *, current_revision: int) -> None:
         super().__init__(details={"currentRevision": current_revision})
@@ -93,6 +89,45 @@ class PublishBlockedError(AppError):
 
     def __init__(self, issues: list[dict[str, str]]) -> None:
         super().__init__(details=issues)
+
+
+class SectionNotAvailableError(AppError):
+    """The invitation's variant does not offer this section."""
+
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    code = "section_not_available"
+    message = "This section is not available for this type of invitation."
+
+    def __init__(self, section: str) -> None:
+        super().__init__(details={"section": section})
+
+
+class TemplateIncompatibleError(AppError):
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    code = "template_incompatible"
+    message = "This template does not support this type of invitation. Choose another template."
+
+    def __init__(self) -> None:
+        super().__init__(details=[{"field": "themeId", "message": self.message}])
+
+
+class RsvpClosedError(AppError):
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    code = "rsvp_closed"
+    message = "RSVP is closed for this invitation."
+
+
+class RsvpLinkInvalidError(AppError):
+    """Unknown, malformed or revoked RSVP edit link (also for replies made before edit links)."""
+
+    status_code = status.HTTP_404_NOT_FOUND
+    code = "rsvp_link_invalid"
+    message = "This RSVP link is not valid. Ask the host, or send a new reply."
+
+
+class CapacityReachedError(ConflictError):
+    code = "capacity_reached"
+    message = "Sorry, this event is fully booked."
 
 
 class UnsupportedImageError(AppError):
@@ -182,16 +217,48 @@ async def _validation_error_handler(_: Request, exc: RequestValidationError) -> 
     )
 
 
-async def _unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
-    logger.exception("Unhandled error on %s %s", request.method, request.url.path, exc_info=exc)
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=_error_body("internal_error", "An unexpected error occurred."),
-    )
+class UnhandledErrorMiddleware:
+    """Outermost catch-all: unexpected exceptions become a generic 500 JSON response.
+
+    Only the exception TYPE and the request path are logged: exception messages and
+    tracebacks can carry request data (e.g. SQL bind parameters with guest PII). The
+    exception is NOT re-raised, so the server does not print a second traceback.
+    (Starlette's own `ServerErrorMiddleware` re-raises after responding; this runs inside it.)
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        started = False
+
+        async def tracking_send(message: Message) -> None:
+            nonlocal started
+            if message["type"] == "http.response.start":
+                started = True
+            await send(message)
+
+        try:
+            await self.app(scope, receive, tracking_send)
+        except Exception as exc:  # noqa: BLE001 - this is the last line of defence
+            logger.error(
+                "Unhandled %s on %s %s", type(exc).__name__, scope.get("method", ""), scope.get("path", "")
+            )
+            if started:
+                return  # too late for an error body; the connection is closed as-is
+            response = JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content=_error_body("internal_error", "An unexpected error occurred."),
+            )
+            await response(scope, receive, send)
 
 
 def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppError, _app_error_handler)  # type: ignore[arg-type]
     app.add_exception_handler(StarletteHTTPException, _http_exception_handler)  # type: ignore[arg-type]
     app.add_exception_handler(RequestValidationError, _validation_error_handler)  # type: ignore[arg-type]
-    app.add_exception_handler(Exception, _unhandled_error_handler)
+    # Added last = outermost of the user middleware stack.
+    app.add_middleware(UnhandledErrorMiddleware)

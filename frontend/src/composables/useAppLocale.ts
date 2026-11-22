@@ -14,6 +14,10 @@ import { previewEn } from '@/locales/en/preview'
 import { previewId } from '@/locales/id/preview'
 import { shellEn } from '@/locales/en/shell'
 import { shellId } from '@/locales/id/shell'
+import { invitationEn } from '@/locales/en/invitation'
+import { invitationId } from '@/locales/id/invitation'
+import { templatesEn } from '@/locales/en/templates'
+import { templatesId } from '@/locales/id/templates'
 
 export type AppLocale = 'en' | 'id'
 
@@ -53,6 +57,8 @@ const messages = {
     ...autosaveEn,
     ...sectionsEn,
     ...publishEn,
+    ...invitationEn,
+    ...templatesEn,
   },
   id: {
     language: 'Bahasa', english: 'English', bahasa: 'Bahasa Indonesia', mainNav: 'Navigasi utama', dashboard: 'Dasbor', themes: 'Tema', account: 'Akun', signOut: 'Keluar',
@@ -87,6 +93,8 @@ const messages = {
     ...autosaveId,
     ...sectionsId,
     ...publishId,
+    ...invitationId,
+    ...templatesId,
   },
 } as const
 
@@ -97,9 +105,11 @@ const familyCopy = {
   artistic: ['Artistik', 'Ekspresif, kontemporer, dan berani', 'Komposisi asimetris, tipografi besar, dan foto bergaya kolase yang ekspresif namun tetap mudah dibaca.'],
   'modern-minimalist': ['Minimalis Modern', 'Kesederhanaan hangat, komposisi presisi', 'Desain pernikahan ekspresif dengan kisi yang teratur, warna netral bertekstur, dan tipografi percaya diri.'],
   'rustic-nature': ['Alam / Rustic', 'Romansa taman yang terasa alami', 'Undangan bernuansa taman dengan lapisan hijau, ilustrasi botani, dan permukaan hangat seperti kertas.'],
+  temuvibe: ['Temuvibe', 'Setiap momen jadi lebih hidup', 'Desain berbasis skema untuk setiap acara — pernikahan, ulang tahun, acara keluarga, komunitas, seminar, hingga perayaan perusahaan.'],
 } as const
 
 const collectionCopy = {
+  'temuvibe-signature': ['Signature', 'Empat preset dari satu desain adaptif: setiap undangan hanya menampilkan bagian yang dipakai acaranya.', 'Sistem merek Temuvibe orisinal (ungu plum dan emas sampanye); tidak menampilkan motif budaya tertentu.'],
   'ceremonial-classic': ['Klasik Seremonial', 'Bingkai formal, tata letak seimbang, warna kaya, dan tipografi display yang halus.', 'Arah desain formal orisinal dengan komposisi simetris dan bingkai dekoratif.'],
   'artisan-pattern': ['Pola Artisan', 'Ornamen geometris orisinal, tekstur taktil, dan cerita warna yang ekspresif.', 'Karya pola abstrak kontemporer; tidak dikaitkan dengan tekstil atau komunitas tertentu.'],
   editorial: ['Editorial', 'Tata letak terinspirasi majalah dengan serif halus, ruang lega, dan foto penuh bidang.', 'Desain editorial kontemporer dan cetak mewah.'],
@@ -171,6 +181,10 @@ const templateTaglines: Record<string, string> = {
 }
 
 const templateCopy = {
+  'temuvibe-elegant': ['Ungu plum dan emas sampanye, mewah dengan tenang', 'Preset Temuvibe yang anggun: ungu plum pekat, aksen emas sampanye, dan tipografi serif yang halus untuk acara apa pun.'],
+  'temuvibe-minimal': ['Gading dan plum dengan ruang lega', 'Preset Temuvibe yang bersih: latar gading, aksen plum, dan tata letak lapang yang menonjolkan isi undangan.'],
+  'temuvibe-festive': ['Berry, kuning marigold, dan ritme yang ceria', 'Preset Temuvibe yang meriah untuk perayaan dan acara kumpul: warna cerah, bentuk dinamis, dan suasana gembira.'],
+  'temuvibe-corporate': ['Bersih, percaya diri, dan berfokus pada agenda', 'Preset Temuvibe untuk acara perusahaan dan komunitas: tata letak rapi dengan susunan acara, pembicara, dan pendaftaran di depan.'],
   traditional: ['Formal, seremonial, dan tak lekang waktu', 'Undangan klasik dengan bingkai elegan, hiasan ornamental, dan palet merah marun kaya.'],
   international: ['Modern, editorial, dan berkesan mewah', 'Tata letak editorial dengan serif elegan, ruang lega, dan fotografi dramatis.'],
   conventional: ['Bunga romantis dalam warna pastel lembut', 'Undangan klasik dengan komposisi floral, warna blush, dan tipografi romantis.'],

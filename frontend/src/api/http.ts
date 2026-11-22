@@ -39,7 +39,7 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE = '/api/v1'
+export const API_BASE = '/api/v1'
 
 interface ErrorBody {
   error?: { code?: string; message?: string; details?: unknown }

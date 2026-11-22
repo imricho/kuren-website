@@ -11,9 +11,9 @@ import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
 import { closingForm, closingPayload } from '@/features/cms/forms'
 import { fieldId, validateClosing } from '@/features/cms/validation'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 useUnsavedChangesGuard()
 

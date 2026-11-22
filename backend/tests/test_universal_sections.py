@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.models import Wedding
+from app.models import Invitation
 from tests.wedding_helpers import API, create_wedding
 
 ARABIC = "مرحبا بكم"  # neutral sample text (not a scripture quotation)
@@ -130,13 +130,13 @@ def test_section_writes_keep_other_universal_sections(auth_client: TestClient, b
     assert content["amplopDigital"] == {
         "enabled": False, "bankAccountsEnabled": False, "bankAccounts": [], "qrisEnabled": False,
     }
-    assert content["contentVersion"] == "1.2"
+    assert content["contentVersion"] == "2.0"
 
 
 def test_stored_keys_unknown_to_the_schema_do_not_break_reads(
     auth_client: TestClient, base: str, db: Session
 ) -> None:
-    wedding = db.query(Wedding).one()
+    wedding = db.query(Invitation).one()
     wedding.universal_content = {"greeting": {"enabled": True, "title": "Hi", "futureField": 1}, "mystery": {}}
     db.commit()
     assert auth_client.get(f"{base}/content").status_code == 200

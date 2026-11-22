@@ -13,7 +13,7 @@ import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 
 import { ApiError } from '@/api/http'
 import { ACCEPT_ATTRIBUTE, assetsApi, checkUploadFile, type AssetKind } from '@/api/assets'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
 import { FOCUS_RING } from '@/components/ui/styles'
 import TextField from '@/components/ui/TextField.vue'
@@ -67,7 +67,7 @@ const props = withDefaults(
 const model = defineModel<ImageForm>({ required: true })
 const { t } = useAppLocale()
 const uid = useId()
-const store = useWeddingStore()
+const store = useInvitationStore()
 
 const srcKey = computed(() => props.srcPath ?? `${props.path}.src`)
 const altKey = computed(() => props.altPath ?? `${props.path}.alt`)

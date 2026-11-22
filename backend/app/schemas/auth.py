@@ -1,12 +1,14 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from app.schemas.text import check_controls
+
 # Upper bound protects the hasher from very large inputs.
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_MAX_LENGTH = 128
 
 
 def _strip_name(value: str) -> str:
-    value = " ".join(value.split())
+    value = " ".join(check_controls(value).split())
     if not value:
         raise ValueError("must not be blank")
     return value

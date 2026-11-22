@@ -29,8 +29,14 @@ describe('completeness rules', () => {
       holyRecite1: 'optional',
       greeting: 'optional',
       couple: 'not_started',
+      // v2.0 sections are not offered to (legacy) weddings.
+      profiles: 'optional',
+      organization: 'optional',
+      milestone: 'optional',
       weddingDate: 'not_started',
       events: 'not_started',
+      agenda: 'optional',
+      speakers: 'optional',
       story: 'optional',
       gallery: 'optional',
       rsvp: 'optional',
@@ -45,9 +51,10 @@ describe('completeness rules', () => {
     expect(c.sections.opening.missing).toEqual(['weddingTitle', 'weddingDate', 'coupleNames'])
   })
 
-  it('a complete draft with a theme is 6 of 6', () => {
+  it('a complete draft with a theme is fully done (6 required + the shown RSVP)', () => {
     const c = computeCompleteness(complete(), 'ethnic')
-    expect(c.done).toBe(6)
+    expect(c.done).toBe(c.total)
+    expect(c.total).toBe(7)
     expect(c.percent).toBe(100)
     expect(firstIncompleteSection(c)).toBeUndefined()
   })
@@ -76,7 +83,7 @@ describe('completeness rules', () => {
     ['events: bad time is not complete', (d) => (d.events = [{ ...completeEvent, startTime: '25:00' }]), 'ethnic', { events: 'in_progress' }],
     ['rsvp: disabled without title', (d) => (d.rsvp = { enabled: false }), 'ethnic', { rsvp: 'optional' }],
     ['rsvp: default only', (d) => (d.rsvp = { enabled: true }), 'ethnic', { rsvp: 'optional' }],
-    ['rsvp: started without title', (d) => (d.rsvp = { enabled: true, introduction: 'Hi' }), 'ethnic', { rsvp: 'in_progress' }],
+    ['rsvp: started without title (a default heading is used)', (d) => (d.rsvp = { enabled: true, introduction: 'Hi' }), 'ethnic', { rsvp: 'complete' }],
     ['weddingDate: missing', (d) => (d.opening.weddingDate = undefined), 'ethnic', { weddingDate: 'not_started', opening: 'in_progress' }],
     ['holyRecite1: on, empty', (d) => (d.holyRecite1 = { enabled: true, reference: 'QS 30:21' }), 'ethnic', { holyRecite1: 'in_progress' }],
     ['holyRecite2: on, original script only', (d) => (d.holyRecite2 = { enabled: true, originalScript: 'نص' }), 'ethnic', { holyRecite2: 'complete' }],
@@ -109,14 +116,16 @@ describe('completeness rules', () => {
     for (const [key, status] of Object.entries(expected)) expect(c.sections[key as keyof typeof c.sections].status).toBe(status)
   })
 
-  it('optional sections never count toward the total', () => {
+  it('shown optional sections count until complete, so "done" never hides a publish blocker', () => {
     const d = complete()
     d.story.timeline = [{ id: 's', title: 'Met' }]
     d.rsvp = { enabled: true, introduction: 'x' }
     d.amplopDigital = { enabled: true, bankAccountsEnabled: true, qrisEnabled: false, bankAccounts: [] }
     const c = computeCompleteness(d, 'ethnic')
-    expect(c.done).toBe(6)
-    expect(c.total).toBe(6)
+    // 6 required + story (incomplete) + RSVP (complete: the heading is optional) + gifts (incomplete).
+    expect(c.total).toBe(9)
+    expect(c.done).toBe(7)
+    expect(c.percent).toBeLessThan(100)
   })
 
   it('counts the 5 mandatory sections + theme (RSVP is not required)', () => {

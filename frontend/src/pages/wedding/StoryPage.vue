@@ -15,9 +15,9 @@ import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedCha
 import { storyMetaForm, storyMetaPayload } from '@/features/cms/forms'
 import { fieldId, validateStoryMeta } from '@/features/cms/validation'
 import type { StoryEntryDraft } from '@/features/wedding/draft'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 useUnsavedChangesGuard()
 

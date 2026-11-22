@@ -53,13 +53,14 @@ describe('toPreviewContent public mode', () => {
     expect(toPreviewContent(emptyDraft(), 'en', today, { mode: 'draft' }).content.events).toHaveLength(1)
   })
 
-  it('drops incomplete events and hides an RSVP without a title', () => {
+  it('drops incomplete events and gives an RSVP without a title the default heading', () => {
     const d = publishableDraft()
     d.events.push({ id: 'e2', type: 'reception', title: 'Reception', date: '2027-06-12' })
     d.rsvp = { enabled: true }
     const c = pub(d)
     expect(c.events.map((e) => e.id)).toEqual(['e1'])
-    expect(c.rsvp.enabled).toBe(false)
+    expect(c.rsvp.enabled).toBe(true)
+    expect(c.rsvp.title).toBe('RSVP')
   })
 
   it('keeps enabled content (trimmed at the ends only) and new fields', () => {

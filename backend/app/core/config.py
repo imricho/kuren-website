@@ -7,7 +7,7 @@ All secrets and environment-specific values come from the environment (or a
 from functools import lru_cache
 from typing import Annotated, Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from sqlalchemy.engine import URL
 
@@ -43,10 +43,41 @@ class Settings(BaseSettings):
     media_root: str = "/app/media"
     max_upload_bytes: int = Field(default=5 * 1024 * 1024, ge=1024)
     max_image_pixels: int = Field(default=40_000_000, ge=1_000_000)
-    max_assets_per_wedding: int = Field(default=300, ge=1)
+    max_assets_per_invitation: int = Field(default=300, ge=1)
 
     # Public invitation endpoint: requests per client IP per minute, per process.
     public_rate_limit_per_minute: int = Field(default=120, ge=1)
+    # Public RSVP submissions: a separate, stricter bucket (per client IP per minute, per process),
+    # plus a per-invitation bucket so one slug cannot be flooded from many addresses.
+    rsvp_rate_limit_per_minute: int = Field(default=10, ge=1)
+    # Well above the per-IP limit, so a handful of addresses cannot lock real guests out.
+    rsvp_slug_rate_limit_per_minute: int = Field(default=300, ge=1)
+
+    # Reverse proxies whose X-Forwarded-For uvicorn trusts (uvicorn reads the same env var,
+    # FORWARDED_ALLOW_IPS). Comma-separated IPs/CIDRs; "*" is refused: anyone could then
+    # spoof their address and dodge the per-IP rate limits.
+    forwarded_allow_ips: str = "127.0.0.1"
+    # Where rate-limit counters live: "memory" is per process (fine for one worker in
+    # development); "database" is shared by every worker/replica and is required in production.
+    rate_limit_backend: Literal["memory", "database"] = "memory"
+    # Public RSVP submissions: body cap (the rest of the API keeps max_request_body_bytes).
+    max_rsvp_body_bytes: int = Field(default=16 * 1024, ge=1024)
+
+    @field_validator("forwarded_allow_ips")
+    @classmethod
+    def _no_wildcard_proxy(cls, value: str) -> str:
+        if "*" in value:
+            raise ValueError("FORWARDED_ALLOW_IPS must list the proxy addresses; '*' is not allowed")
+        return value
+
+    @model_validator(mode="after")
+    def _secure_cookies_in_production(self) -> "Settings":
+        # Production is served over HTTPS; a session cookie without Secure could leak over HTTP.
+        if self.environment == "production" and not self.session_cookie_secure:
+            raise ValueError("SESSION_COOKIE_SECURE must be true when ENVIRONMENT=production")
+        if self.environment == "production" and self.rate_limit_backend != "database":
+            raise ValueError("RATE_LIMIT_BACKEND must be 'database' when ENVIRONMENT=production")
+        return self
 
     @field_validator("cors_origins", mode="before")
     @classmethod

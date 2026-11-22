@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 
 import { authApi, type LoginPayload, type RegisterPayload, type User } from '@/api/auth'
 import { ApiError } from '@/api/http'
+import { clearRecoveries } from '@/features/cms/draftRecovery'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
@@ -49,6 +50,8 @@ export const useAuthStore = defineStore('auth', () => {
       await authApi.logout()
     } finally {
       user.value = null
+      // Unsaved-change recovery copies are personal: never leave them for the next person.
+      clearRecoveries()
     }
   }
 

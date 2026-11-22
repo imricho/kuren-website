@@ -7,6 +7,7 @@
 import { useAppLocale } from '@/composables/useAppLocale'
 import { isIsoDate, isTime } from '@/features/wedding/draft'
 import { isSafeImageSrc } from '@/features/wedding/format'
+import { INVITATION_LIMITS } from '@/features/invitation/validation'
 import { isInstagramUrl } from '@/features/wedding/validation'
 
 import type {
@@ -29,6 +30,7 @@ export type IssueCode =
   | 'invalidDate'
   | 'invalidTime'
   | 'endBeforeStart'
+  | 'endDateBeforeDate'
   | 'invalidUrl'
   | 'invalidInstagram'
   | 'invalidImage'
@@ -40,11 +42,17 @@ export type IssueCode =
   | 'incompleteAccount'
   | 'invalidPhone'
   | 'httpsOnly'
+  | 'required'
+  | 'outOfRange'
+  | 'tooMany'
+  | 'duplicateOption'
+  | 'optionsRequired'
 
 export interface FieldIssue {
   field: string
   code: IssueCode
   max?: number
+  min?: number
 }
 
 export const LIMITS = {
@@ -96,7 +104,7 @@ export function isHttpUrl(value: string): boolean {
   }
 }
 
-class Checker {
+export class Checker {
   issues: FieldIssue[] = []
   constructor(private prefix = '') {}
   private path(field: string) {
@@ -119,6 +127,14 @@ class Checker {
   }
   pattern(field: string, value: string, re: RegExp, code: IssueCode) {
     if (value.trim() !== '' && !re.test(value.trim())) this.issues.push({ field: this.path(field), code })
+  }
+  /** A whole number from `min` to `max`, typed as text ('' = not set). */
+  wholeNumber(field: string, value: string, min: number, max: number) {
+    const v = value.trim()
+    if (v !== '' && !(/^\d+$/.test(v) && Number(v) >= min && Number(v) <= max)) this.issues.push({ field: this.path(field), code: 'outOfRange', min, max })
+  }
+  required(field: string, value: string) {
+    if (value.trim() === '') this.issues.push({ field: this.path(field), code: 'required' })
   }
   instagram(field: string, value: string) {
     if (value.trim() !== '' && !isInstagramUrl(value.trim()))
@@ -186,8 +202,15 @@ export function validateEvent(f: EventForm): FieldIssue[] {
   c.date('date', f.date)
   c.time('startTime', f.startTime)
   c.time('endTime', f.endTime)
-  if (isTime(f.startTime.trim()) && isTime(f.endTime.trim()) && f.endTime.trim() <= f.startTime.trim())
+  c.date('endDate', f.endDate)
+  const multiDay = isIsoDate(f.endDate.trim()) && isIsoDate(f.date.trim()) && f.endDate.trim() > f.date.trim()
+  if (isIsoDate(f.endDate.trim()) && isIsoDate(f.date.trim()) && f.endDate.trim() < f.date.trim())
+    c.issues.push({ field: 'endDate', code: 'endDateBeforeDate' })
+  if (!multiDay && isTime(f.startTime.trim()) && isTime(f.endTime.trim()) && f.endTime.trim() <= f.startTime.trim())
     c.issues.push({ field: 'endTime', code: 'endBeforeStart' })
+  c.https('onlineUrl', f.onlineUrl)
+  c.max('onlineLabel', f.onlineLabel, LIMITS.title)
+  c.max('onlineInstructions', f.onlineInstructions, 1000)
   c.max('venueName', f.venueName, LIMITS.venueName)
   c.max('address', f.address, LIMITS.address)
   c.url('mapsUrl', f.mapsUrl)
@@ -228,6 +251,21 @@ export function validateRsvp(f: RsvpForm): FieldIssue[] {
   const max = String(f.maxGuestsPerResponse).trim()
   if (max !== '' && !(/^\d+$/.test(max) && Number(max) >= 1 && Number(max) <= 20))
     c.issues.push({ field: 'maxGuestsPerResponse', code: 'guestRange' })
+  c.wholeNumber('capacity', f.capacity, INVITATION_LIMITS.capacityMin, INVITATION_LIMITS.capacityMax)
+  if (f.registrationFields.length > INVITATION_LIMITS.registrationFields)
+    c.issues.push({ field: 'registrationFields', code: 'tooMany', max: INVITATION_LIMITS.registrationFields })
+  f.registrationFields.forEach((field, i) => {
+    const p = `registrationFields.${i}`
+    c.required(`${p}.label`, field.label)
+    c.max(`${p}.label`, field.label, INVITATION_LIMITS.registrationLabel)
+    if (field.type !== 'select') return
+    const options = field.options.map((o) => o.trim())
+    if (!options.some(Boolean)) c.issues.push({ field: `${p}.options`, code: 'optionsRequired' })
+    if (options.length > INVITATION_LIMITS.registrationOptions) c.issues.push({ field: `${p}.options`, code: 'tooMany', max: INVITATION_LIMITS.registrationOptions })
+    field.options.forEach((o, j) => c.max(`${p}.options.${j}`, o, INVITATION_LIMITS.registrationOption))
+    const filled = options.filter(Boolean)
+    if (new Set(filled).size !== filled.length) c.issues.push({ field: `${p}.options`, code: 'duplicateOption' })
+  })
   return c.issues
 }
 
@@ -312,6 +350,8 @@ export function issueMessage(issue: FieldIssue): string {
       return t('errInvalidTime')
     case 'endBeforeStart':
       return t('errEndBeforeStart')
+    case 'endDateBeforeDate':
+      return t('errEndDateBeforeDate')
     case 'invalidUrl':
       return t('errInvalidUrl')
     case 'invalidInstagram':
@@ -334,6 +374,16 @@ export function issueMessage(issue: FieldIssue): string {
       return t('errPhone')
     case 'httpsOnly':
       return t('errHttpsUrl')
+    case 'required':
+      return t('errRequired')
+    case 'outOfRange':
+      return t('errOutOfRange', { min: issue.min ?? 0, max: issue.max ?? 0 })
+    case 'tooMany':
+      return t('errTooMany', { max: issue.max ?? 0 })
+    case 'duplicateOption':
+      return t('errDuplicateOption')
+    case 'optionsRequired':
+      return t('errOptionsRequired')
   }
 }
 

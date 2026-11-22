@@ -53,8 +53,10 @@ def test_create_and_read_wedding(auth_client: TestClient) -> None:
     created = create_wedding(auth_client)
     assert set(created) == {
         "id", "themeId", "locale", "status", "publishedAt", "revision", "createdAt", "updatedAt",
-        "slug", "hasUnpublishedChanges", "publication",
+        "slug", "hasUnpublishedChanges", "publication", "category", "variant", "title", "timezone",
     }
+    assert (created["category"], created["variant"]) == ("wedding", "wedding_ceremony")
+    assert created["title"] is None and created["timezone"] == "Asia/Jakarta"
     assert created["slug"] is None and created["publication"] is None
     assert created["hasUnpublishedChanges"] is False
     assert created["themeId"] is None
@@ -69,11 +71,14 @@ def test_create_with_theme_and_locale(auth_client: TestClient) -> None:
     assert (created["themeId"], created["locale"]) == ("afterglow", "id")
 
 
-def test_second_create_conflicts(auth_client: TestClient) -> None:
-    create_wedding(auth_client)
-    response = auth_client.post(API, json={"locale": "id"})
-    assert response.status_code == 409
-    assert response.json()["error"]["code"] == "wedding_exists"
+def test_second_create_makes_another_wedding_and_me_is_the_latest(auth_client: TestClient) -> None:
+    first = create_wedding(auth_client)
+    second = create_wedding(auth_client, locale="id")
+    assert second["id"] != first["id"]
+    assert auth_client.get(f"{API}/me").json()["id"] == second["id"]
+    # Touching the first one makes it the most recently updated again.
+    assert auth_client.patch(f"{API}/{first['id']}", json={"locale": "id"}).status_code == 200
+    assert auth_client.get(f"{API}/me").json()["id"] == first["id"]
 
 
 @pytest.mark.parametrize("body", [{"themeId": "nope"}, {"locale": "fr"}, {"theme_id": "afterglow"}, {"x": 1}])

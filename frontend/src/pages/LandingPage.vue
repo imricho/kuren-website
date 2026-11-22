@@ -24,12 +24,13 @@ const plans = [
   { name: 'Signature', price: '199.000', note: 'Rencana harga per undangan.', items: ['Rencana koleksi template premium', 'Rencana pilihan desain tambahan', 'Detail layanan akan dikonfirmasi', 'Detail paket akan dikonfirmasi'], cta: 'Buat Akun' },
 ]
 const faqs = [
-  ['Apa itu Temuvibe?', 'Temuvibe adalah ruang untuk menyusun undangan pernikahan digital: memilih desain, mengisi cerita, menambahkan detail acara, dan melihat pratinjau.'],
+  ['Apa itu Temuvibe?', 'Temuvibe adalah ruang untuk menyusun undangan digital — pernikahan, ulang tahun, khitanan, aqiqah, wisuda, acara keluarga, komunitas, hingga acara perusahaan: memilih desain, mengisi detail acara, menerbitkan tautan, dan menerima konfirmasi kehadiran (RSVP).'],
   ['Apakah saya perlu keahlian desain?', 'Tidak. Mulai dari template yang tersedia, lalu isi konten melalui editor. Anda dapat memeriksa hasilnya di pratinjau.'],
-  ['Bagaimana cara membuat undangan?', 'Buat akun, lengkapi nama dan tanggal pernikahan, pilih template, lalu susun bagian undangan melalui dashboard.'],
+  ['Bagaimana cara membuat undangan?', 'Buat akun, pilih jenis acara dan template, isi detailnya melalui editor dengan pratinjau langsung, lalu terbitkan tautannya.'],
   ['Apakah pembayaran sudah tersedia?', 'Belum. Harga Free, Premium, dan Signature masih merupakan rencana awal. Halaman ini tidak memproses pembayaran atau mengaktifkan paket berbayar.'],
-  ['Berapa lama undangan bisa diakses?', 'Masa aktif dan ketentuan publikasi akan dikonfirmasi saat layanan tersedia. Saat ini Anda dapat menyusun dan meninjau undangan di CMS.'],
-  ['Apakah saya bisa mengganti tema nantinya?', 'Ya. Pilih template lain melalui studio tema. Konten pernikahan dikelola terpisah dari tampilan desain.'],
+  ['Berapa lama undangan bisa diakses?', 'Undangan yang diterbitkan dapat dibuka siapa pun yang memiliki tautannya sampai Anda menonaktifkannya. Masa aktif paket berbayar akan dikonfirmasi saat layanan tersedia.'],
+  ['Apakah ada buku tamu, daftar tamu, atau QR check-in?', 'Belum. Tamu dapat mengirim konfirmasi kehadiran (RSVP) dan mengubahnya lewat tautan pribadi, dan Anda dapat membuat tautan bernama untuk setiap tamu. Buku tamu online, daftar tamu, dan QR check-in belum tersedia.'],
+  ['Apakah saya bisa mengganti tema nantinya?', 'Ya. Pilih template lain yang cocok untuk jenis acara Anda. Isi undangan dikelola terpisah dari tampilan desain.'],
 ]
 </script>
 
@@ -84,8 +85,8 @@ const faqs = [
     <section class="landing-hero">
       <div class="hero-body landing-container">
         <div class="hero-copy">
-          <p class="landing-eyebrow">Undangan Pernikahan Digital</p>
-          <h1>Undangan Pernikahan<br class="desktop-break" /> Elegan, Sesuai Cerita Anda</h1>
+          <p class="landing-eyebrow">Undangan Digital untuk Setiap Momen</p>
+          <h1>Undangan Digital<br class="desktop-break" /> Elegan, Sesuai Cerita Anda</h1>
           <p class="hero-description">Temukan desain yang terasa seperti Anda, rangkai cerita,<br class="desktop-break" /> dan hadirkan hari istimewa dalam satu undangan digital.</p>
           <div class="hero-actions">
             <RouterLink
@@ -363,7 +364,7 @@ const faqs = [
         alt=""
       />
       <div class="landing-container">
-        <h2>Mulai Cerita Pernikahan Anda<br />Bersama Temuvibe</h2>
+        <h2>Mulai Cerita Anda<br />Bersama Temuvibe</h2>
         <RouterLink
           :to="join"
           class="landing-button landing-button--gold"

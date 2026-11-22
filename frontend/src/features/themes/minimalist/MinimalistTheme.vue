@@ -102,7 +102,7 @@ const view = useWeddingView(props)
             <p class="mf-event__venue">{{ event.venueName }}</p>
             <p class="mf-body">{{ event.address }}</p>
             <p v-if="event.description" class="mf-body">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
-            <a class="mf-link" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} <span aria-hidden="true">↗</span></a>
+            <a class="mf-link" v-if="event.mapHref" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} <span aria-hidden="true">↗</span></a>
           </div>
         </article>
       </div>

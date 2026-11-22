@@ -5,8 +5,8 @@ import { defineComponent, h } from 'vue'
 
 import { useAppLocale } from '@/composables/useAppLocale'
 import { useToast } from '@/composables/useToast'
-import { useWeddingStore } from '@/stores/wedding'
-import { installFakeWeddingApi } from '@/test/fakeWeddingApi'
+import { useInvitationStore } from '@/stores/invitation'
+import { installFakeInvitationApi } from '@/test/fakeInvitationApi'
 
 import { closingForm, closingPayload } from '../forms'
 import { useSectionDraft } from '../composables/useSectionDraft'
@@ -17,11 +17,11 @@ import SaveStatus from './SaveStatus.vue'
 enableAutoUnmount(afterEach)
 
 async function setup(options: { banner?: boolean; twice?: boolean } = {}) {
-  const api = installFakeWeddingApi({ content: { closing: { message: 'Saved' } } })
+  const api = installFakeInvitationApi({ content: { closing: { message: 'Saved' } } })
   const pinia = createPinia()
   setActivePinia(pinia)
-  const store = useWeddingStore()
-  await store.ensureLoaded()
+  const store = useInvitationStore()
+  await store.ensureLoaded('w1')
   let draft!: ReturnType<typeof useSectionDraft<ReturnType<typeof closingForm>, ReturnType<typeof closingPayload>>>
   const Editor = defineComponent({
     setup() {
@@ -86,7 +86,7 @@ describe('SaveStatus', () => {
     await flushPromises()
     await status().get('[data-action="save-now"]').trigger('click')
     await flushPromises()
-    expect(api.callsTo('PUT', '/weddings/w1/sections/closing')).toHaveLength(1)
+    expect(api.callsTo('PUT', '/invitations/w1/sections/closing')).toHaveLength(1)
     expect(status().attributes('data-state')).toBe('saved')
     expect(live()[0]!.textContent).toBe('All changes saved')
     expect(live()[0]!.getAttribute('aria-live')).toBe('polite')
@@ -107,12 +107,12 @@ describe('SaveStatus', () => {
     window.dispatchEvent(event)
     await flushPromises()
     expect(event.defaultPrevented).toBe(true)
-    expect(api.callsTo('PUT', '/weddings/w1/sections/closing')).toHaveLength(1) // once, not per instance
+    expect(api.callsTo('PUT', '/invitations/w1/sections/closing')).toHaveLength(1) // once, not per instance
   })
 
   it('Failed → Retry, announced', async () => {
     const { status, draft, api, live } = await setup()
-    api.failNext('PUT /weddings/w1/sections/closing', { status: 400, message: 'Bad' })
+    api.failNext('PUT /invitations/w1/sections/closing', { status: 400, message: 'Bad' })
     draft().form.value.message = 'New'
     await vi.advanceTimersByTimeAsync(1000)
     await flushPromises()

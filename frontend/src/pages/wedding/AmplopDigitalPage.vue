@@ -36,9 +36,9 @@ import {
   type BankAccountForm,
 } from '@/features/cms/universalForms'
 import { fieldId, validateAmplop } from '@/features/cms/validation'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 const confirm = useConfirm()
 useUnsavedChangesGuard()

@@ -1,5 +1,7 @@
 import { computed, inject, provide, type ComputedRef, type InjectionKey } from 'vue'
 
+import type { VariantId } from '@/features/invitation/registry'
+
 /**
  * Where a theme is being rendered:
  *  - `draft`: editor live preview, full-screen draft preview, template browsing.
@@ -14,17 +16,45 @@ interface RenderContext {
   mode: ComputedRef<RenderMode>
   /** Sanitised guest name from `?to=` (public page only). */
   guestName: ComputedRef<string | undefined>
+  /** The invitation's variant, when the host page knows it (variant-aware wording). */
+  variant: ComputedRef<VariantId | undefined>
+  /** Published slug (public page only): enables the live RSVP form. */
+  slug: ComputedRef<string | undefined>
+  /** IANA time zone of the invitation (RSVP deadline is checked in it). */
+  timezone: ComputedRef<string | undefined>
+  /** Id of the template actually rendered (after any fallback). */
+  themeId: ComputedRef<string | undefined>
+}
+
+export interface RenderContextSource {
+  mode: () => RenderMode
+  guestName: () => string | undefined
+  variant?: () => VariantId | undefined
+  slug?: () => string | undefined
+  timezone?: () => string | undefined
+  themeId?: () => string | undefined
 }
 
 const RENDER_CONTEXT: InjectionKey<RenderContext> = Symbol('themeRenderContext')
 
-export function provideRenderContext(source: { mode: () => RenderMode; guestName: () => string | undefined }) {
-  provide(RENDER_CONTEXT, { mode: computed(source.mode), guestName: computed(source.guestName) })
+export function provideRenderContext(source: RenderContextSource) {
+  provide(RENDER_CONTEXT, {
+    mode: computed(source.mode),
+    guestName: computed(source.guestName),
+    variant: computed(() => source.variant?.()),
+    slug: computed(() => source.slug?.()),
+    timezone: computed(() => source.timezone?.()),
+    themeId: computed(() => source.themeId?.()),
+  })
 }
 
 const DEFAULT_CONTEXT: RenderContext = {
   mode: computed(() => 'draft' as const),
   guestName: computed(() => undefined),
+  variant: computed(() => undefined),
+  slug: computed(() => undefined),
+  timezone: computed(() => undefined),
+  themeId: computed(() => undefined),
 }
 
 export function useRenderContext(): RenderContext {

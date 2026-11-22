@@ -19,6 +19,8 @@ async function editorApi(page: Page, locale: 'en' | 'id' = 'en') {
   let revision = 1
   const wedding = {
     id: 'cms-design-wedding', themeId: 'royal-maroon-v2', locale,
+    // Invitation engine v2.0 record fields (InvitationRead ⊇ WeddingRead).
+    category: 'wedding', variant: 'wedding_ceremony', title: null as string | null, timezone: 'Asia/Jakarta',
     status: 'draft', revision, publishedAt: null as string | null, slug: null as string | null,
     publication: null as { publishedAt: string; revision: number; themeId: string } | null,
     hasUnpublishedChanges: false,
@@ -40,8 +42,14 @@ async function editorApi(page: Page, locale: 'en' | 'id' = 'en') {
     const respond = (json: unknown, status = 200) => route.fulfill({ status, json, headers: { ETag: `"${revision}"` } })
     if (path === '/users/me') return respond({ id: 'cms-design-user', email: 'fixture@example.invalid', full_name: 'Alex Wijaya', created_at: '2026-01-01' })
     if (path === '/weddings/me') return respond(wedding)
+    if (path === '/invitation-types') return route.continue()
+    if (path === '/invitations' && method === 'GET') {
+      const { id, title, category, variant, themeId, status, slug, hasUnpublishedChanges, updatedAt, publishedAt } = wedding
+      return respond({ items: [{ id, title, category, variant, themeId, status, slug, hasUnpublishedChanges, eventDate: content.opening.weddingDate, updatedAt, publishedAt }] })
+    }
+    if (path === '/invitations/cms-design-wedding' && method === 'GET') return respond(wedding)
     if (path.endsWith('/content')) return respond(content)
-    if (path === '/weddings/cms-design-wedding' && method === 'PATCH') {
+    if (/^\/(weddings|invitations)\/cms-design-wedding$/.test(path) && method === 'PATCH') {
       Object.assign(wedding, body)
       return respond(wedding)
     }
@@ -123,7 +131,7 @@ test('section navigation is keyboard usable and preserves the selected route', a
   const couple = page.getByTestId('section-nav').locator('a[data-section="couple"]')
   await couple.focus()
   await page.keyboard.press('Enter')
-  await expect(page).toHaveURL(/\/wedding\/couple$/)
+  await expect(page).toHaveURL(/\/invitations\/cms-design-wedding\/edit\/couple$/)
   await expect(couple).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
 })
@@ -152,7 +160,7 @@ test('publish entry still reaches the real checklist and publishes only on reque
   await page.setViewportSize({ width: 1606, height: 979 })
   await openEditor(page)
   await page.locator('[data-action="open-publish"]:visible').first().click()
-  await expect(page).toHaveURL(/\/wedding\/publish$/)
+  await expect(page).toHaveURL(/\/invitations\/cms-design-wedding\/edit\/publish$/)
   await expect(page.getByTestId('publish-page')).toBeVisible()
   expect(api.calls.some(call => call.path.endsWith('/publish'))).toBe(false)
   await page.locator('[data-action="publish"]').click()

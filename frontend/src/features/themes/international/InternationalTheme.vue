@@ -89,7 +89,7 @@ const view = useWeddingView(props)
             <div class="intl-event__where">
               <p class="intl-event__venue">{{ event.venueName }}</p>
               <p class="intl-body">{{ event.address }}</p>
-              <a class="intl-link" :href="event.mapHref" target="_blank" rel="noopener noreferrer">
+              <a class="intl-link" v-if="event.mapHref" :href="event.mapHref" target="_blank" rel="noopener noreferrer">
                 {{ view.t.viewMap }} <span aria-hidden="true">→</span>
               </a>
             </div>

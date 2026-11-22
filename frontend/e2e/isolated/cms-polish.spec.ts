@@ -1,13 +1,14 @@
 import { expect, test, type Page } from '@playwright/test'
 import { normalizeDraft } from '../../src/features/wedding/draft'
 import { sampleWedding } from '../../src/features/wedding/sampleWedding'
+import { asInvitation, handleInvitationRoutes } from './invitationMocks'
 
 const screenshots = process.env.POLISH_SCREENSHOTS ?? 'test-results/cms-polish'
 async function api(page: Page, authenticated = true) {
   const content = normalizeDraft(structuredClone(sampleWedding))
   content.opening.weddingDate = '2099-06-12'
   content.countdown = { enabled: true, addToCalendar: true }
-  const wedding = { id: 'polish-fixture', themeId: 'royal-maroon-v2', locale: 'en', status: 'draft', revision: 1, publishedAt: null }
+  const wedding = asInvitation({ id: 'polish-fixture', themeId: 'royal-maroon-v2', locale: 'en', status: 'draft', revision: 1, publishedAt: null })
   await page.addInitScript(() => localStorage.setItem('kuren.appLocale', 'en'))
   await page.routeWebSocket(url => url.pathname === '/' && url.searchParams.has('token'), () => {})
   await page.route('**/api/v1/**', async route => {
@@ -16,6 +17,7 @@ async function api(page: Page, authenticated = true) {
       ? { json: { id: 'polish-user', email: 'fixture@example.invalid', full_name: 'Fixture Couple', created_at: '2026-01-01' } }
       : { status: 401, json: { error: { code: 'unauthorized', message: 'Sign in' } } })
     if (path.endsWith('/weddings/me')) return route.fulfill({ json: wedding })
+    if (authenticated && await handleInvitationRoutes(route, path, wedding)) return
     if (path.endsWith('/polish-fixture') && route.request().method() === 'PATCH') {
       Object.assign(wedding, route.request().postDataJSON())
       return route.fulfill({ json: wedding })
@@ -51,8 +53,11 @@ test('picking a different template resets desktop mode and the CMS opens in desk
   await expect(pane.locator('.device-frame')).toHaveAttribute('data-device', 'phone')
   await page.locator('[data-theme-card="ivory-processional"] h4 a').click()
   await expect(pane.locator('.device-frame')).toHaveAttribute('data-device', 'desktop')
+  // Opened from a fresh page load no invitation is open: selecting starts the wizard (preselected).
   await pane.locator('[data-action="select"]').click()
-  await expect(page).toHaveURL(/\/wedding\//)
+  await expect(page).toHaveURL(/\/invitations\/new\?template=ivory-processional$/)
+  // The CMS itself opens in desktop mode.
+  await page.goto('/wedding/opening')
   await expect(page.getByTestId('preview-frame')).toHaveAttribute('data-device', 'desktop')
 })
 

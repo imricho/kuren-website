@@ -110,7 +110,7 @@ const view = useWeddingView(props)
           <p class="trad-event__venue">{{ event.venueName }}</p>
           <p class="trad-event__address">{{ event.address }}</p>
           <p v-if="event.description" class="trad-event__note">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
-          <a class="trad-button" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }}</a>
+          <a class="trad-button" v-if="event.mapHref" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }}</a>
         </article>
       </div>
     </section>

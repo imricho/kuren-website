@@ -7,6 +7,8 @@ import { resolve } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
+import { TEMPLATES } from '@/features/invitation/registry'
+
 import { THEMES } from '../core/registry'
 
 const frontendList = resolve(__dirname, 'selectable-theme-ids.json')
@@ -24,7 +26,10 @@ describe('selectable theme allowlist', () => {
   it.skipIf(!existsSync(backendList))(
     'is identical to backend/app/core/selectable_theme_ids.json (skipped when the backend folder is not accessible, e.g. in the frontend container)',
     () => {
-      expect(sorted(read(backendList))).toEqual(sorted(read(frontendList)))
+      // The backend already accepts the temuvibe templates declared in the invitation registry
+      // (contract §5); the frontend lists them once their renderer exists.
+      const expected = new Set([...read(frontendList), ...TEMPLATES.map((t) => t.id)])
+      expect(sorted(read(backendList))).toEqual(sorted([...expected]))
     },
   )
 })

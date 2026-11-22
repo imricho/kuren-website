@@ -11,8 +11,8 @@ import { RouterView } from 'vue-router'
 import ConfirmHost from '@/features/cms/components/ConfirmHost.vue'
 import { EDITOR_WIDTH_STORAGE_KEY } from '@/features/cms/preview/editorWidth'
 import { emptyDraft, normalizeDraft, type WeddingDraft } from '@/features/wedding/draft'
-import { useWeddingStore } from '@/stores/wedding'
-import { installFakeWeddingApi } from '@/test/fakeWeddingApi'
+import { useInvitationStore } from '@/stores/invitation'
+import { installFakeInvitationApi } from '@/test/fakeInvitationApi'
 import { mockMatchMedia } from '@/test/matchMedia'
 import { createTestRouter } from '@/test/mountApp'
 
@@ -22,7 +22,7 @@ const restores: (() => void)[] = []
 beforeEach(() => {
   localStorage.clear()
   window.scrollTo = vi.fn() as never
-  installFakeWeddingApi()
+  installFakeInvitationApi()
 })
 afterEach(() => {
   while (restores.length) restores.pop()!()
@@ -37,7 +37,7 @@ async function mountEditor(path: string, opts: { desktop?: boolean; themeId?: st
   if (opts.desktop) restores.push(mockMatchMedia({ '(min-width: 1024px)': true }))
   const pinia = createPinia()
   setActivePinia(pinia)
-  const store = useWeddingStore()
+  const store = useInvitationStore()
   store.$patch({
     record: {
       id: 'w1',
@@ -83,13 +83,13 @@ describe('live editor: desktop split', () => {
     expect(wrapper.find('[data-testid="editor-tabs"]').exists()).toBe(false)
     // Compact publish status + action in the header row.
     expect(editor.get('[data-testid="publish-chip"]').attributes('data-state')).toBe('draft')
-    expect(editor.get('[data-testid="publish-chip"] a[data-action="open-publish"]').attributes('href')).toBe('/wedding/publish')
+    expect(editor.get('[data-testid="publish-chip"] a[data-action="open-publish"]').attributes('href')).toBe('/invitations/w1/edit/publish')
 
     const preview = wrapper.get('#preview-panel')
     expect(preview.attributes('aria-label')).toBe('Live preview')
     expect(preview.get('.wedding-site').attributes('data-theme')).toBe('ethnic')
     expect(preview.get('[data-testid="preview-theme-name"]').text()).toBe('Woven Indigo')
-    expect(preview.get('[data-testid="preview-fullscreen"]').attributes('href')).toBe('/wedding/preview?from=/wedding/opening')
+    expect(preview.get('[data-testid="preview-fullscreen"]').attributes('href')).toBe('/invitations/w1/preview?from=/invitations/w1/edit/opening')
     expect(preview.findAll('[data-testid="preview-device"] input[type="radio"]')).toHaveLength(2)
     expect(preview.get('[data-testid="preview-device"]').attributes('role')).toBe('radiogroup')
     expect(preview.find('[data-testid="preview-no-theme"]').exists()).toBe(false)
@@ -176,7 +176,7 @@ describe('live editor: mobile tabs', () => {
     // Save status sits in the tab bar, visible on both tabs.
     expect(wrapper.get('[data-testid="editor-tabs"]').find('[data-testid="save-status"]').exists()).toBe(true)
     // So does the compact publish chip/button.
-    expect(wrapper.get('[data-testid="editor-tabs"] [data-testid="publish-chip"] a').attributes('href')).toBe('/wedding/publish')
+    expect(wrapper.get('[data-testid="editor-tabs"] [data-testid="publish-chip"] a').attributes('href')).toBe('/invitations/w1/edit/publish')
     const edit = () => wrapper.get('#editor-tab-edit')
     const prev = () => wrapper.get('#editor-tab-preview')
     const editPanel = () => wrapper.get('#editor-panel')

@@ -1,14 +1,18 @@
 import { expect, test, type Page } from '@playwright/test'
 
+import { asInvitation, handleInvitationRoutes } from './invitationMocks'
+
 const user = { id: 'marketing-user', email: 'fixture@example.invalid', full_name: 'Fixture Couple', created_at: '2026-01-01' }
 async function api(page: Page, authenticated = false) {
   let signedIn = authenticated
+  const wedding = asInvitation({ id: 'marketing-wedding', themeId: 'international', locale: 'en', status: 'draft' } as Record<string, unknown>)
   await page.addInitScript(() => localStorage.setItem('kuren.welcomeSeen.marketing-user', '1'))
   await page.route('**/api/v1/**', async route => {
     const path = new URL(route.request().url()).pathname
     if (path.endsWith('/auth/login')) { signedIn = true; return route.fulfill({ json: user }) }
     if (path.endsWith('/users/me')) return route.fulfill(signedIn ? { json: user } : { status: 401, json: { error: { code: 'unauthorized', message: 'Sign in' } } })
-    if (path.endsWith('/weddings/me')) return route.fulfill({ json: { id: 'marketing-wedding', themeId: 'international', locale: 'en', status: 'draft' } })
+    if (path.endsWith('/weddings/me')) return route.fulfill({ json: wedding })
+    if (await handleInvitationRoutes(route, path, wedding)) return
     if (path.endsWith('/content')) return route.fulfill({ json: { schemaVersion: 1, locale: 'en', opening: {}, couple: { groom: {}, bride: {} }, story: { timeline: [] }, events: [], gallery: { images: [] }, rsvp: { enabled: true }, closing: {} } })
     return route.fulfill({ json: [] })
   })
@@ -53,7 +57,8 @@ for (const destination of ['/dashboard', '/wedding/story?mode=edit#story', '/the
     await api(page)
     await page.goto(destination)
     await expect(page).toHaveURL(/\/login/)
-    expect(new URL(page.url()).searchParams.get('redirect')).toBe(destination)
+    // /dashboard is now an alias of the invitation list.
+    expect(new URL(page.url()).searchParams.get('redirect')).toBe(destination === '/dashboard' ? '/invitations' : destination)
     await expect(page.locator('input[type=email]')).toBeVisible()
   })
 }
@@ -64,12 +69,13 @@ test('login restores a nested route; signed-in users can still view marketing', 
   await page.locator('input[type=email]').fill('fixture@example.invalid')
   await page.locator('input[type=password]').fill('fixture-password')
   await page.locator('button[type=submit]').click()
-  await expect(page).toHaveURL(/\/wedding\/story\?mode=edit$/)
+  // The legacy URL resolves to the invitation editor (query kept).
+  await expect(page).toHaveURL(/\/invitations\/marketing-wedding\/edit\/story\?mode=edit$/)
   await page.reload()
-  await expect(page).toHaveURL(/\/wedding\/story\?mode=edit$/)
+  await expect(page).toHaveURL(/\/invitations\/marketing-wedding\/edit\/story\?mode=edit$/)
   await page.goto('/')
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.locator('a[href="/dashboard"]').first()).toBeVisible()
+  await expect(page.locator('a[href="/dashboard"], a[href="/invitations"]').first()).toBeVisible()
 })
 
 test('external login return cannot leave the application', async ({ page }) => {
@@ -78,5 +84,5 @@ test('external login return cannot leave the application', async ({ page }) => {
   await page.locator('input[type=email]').fill('fixture@example.invalid')
   await page.locator('input[type=password]').fill('fixture-password')
   await page.locator('button[type=submit]').click()
-  await expect(page).toHaveURL(/\/dashboard$/)
+  await expect(page).toHaveURL(/\/(dashboard|invitations)$/)
 })

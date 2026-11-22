@@ -7,13 +7,16 @@ import { useAppLocale } from '@/composables/useAppLocale'
 import ErrorSummary from '@/features/cms/components/ErrorSummary.vue'
 import ImageField from '@/features/cms/components/ImageField.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
+import SectionHiddenNote from '@/features/cms/components/SectionHiddenNote.vue'
+import SectionToggle from '@/features/cms/components/SectionToggle.vue'
+import { isMandatorySection } from '@/features/cms/sections'
 import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
 import { coupleForm, couplePayload } from '@/features/cms/forms'
 import { fieldId, validateCouple } from '@/features/cms/validation'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 
 const draft = useSectionDraft({
@@ -26,6 +29,8 @@ const draft = useSectionDraft({
 })
 const { form, errors } = draft
 useUnsavedChangesGuard()
+/** Anniversary offers the couple as an optional section (`couple.enabled`); elsewhere it is always shown. */
+const switchable = computed(() => !isMandatorySection('couple', store.variant))
 
 const people = computed(() => [
   { role: 'groom' as const, legend: t('theGroom'), parentsPlaceholder: t('parentsPlaceholderGroom') },
@@ -49,12 +54,18 @@ const labels = computed<Record<string, string>>(() => {
 
 <template>
   <form class="space-y-8" novalidate data-testid="couple-form" @submit.prevent="draft.save()">
-    <SectionHeader section="couple" :description="t('coupleIntro')" />
+    <SectionHeader section="couple" :description="t('coupleIntro')">
+      <template v-if="switchable" #toggle>
+        <SectionToggle v-model="form.enabled" section="couple" />
+      </template>
+    </SectionHeader>
+    <SectionHiddenNote v-if="switchable && !form.enabled" />
     <ErrorSummary :errors="draft.errorList.value" :labels="labels" />
     <p v-if="draft.formError.value" class="text-sm text-danger-600" data-testid="form-error">{{ draft.formError.value }}</p>
 
     <fieldset
       v-for="p in people"
+      v-show="!switchable || form.enabled"
       :key="p.role"
       class="min-w-0 space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6"
     >

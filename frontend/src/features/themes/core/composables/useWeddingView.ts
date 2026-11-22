@@ -30,14 +30,22 @@ export function useWeddingView(props: { content: WeddingContent }) {
         short: formatDate(c.opening.weddingDate, locale, 'short'),
         parts: dateParts(c.opening.weddingDate, locale),
       },
-      events: c.events.map((event) => ({
-        ...event,
-        typeLabel: eventTypeLabel(event.type, locale),
-        dateText: formatDate(event.date, locale, 'full'),
-        dateParts: dateParts(event.date, locale),
-        timeText: formatTimeRange(event.startTime, event.endTime, locale),
-        mapHref: mapsLink(event),
-      })),
+      events: c.events.map((event) => {
+        const online = event.format === 'online'
+        const multiDay = !!event.endDate && event.endDate > event.date
+        return {
+          ...event,
+          // Online-only: no venue, so themes show "Online" where the venue goes and no map.
+          venueName: online && !event.venueName ? (locale === 'id' ? 'Daring (online)' : 'Online') : event.venueName,
+          typeLabel: eventTypeLabel(event.type, locale),
+          dateText: multiDay
+            ? `${formatDate(event.date, locale, 'full')} – ${formatDate(event.endDate!, locale, 'full')}`
+            : formatDate(event.date, locale, 'full'),
+          dateParts: dateParts(event.date, locale),
+          timeText: formatTimeRange(event.startTime, event.endTime, locale),
+          mapHref: online || !(event.venueName || event.address) ? '' : mapsLink(event),
+        }
+      }),
       story: c.story && c.story.enabled !== false && c.story.timeline.length > 0 ? c.story : undefined,
       gallery: c.gallery && c.gallery.enabled !== false && c.gallery.images.length > 0 ? c.gallery : undefined,
     }

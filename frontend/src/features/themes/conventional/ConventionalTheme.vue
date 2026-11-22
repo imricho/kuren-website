@@ -96,7 +96,7 @@ const view = useWeddingView(props)
           <p class="conv-event__venue">{{ event.venueName }}</p>
           <p class="conv-body">{{ event.address }}</p>
           <p v-if="event.description" class="conv-body conv-event__note">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
-          <a class="conv-pill" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }}</a>
+          <a class="conv-pill" v-if="event.mapHref" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }}</a>
         </div>
       </div>
     </section>

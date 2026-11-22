@@ -12,7 +12,8 @@ import { useRoute } from 'vue-router'
 
 import { useAppLocale } from '@/composables/useAppLocale'
 import { DEFAULT_THEME_ID, getTheme } from '@/features/themes/core/registry'
-import { useWeddingStore } from '@/stores/wedding'
+import { INVITATION_PREVIEW_ROUTE_NAME } from '../editorRoutes'
+import { useInvitationStore } from '@/stores/invitation'
 
 import { sectionByRouteName } from '../sections'
 import { STAGE_GUTTER, type PreviewDevice, type PreviewZoom } from './frameBox'
@@ -21,7 +22,7 @@ import PreviewToolbar from './PreviewToolbar.vue'
 
 const props = withDefaults(defineProps<{ compact?: boolean; visible?: boolean; toolbarTarget?: string }>(), { compact: false, visible: true })
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const route = useRoute()
 const { t } = useAppLocale()
 
@@ -38,10 +39,10 @@ const themeId = computed(() => (hasTheme.value ? store.themeId! : DEFAULT_THEME_
 watch(themeId, () => { chosenDevice.value = 'desktop' })
 const themeName = computed(() => getTheme(themeId.value)?.name ?? '')
 const section = computed(() => {
-  const key = sectionByRouteName(route.name)?.key
+  const key = sectionByRouteName(route.name, store.variant)?.key
   return key && key !== 'theme' ? key : null
 })
-const fullScreenTo = computed(() => ({ name: 'wedding-preview', query: { from: route.fullPath } }))
+const fullScreenTo = computed(() => ({ name: INVITATION_PREVIEW_ROUTE_NAME, query: { from: route.fullPath } }))
 
 const frame = ref<InstanceType<typeof PreviewFrame> | null>(null)
 defineExpose({ frame })
@@ -77,6 +78,8 @@ defineExpose({ frame })
       :gutter="compact ? STAGE_GUTTER.compact : STAGE_GUTTER.desktop"
       :section="section"
       :visible="visible"
+      :variant="store.variant ?? undefined"
+      :timezone="store.timezone ?? undefined"
     />
   </div>
 </template>

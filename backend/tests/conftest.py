@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from alembic import command
 from app.core.config import get_settings
 from app.db.base import Base
-from app.db.session import get_db
+from app.db.session import ENGINE_OPTIONS, get_db
 from app.main import app
 
 settings = get_settings()
@@ -36,7 +36,7 @@ def _ensure_database_exists() -> None:
 @pytest.fixture(scope="session")
 def engine() -> Iterator[Engine]:
     _ensure_database_exists()
-    test_engine = create_engine(settings.test_database_url)
+    test_engine = create_engine(settings.test_database_url, **ENGINE_OPTIONS)
     alembic_cfg = Config("alembic.ini")
     with test_engine.begin() as conn:
         alembic_cfg.attributes["connection"] = conn
@@ -109,8 +109,11 @@ def media_root(tmp_path, monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-un
 
 @pytest.fixture(autouse=True)
 def _reset_public_rate_limit() -> Iterator[None]:
-    from app.core.rate_limit import public_limiter
+    from app.core.rate_limit import public_limiter, rsvp_limiter, rsvp_slug_limiter
 
-    public_limiter.reset()
+    limiters = (public_limiter, rsvp_limiter, rsvp_slug_limiter)
+    for limiter in limiters:
+        limiter.reset()
     yield
-    public_limiter.reset()
+    for limiter in limiters:
+        limiter.reset()

@@ -7,16 +7,27 @@ import { computed } from 'vue'
 
 import type { WeddingContent } from '@/features/wedding/types'
 
-import { googleCalendarUrl, icsDataUrl, icsFileName, weddingCalendarEntry } from '../calendar'
-import { useIsDraftRender } from '../composables/useRenderMode'
+import { ASSUMED_DURATION_MINUTES, googleCalendarUrl, icsDataUrl, icsFileName, weddingCalendarEntry } from '../calendar'
+import { useIsDraftRender, useRenderContext } from '../composables/useRenderMode'
 
-const props = defineProps<{ content: WeddingContent }>()
+/** `title`: calendar entry title for non-wedding invitations (default: wedding wording). */
+const props = defineProps<{ content: WeddingContent; title?: string }>()
 const isDraft = useIsDraftRender()
+const { timezone } = useRenderContext()
 const isId = computed(() => props.content.locale === 'id')
-const entry = computed(() => weddingCalendarEntry(props.content))
+/** Times are converted from the invitation's PUBLISHED time zone (DST-aware). */
+const entry = computed(() => weddingCalendarEntry(props.content, props.title, timezone.value))
+/** Shown when no end time was given, so the assumed length is never passed off as a fact. */
+const assumedNote = computed(() =>
+  entry.value.assumedEnd
+    ? isId.value
+      ? `Jam selesai belum ditentukan, jadi entri kalender dibuat ${ASSUMED_DURATION_MINUTES / 60} jam.`
+      : `No end time was given, so the calendar entry lasts ${ASSUMED_DURATION_MINUTES / 60} hours.`
+    : '',
+)
 const google = computed(() => googleCalendarUrl(entry.value))
 const ics = computed(() => (isDraft.value ? undefined : icsDataUrl(entry.value)))
-const fileName = computed(() => icsFileName(props.content))
+const fileName = computed(() => icsFileName(props.content, props.title))
 const labels = computed(() =>
   isId.value
     ? { group: 'Tambahkan ke kalender', google: 'Google Calendar', ics: 'Unduh file kalender (.ics)', newTab: '(membuka tab baru)', inert: 'Aktif di undangan yang diterbitkan' }
@@ -39,6 +50,7 @@ const labels = computed(() =>
         <a class="add-to-calendar__button" :href="ics" :download="fileName" data-calendar="ics">{{ labels.ics }}</a>
       </template>
     </div>
+    <p v-if="assumedNote" class="add-to-calendar__note" data-role="assumed-end">{{ assumedNote }}</p>
     <p v-if="isDraft" class="add-to-calendar__note" data-editor-only>{{ labels.inert }}</p>
   </div>
 </template>

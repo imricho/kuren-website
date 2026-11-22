@@ -169,9 +169,12 @@ SAMPLE_WEDDING: dict[str, Any] = {
 #: Universal sections every NEW wedding starts with (CMS v2.0; existing weddings are not backfilled).
 NEW_WEDDING_DEFAULTS: dict[str, Any] = {"countdown": {"enabled": True, "addToCalendar": True}}
 
+#: Rows created since the invitation engine (migration 0008) use row layout 2.
+NEW_SCHEMA_VERSION = 2
+
 EMPTY_DRAFT: dict[str, Any] = {
     **NEW_WEDDING_DEFAULTS,
-    "schemaVersion": 1,
+    "schemaVersion": NEW_SCHEMA_VERSION,
     "locale": "en",
     "opening": {},
     "couple": {"groom": {}, "bride": {}},
@@ -183,5 +186,8 @@ EMPTY_DRAFT: dict[str, Any] = {
 }
 
 
-#: SAMPLE_WEDDING saved (legacy merge semantics) into a freshly created wedding.
-SAVED_SAMPLE: dict[str, Any] = {**NEW_WEDDING_DEFAULTS, **SAMPLE_WEDDING}
+#: SAMPLE_WEDDING saved (legacy merge semantics) into a freshly created wedding:
+#: every content write stamps contentVersion "2.0"; the row layout is the new one.
+SAVED_SAMPLE: dict[str, Any] = {
+    **NEW_WEDDING_DEFAULTS, **SAMPLE_WEDDING, "contentVersion": "2.0", "schemaVersion": NEW_SCHEMA_VERSION,
+}

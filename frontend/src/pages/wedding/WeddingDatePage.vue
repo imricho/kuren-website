@@ -15,16 +15,18 @@ import { useAppLocale } from '@/composables/useAppLocale'
 import DateField from '@/features/cms/components/DateField.vue'
 import ErrorSummary from '@/features/cms/components/ErrorSummary.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
+import { useVariantCopy } from '@/features/cms/composables/useVariantCopy'
 import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
 import { clean, opt, s } from '@/features/cms/forms'
 import { countdownForm, countdownPayload } from '@/features/cms/universalForms'
 import { fieldId, validateWeddingDate } from '@/features/cms/validation'
 import type { OpeningDraft } from '@/features/wedding/draft'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
+const { vt } = useVariantCopy()
 useUnsavedChangesGuard()
 
 /** The saved opening with only the date replaced (PUT /sections/opening replaces the section). */
@@ -48,7 +50,7 @@ const countdownDraft = useSectionDraft({
 })
 const dateForm = dateDraft.form
 const countdown = countdownDraft.form
-const labels = computed<Record<string, string>>(() => ({ weddingDate: t('weddingDate') }))
+const labels = computed<Record<string, string>>(() => ({ weddingDate: vt('weddingDate') }))
 
 async function saveAll() {
   await Promise.all([dateDraft.save(), countdownDraft.save()])
@@ -57,16 +59,16 @@ async function saveAll() {
 
 <template>
   <form class="space-y-8" novalidate data-testid="weddingDate-form" @submit.prevent="saveAll">
-    <SectionHeader section="weddingDate" :description="t('weddingDateIntro')" />
+    <SectionHeader section="weddingDate" :description="vt('weddingDateIntro')" />
     <ErrorSummary :errors="dateDraft.errorList.value" :labels="labels" />
     <p v-if="dateDraft.formError.value" class="text-sm text-danger-600" data-testid="form-error">{{ dateDraft.formError.value }}</p>
 
     <fieldset class="min-w-0 space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6">
-      <legend class="px-1 font-display text-xl font-semibold">{{ t('weddingDate') }}</legend>
+      <legend class="px-1 font-display text-xl font-semibold">{{ vt('weddingDate') }}</legend>
       <DateField
         :id="fieldId('weddingDate')"
         v-model="dateForm.weddingDate"
-        :label="t('weddingDate')"
+        :label="vt('weddingDate')"
         :hint="t('weddingDateShared')"
         :error="dateDraft.errors.value.weddingDate"
         :needed-hint="t('neededBeforePublishing')"
@@ -75,7 +77,7 @@ async function saveAll() {
 
     <fieldset class="min-w-0 space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6" data-testid="countdown-options">
       <legend class="px-1 font-display text-xl font-semibold">{{ t('countdownOptions') }}</legend>
-      <SwitchField :id="fieldId('enabled', 'cd')" v-model="countdown.enabled" :label="t('showCountdown')" :hint="t('showCountdownHint')" />
+      <SwitchField :id="fieldId('enabled', 'cd')" v-model="countdown.enabled" :label="t('showCountdown')" :hint="vt('showCountdownHint')" />
       <SwitchField
         :id="fieldId('addToCalendar', 'cd')"
         v-model="countdown.addToCalendar"

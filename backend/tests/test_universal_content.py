@@ -4,7 +4,7 @@ from copy import deepcopy
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.wedding import AmplopDigitalSection, HolyReciteSection
+from app.schemas.invitation import AmplopDigitalSection, HolyReciteSection
 from tests.wedding_helpers import API, create_wedding
 from tests.wedding_samples import SAMPLE_WEDDING
 
@@ -99,19 +99,19 @@ def test_legacy_save_refreshes_stale_orm_state_before_merge(auth_client, db):
     import uuid
     from sqlalchemy import update
     from sqlalchemy.orm import Session
-    from app.models import Wedding
-    from app.schemas.wedding import WeddingDraftIn
-    from app.services.wedding_content_service import replace_content
+    from app.models import Invitation
+    from app.schemas.invitation import InvitationDraftIn
+    from app.services.invitation_content_service import replace_content
 
     wedding_id = uuid.UUID(create_wedding(auth_client)["id"])
-    stale = db.get(Wedding, wedding_id)
+    stale = db.get(Invitation, wedding_id)
     assert stale.universal_content == {"countdown": {"enabled": True, "addToCalendar": True}}
     with Session(bind=db.get_bind()) as concurrent:
-        concurrent.execute(update(Wedding).where(Wedding.id == wedding_id).values(
+        concurrent.execute(update(Invitation).where(Invitation.id == wedding_id).values(
             universal_content={"holyRecite2": {"enabled": False, "passage": "Concurrent update"}},
             story_meta={"enabled": False},
         ))
         concurrent.commit()
-    body = replace_content(db, stale, WeddingDraftIn.model_validate(LEGACY_SAMPLE))
+    body = replace_content(db, stale, InvitationDraftIn.model_validate(LEGACY_SAMPLE))
     assert body["holyRecite2"]["passage"] == "Concurrent update"
     assert body["story"]["enabled"] is False

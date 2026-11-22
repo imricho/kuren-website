@@ -75,4 +75,12 @@ export const COLLECTIONS: readonly ThemeCollection[] = [
   { id: 'garden-gatherings', familyId: 'rustic-nature', name: 'Garden Gatherings', description: 'Olive foliage, orchard still-life photography and relaxed event details.', reference: { kind: 'design', notes: 'Nature-inspired wedding photography and original botanical artwork.', review: 'not_required' }, status: 'available' },
   { id: 'landscape-editions', familyId: 'rustic-nature', name: 'Landscape Editions', description: 'Open horizons, softened greens and cinematic natural light.', reference: { kind: 'design', notes: 'Contemporary landscape photography and nature-inspired print design.', review: 'not_required' }, status: 'available' },
   { id: 'botanical-paper', familyId: 'rustic-nature', name: 'Botanical Paper', description: 'Pressed-flower detail, warm paper surfaces and organic story pacing.', reference: { kind: 'design', notes: 'Original botanical illustration and tactile paper design.', review: 'not_required' }, status: 'available' },
+  {
+    id: 'temuvibe-signature',
+    familyId: 'temuvibe',
+    name: 'Signature',
+    description: 'Four presets of one adaptive design: each invitation shows only the sections its occasion uses.',
+    reference: { kind: 'design', notes: 'Original Temuvibe brand system (deep plum, champagne gold); no cultural motifs are represented.', review: 'not_required' },
+    status: 'available',
+  },
 ]

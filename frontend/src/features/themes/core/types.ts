@@ -1,5 +1,6 @@
 import type { Component } from 'vue'
 
+import type { CategoryId, SectionId, VariantId } from '@/features/invitation/registry'
 import type { WeddingContent } from '@/features/wedding/types'
 
 /**
@@ -213,4 +214,44 @@ export function isRenderable(template: ThemeTemplate): template is RenderableTem
 /** Only available templates can be chosen for a wedding. Drafts are preview-only. */
 export function isSelectable(template: ThemeTemplate | undefined): boolean {
   return template?.status === 'available'
+}
+
+// --- Template manifests (docs/architecture/invitation-engine.md §5) --------------------
+
+/** Colour roles every manifest declares (hex). Renderers may use more tokens internally. */
+export interface ManifestColors {
+  /** Page background. */
+  background: string
+  /** Cards / alternate bands. */
+  surface: string
+  /** Body text. */
+  text: string
+  /** Secondary text. */
+  muted: string
+  /** Brand / heading colour. */
+  primary: string
+  /** Decorative accent (rules, ornaments). */
+  accent: string
+  [token: string]: string
+}
+
+/**
+ * What a template can render and what it needs. `variants` omitted = every variant of
+ * `categories`. Compatibility always comes from the invitation registry (`TEMPLATES` /
+ * `LEGACY_TEMPLATE_COMPATIBILITY`), never re-declared by hand.
+ */
+export interface TemplateManifest {
+  id: string
+  name: string
+  family: string
+  categories: readonly CategoryId[]
+  variants?: readonly VariantId[]
+  /** Sections the template can render, in canonical order. */
+  sections: readonly SectionId[]
+  theme: {
+    colors: ManifestColors
+    /** Primary font family names (first entry of each CSS font stack). */
+    typography: { display: string; body: string; script?: string }
+  }
+  media: { cover: 'required' | 'optional' | 'none'; gallery: boolean }
 }

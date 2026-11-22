@@ -19,11 +19,11 @@ import { useSectionDraft } from '../../composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '../../composables/useUnsavedChangesGuard'
 import { holyReciteForm, holyRecitePayload } from '../../universalForms'
 import { fieldId, validateHolyRecite } from '../../validation'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 import { langOrUndefined, SCRIPTURE_LANGUAGES } from '@/features/wedding/languages'
 
 const props = defineProps<{ section: 'holyRecite1' | 'holyRecite2' }>()
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 // Fixed for this instance: the page re-creates the editor (key) when the route switches 1 ↔ 2.
 const section = props.section

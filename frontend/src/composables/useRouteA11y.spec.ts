@@ -45,7 +45,7 @@ describe('useRouteA11y', () => {
     expect(document.title).toBe('Dasbor · Temuvibe')
     await router.push('/plain')
     await flushPromises()
-    expect(document.title).toBe('Temuvibe · Situs pernikahan')
+    expect(document.title).toBe('Temuvibe · Undangan digital')
   })
 
   it('does not move focus on first load, but focuses the new h1 after navigating', async () => {

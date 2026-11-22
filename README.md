@@ -1,19 +1,28 @@
-# Kuren — Wedding Website Platform
+# Temuvibe — Multi-variant Digital Invitations
 
-A template-based SaaS platform where couples create a wedding website by
-choosing a theme, filling in predefined content, uploading photos, and
-publishing a shareable link. It is intentionally **not** a general-purpose
-site builder: fixed structure, predefined sections, theme-based styling.
+*Where Every Moment Comes Alive.* Organizers create a digital invitation for a wedding,
+celebration, family or community gathering, or corporate event (4 categories, 17 variants),
+choose a compatible template, fill in predefined sections with a live preview, publish a
+shareable link, and collect RSVP replies. It is intentionally **not** a general-purpose site
+builder: fixed structure, predefined sections, template-based styling.
 
-> **Status:** Workstreams 1–2 complete.
-> - **WS1 Platform Foundation:** app skeleton, authentication, database, Docker.
-> - **WS2 Theme & Template System:** shared wedding content model, theme registry
->   and renderer, seven templates across six families, theme picker with live device previews.
-> - **WS2 change request:** theme family hierarchy (Family → Collection → Template):
->   six families, two origin-neutral Traditional design collections
->   and a step-by-step picker.
->
-> Content editing (CMS), photo uploads, publishing and RSVP processing come next.
+### What works today
+
+| Area | Status |
+|---|---|
+| Accounts, sessions | Working (cookie sessions; `Secure` enforced in production) |
+| Creation wizard (category → variant → template → settings, session choices) | Working |
+| CMS editor with autosave, conflict handling and live preview | Working |
+| Templates: 4 Temuvibe templates (all variants) + 49 wedding/engagement/anniversary themes | Working |
+| Sessions: in person, online or hybrid; multi-day; optional sessions (corporate) | Working |
+| Publishing: snapshot, republish, unpublish, server publish check, time zone frozen per publish | Working |
+| Public page `/i/<slug>`, "Add to calendar" (Google + .ics, time-zone aware) | Working |
+| RSVP: replies stored, capacity, deadline, registration questions, guest can change their own reply through a private link, organizer list + CSV, duplicate flags | Working |
+| Personal guest links (`#to=<name>`) | Working (a link generator; no guest list is stored) |
+| Online guestbook / wishes, guest list management, QR check-in, payments | **Not implemented** (wishes shows a "coming soon" note) |
+
+Architecture: `docs/architecture/invitation-engine.md`. API: `docs/api/invitations.md`.
+Deploying: `docs/operations/deploy-readiness.md`.
 
 ---
 
@@ -170,7 +179,18 @@ automatically). See `.env.example` for the full list.
 | `BACKEND_HOST_PORT`, `FRONTEND_HOST_PORT` | Host ports | `8000`, `5173` |
 | `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API | `http://localhost:5173` |
 | `SESSION_TTL_HOURS` | Session lifetime | `168` (7 days) |
-| `SESSION_COOKIE_SECURE` | Send cookie only over HTTPS (set `true` in production) | `false` |
+| `SESSION_COOKIE_SECURE` | Send cookie only over HTTPS (required `true` in production) | `false` |
+| `FORWARDED_ALLOW_IPS` | Proxy IPs/CIDRs whose `X-Forwarded-For` is trusted (`*` is refused) | `127.0.0.1` |
+| `RUN_MIGRATIONS` | Run `alembic upgrade head` on container start | `true` |
+| `RATE_LIMIT_BACKEND` | `memory` (per process; development) or `database` (shared by all workers/replicas; **required in production**) | `memory` |
+| `PUBLIC_RATE_LIMIT_PER_MINUTE` | Public invitation reads per client IP | `120` |
+| `RSVP_RATE_LIMIT_PER_MINUTE`, `RSVP_SLUG_RATE_LIMIT_PER_MINUTE` | RSVP submissions per client IP / per invitation | `10`, `300` |
+| `MAX_RSVP_BODY_BYTES` | Max RSVP request body | `16384` |
+| `MAX_ASSETS_PER_INVITATION` | Uploaded images per invitation (was `MAX_ASSETS_PER_WEDDING`, no longer read) | `300` |
+
+Deploying: see `docs/operations/deploy-readiness.md` (migration 0008 needs a stop-the-world deploy;
+0009 is additive). With `ENVIRONMENT=production` the backend refuses to start unless
+`SESSION_COOKIE_SECURE=true` and `RATE_LIMIT_BACKEND=database`.
 
 `.env` is git-ignored. Never commit real credentials.
 
@@ -225,7 +245,9 @@ All endpoints are under `/api/v1`.
 | GET | `/users/me` | cookie | Current user's profile | 200, 401 |
 | PATCH | `/users/me` | cookie | Update profile. Body: `full_name` | 200, 401, 422 |
 
-Workstream 2 added no API endpoints; themes and sample content are frontend-only.
+Invitations, sections, sessions, uploads, publishing, the publish check, public pages and
+RSVP (including a guest's own reply at `/public/invitations/{slug}/rsvp/mine`) are documented
+in `docs/api/invitations.md`.
 
 Example with curl:
 

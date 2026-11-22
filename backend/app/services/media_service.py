@@ -12,6 +12,7 @@ Security model:
 
 import io
 import json
+import logging
 import os
 import re
 import uuid
@@ -26,7 +27,9 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.errors import LimitReachedError, NotFoundError, PayloadTooLargeError, UnsupportedImageError
-from app.models import Wedding, WeddingAsset, WeddingPublication
+from app.models import Invitation, InvitationAsset, InvitationPublication
+
+logger = logging.getLogger(__name__)
 
 AssetKind = Literal["image", "qris"]
 
@@ -146,28 +149,33 @@ def _write_file(name: str, data: bytes) -> Path:
     return final
 
 
-def asset_src(asset: WeddingAsset) -> str:
+def asset_src(asset: InvitationAsset) -> str:
     return f"/media/{asset.filename}"
 
 
-def asset_out(asset: WeddingAsset) -> dict[str, object]:
+def asset_out(asset: InvitationAsset) -> dict[str, object]:
     return {
         "id": asset.id, "src": asset_src(asset), "width": asset.width,
         "height": asset.height, "kind": asset.kind,
     }
 
 
-def create_asset(db: Session, wedding: Wedding, *, kind: AssetKind, data: bytes) -> WeddingAsset:
+def create_asset(db: Session, invitation: Invitation, *, kind: AssetKind, data: bytes) -> InvitationAsset:
     settings = get_settings()
-    count = db.scalar(select(func.count()).select_from(WeddingAsset).where(WeddingAsset.wedding_id == wedding.id))
-    if (count or 0) >= settings.max_assets_per_wedding:
+    encoded = encode(data, kind)  # CPU work before taking the lock
+    # Lock the invitation row so concurrent uploads cannot both pass the limit check.
+    db.scalar(select(Invitation.id).where(Invitation.id == invitation.id).with_for_update())
+    count = db.scalar(select(func.count()).select_from(InvitationAsset).where(
+        InvitationAsset.invitation_id == invitation.id, InvitationAsset.deleted_at.is_(None),
+    ))
+    if (count or 0) >= settings.max_assets_per_invitation:
+        db.rollback()
         raise LimitReachedError("You have uploaded the maximum number of images. Delete some first.")
-    encoded = encode(data, kind)
     asset_id = uuid.uuid4()
     filename = f"{asset_id}.{encoded.ext}"
     path = _write_file(filename, encoded.data)
-    asset = WeddingAsset(
-        id=asset_id, wedding_id=wedding.id, kind=kind, filename=filename,
+    asset = InvitationAsset(
+        id=asset_id, invitation_id=invitation.id, kind=kind, filename=filename,
         content_type=CONTENT_TYPES[encoded.ext], width=encoded.width, height=encoded.height,
         bytes=len(encoded.data),
     )
@@ -182,28 +190,55 @@ def create_asset(db: Session, wedding: Wedding, *, kind: AssetKind, data: bytes)
     return asset
 
 
-def delete_asset(db: Session, wedding: Wedding, asset_id: str) -> None:
-    """Delete the record (owner only). The file is removed now unless the LIVE
-    publication still shows it; such files are left for a later cleanup job."""
+def delete_asset(db: Session, invitation: Invitation, asset_id: str) -> None:
+    """Delete an image (owner only). Removed at once unless the LIVE publication still shows
+    it: then it is tombstoned (`deleted_at`) and removed by `sweep_deleted_assets` as soon as
+    the live page stops using it (publish, unpublish, invitation delete)."""
     try:
         parsed = uuid.UUID(asset_id)
     except ValueError:
         raise NotFoundError("Image not found.") from None
-    asset = db.scalar(select(WeddingAsset).where(WeddingAsset.id == parsed, WeddingAsset.wedding_id == wedding.id))
+    asset = db.scalar(select(InvitationAsset).where(
+        InvitationAsset.id == parsed, InvitationAsset.invitation_id == invitation.id, InvitationAsset.deleted_at.is_(None),
+    ))
     if asset is None:
         raise NotFoundError("Image not found.")
     filename = asset.filename
+    if _referenced_by_live_publication(db, invitation, filename):
+        asset.deleted_at = func.now()
+        db.commit()
+        return
     db.delete(asset)
     db.commit()
-    if not _referenced_by_live_publication(db, wedding, filename):
-        (media_root() / filename).unlink(missing_ok=True)
+    (media_root() / filename).unlink(missing_ok=True)
 
 
-def _referenced_by_live_publication(db: Session, wedding: Wedding, filename: str) -> bool:
-    if wedding.published_publication_id is None:
+def sweep_deleted_assets(db: Session, invitation: Invitation) -> None:
+    """Remove tombstoned images the live publication no longer shows (file first, then row).
+    Call after the live publication changed (publish / unpublish)."""
+    rows = list(db.scalars(select(InvitationAsset).where(
+        InvitationAsset.invitation_id == invitation.id, InvitationAsset.deleted_at.is_not(None),
+    )))
+    removed = False
+    for row in rows:
+        if _referenced_by_live_publication(db, invitation, row.filename):
+            continue
+        try:
+            (media_root() / row.filename).unlink(missing_ok=True)
+        except OSError:
+            logger.warning("Could not remove a deleted media file")
+            continue
+        db.delete(row)
+        removed = True
+    if removed:
+        db.commit()
+
+
+def _referenced_by_live_publication(db: Session, invitation: Invitation, filename: str) -> bool:
+    if invitation.published_publication_id is None:
         return False
     content = db.scalar(
-        select(WeddingPublication.content).where(WeddingPublication.id == wedding.published_publication_id)
+        select(InvitationPublication.content).where(InvitationPublication.id == invitation.published_publication_id)
     )
     return f"/media/{filename}" in json.dumps(content or {})
 

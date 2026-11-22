@@ -101,7 +101,7 @@ const people = computed(() => [
           <h3>{{ event.title }}</h3><p>{{ event.dateText }}</p><p class="rm2-event__time">{{ event.timeText }}</p>
           <div class="rm2-rule" aria-hidden="true"><BotanicalOrnament kind="rosette" /></div>
           <p class="rm2-event__venue">{{ event.venueName }}</p><p>{{ event.address }}</p><p v-if="event.description" class="rm2-event__note">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
-          <a class="rm2-button" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} <span aria-hidden="true">↗</span></a>
+          <a class="rm2-button" v-if="event.mapHref" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} <span aria-hidden="true">↗</span></a>
         </article>
       </div>
       <div class="rm2-section-divider rm2-events__tail" aria-hidden="true"><span /><BotanicalOrnament kind="rosette" /><span /></div>

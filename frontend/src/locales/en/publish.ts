@@ -1,7 +1,7 @@
 /** English UI text for the publishing, public invitation page (Agent B). Keep keys in sync with ../id/publish.ts (type-checked). */
 export const publishEn = {
   sectionPublish: 'Preview & Publish',
-  publicInvitation: 'Wedding invitation',
+  publicInvitation: 'Invitation',
 
   // Status
   publishStatusDraft: 'Draft saved — not published yet',
@@ -31,6 +31,13 @@ export const publishEn = {
   previewDraft: 'Preview draft',
   publicLinkLabel: 'Your invitation link',
   publicLinkPending: 'Your link is created when you publish for the first time.',
+  personalLinkTitle: 'Personal link for a guest',
+  personalLinkIntro: 'Type a guest’s name to get a link that greets them by name and fills in the RSVP name. Make one link per guest or family and send it yourself.',
+  personalLinkName: 'Guest name',
+  personalLinkNameHint: 'Up to {max} characters, e.g. “Bapak Budi & Keluarga”.',
+  personalLinkResult: 'Personal link',
+  personalLinkPrivacy: 'Temuvibe does not keep a guest list or send messages. The name is placed after “#” in the link, so it is not sent to our server or stored in its logs.',
+  personalLinkPending: 'Personal links are available once the invitation is published.',
   openPublishPage: 'Preview & Publish',
 
   // Disabled reasons
@@ -51,7 +58,7 @@ export const publishEn = {
   // Lists
   publishErrorsTitle: 'Needed before publishing',
   publishWarningsTitle: 'Worth checking',
-  publishAllClear: 'Everything needed for publishing is in place.',
+  publishAllClear: 'Everything needed for publishing is in place (confirmed by the server).',
   publishFixLink: 'Fix in {section}',
   publishPrivacyTitle: 'What guests will see',
   publishPrivacyIntro: 'Anyone with the link can see your invitation. These details will be public:',
@@ -68,9 +75,24 @@ export const publishEn = {
   // Checklist messages (blocking)
   checkTheme: 'Choose an available theme.',
   checkWeddingDate: 'Add your wedding date.',
+  checkEventDate: 'Add your event date.',
+  checkProfiles: 'Profiles is shown but has no one with a name — add someone or turn Profiles off.',
+  checkAgenda: 'Agenda is shown but has no item with a title — add one or turn Agenda off.',
+  checkSpeakers: 'Speakers is shown but has no one with a name — add someone or turn Speakers off.',
+  checkOrganization: 'Organization is shown but has no name — add it or turn Organization off.',
+  checkMilestone: 'This section is shown but has no details — add what you are celebrating or turn it off.',
+  checkEventOnline: '{event} is online: add a joining link or joining instructions.',
+  checkThemeInvalid: 'This template is no longer available. Choose another one.',
+  checkThemeIncompatible: 'This template doesn’t support this type of invitation. Choose another one.',
+  checkServerGeneric: '{section} needs attention before publishing.',
+  checkForeignImage: '{section}: an image was not uploaded to this invitation (or was deleted). Upload it again here.',
+  serverCheckPending: 'Checking with the server…',
+  serverCheckFailed: 'Couldn’t confirm with the server. Publishing will still check everything.',
+  warnRsvpDeadlineEvent: 'The RSVP deadline is after the event date.',
+  warnSessionChoiceNoOptional: 'Guests may choose sessions, but no session is marked optional.',
   checkGroomName: 'Add the groom’s name.',
   checkBrideName: 'Add the bride’s name.',
-  checkEvent: 'Add at least one event with a title, date, start time, venue and address.',
+  checkEvent: 'Add at least one event with a title, date and start time, plus a venue or online access.',
   checkEventField: '{event}: add the {field}.',
   checkBankAccounts: 'Bank transfer is on: add at least one bank account, or turn it off.',
   eventNumber: 'Event {n}',
@@ -80,7 +102,7 @@ export const publishEn = {
   eventFieldVenue: 'venue',
   eventFieldAddress: 'address',
   checkClosing: 'Add a closing message.',
-  checkRsvpTitle: 'RSVP has no title, so it won’t show on your invitation.',
+  checkRsvpTitle: 'RSVP has no title, so guests will see the default heading “RSVP”.',
   checkHolyRecite: 'Add the passage, original text or translation — or turn this section off.',
   checkGreeting: 'Add a greeting title, message or prayer — or turn this section off.',
   checkAmplopMethod: 'Add at least one complete gift method (bank account, QRIS or delivery address) — or turn gifts off.',
@@ -97,7 +119,6 @@ export const publishEn = {
   warnCover: 'Add a cover photo for a richer first impression.',
   warnScriptureReference: 'Add the reference (book, chapter or verse) for your passage.',
   warnPhysicalAddress: 'Your delivery address will be visible to anyone with the link.',
-  warnRsvpInfoOnly: 'Guests can’t reply online yet — RSVP shows your details only.',
   warnSampleImage: 'A sample photo is still in use. Replace it with your own.',
   warnStoryEmpty: 'Our Story is shown but has no entry with a title and description — add one or turn Our Story off.',
   warnGalleryEmpty: 'Gallery is shown but has no photos — add one or turn Gallery off.',
@@ -105,7 +126,7 @@ export const publishEn = {
 
   // Public page
   publicNotFoundTitle: 'This invitation isn’t available',
-  publicNotFoundBody: 'The link may be mistyped, or the couple may have taken the invitation offline.',
+  publicNotFoundBody: 'The link may be mistyped, or the host may have taken the invitation offline.',
   publicLoadFailed: 'We couldn’t load this invitation. Check your connection and try again.',
   publicRetry: 'Try again',
   publicLoading: 'Loading invitation…',

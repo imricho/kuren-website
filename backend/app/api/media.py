@@ -1,7 +1,8 @@
 r"""`GET /media/<uuid>.<ext>`: uploaded images, mounted at the app root (not under /api).
 
 Only names matching `^[0-9a-f-]{36}\.(png|jpg|webp)$` are looked up, so a path can
-never escape the media root. Files are immutable (new upload = new name).
+never escape the media root. A file's bytes never change (new upload = new name), but a file
+can be DELETED, so caches keep it for a day rather than a year.
 """
 
 from fastapi import APIRouter
@@ -15,7 +16,7 @@ router = APIRouter(tags=["media"])
 _HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "Content-Security-Policy": "default-src 'none'",
-    "Cache-Control": "public, max-age=31536000, immutable",
+    "Cache-Control": "public, max-age=86400",
     "Cross-Origin-Resource-Policy": "same-site",
 }
 

@@ -14,6 +14,11 @@
   --color-rose-700: #57315f;
   --shadow-soft: 0 1px 3px #3d1c4b0a, 0 5px 15px #3d1c4b0c;
   --cms-champagne: #d8b58e;
+  /* Temuvibe brand: Deep Plum primary, champagne-gold accent (invitation list, wizard, responses). */
+  --tv-plum: #241236;
+  --tv-plum-soft: #3a2150;
+  --tv-gold: #c9a46b;
+  --tv-gold-soft: #f3e6d2;
   --cms-shell: #321a39;
   --cms-sidebar-width: 212px;
   --cms-header-height: 64px;
@@ -155,9 +160,21 @@
 @media (min-width: 1024px) {
   .cms-workspace--studio { height: calc(100dvh - var(--cms-header-height)); overflow: hidden; }
 }
+.cms-sidebar-toggle {
+  display: flex; align-items: center; gap: 10px; min-height: 40px; margin: 0 0 10px; padding: 8px 19px;
+  border: 0; border-radius: 9px; background: transparent; color: #e9d8ef; font: inherit; font-size: 11px; cursor: pointer;
+}
+.cms-sidebar-toggle svg { width: 18px; height: 18px; flex-shrink: 0; }
+.cms-sidebar-toggle:hover { background: #70457866; }
+.cms-sidebar-toggle:focus-visible, .cms-sidebar-link:focus-visible { outline: 2px solid #f3d27a; outline-offset: 2px; }
+.cms-sidebar-context { margin: 10px 19px 2px; display: grid; gap: 2px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #c9b5d1; }
+.cms-sidebar-context strong { font-size: 12px; letter-spacing: 0; text-transform: none; color: #fff; font-weight: 600; overflow-wrap: anywhere; }
+.cms-sidebar[data-collapsed='true'] { width: 64px; padding-inline: 8px; }
+.cms-sidebar[data-collapsed='true'] .cms-sidebar-link, .cms-sidebar[data-collapsed='true'] .cms-sidebar-toggle { justify-content: center; padding-inline: 0; }
 @media (min-width: 1280px) {
   .cms-sidebar { display: flex; }
   .cms-workspace { margin-left: var(--cms-sidebar-width); }
+  .kuren-cms[data-sidebar='collapsed'] .cms-workspace { margin-left: 64px; }
   .cms-top-nav .cms-top-link:last-child { display: none; }
 }
 @media (max-width: 999px) {

@@ -8,11 +8,11 @@ import { computed } from 'vue'
 import { FOCUS_RING } from '@/components/ui/styles'
 import { useAppLocale } from '@/composables/useAppLocale'
 import { PUBLISH_ROUTE_NAME } from '@/features/cms/sections'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
 withDefaults(defineProps<{ compact?: boolean }>(), { compact: false })
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 
 const chip = computed(() => {

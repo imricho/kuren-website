@@ -16,11 +16,11 @@ import { computed, nextTick, ref, watch } from 'vue'
 
 import { FOCUS_RING } from '@/components/ui/styles'
 import { useAppLocale, type AppMessageKey } from '@/composables/useAppLocale'
-import { useWeddingStore, type SaveState } from '@/stores/wedding'
+import { useInvitationStore, type SaveState } from '@/stores/invitation'
 
 import { conflictBanners, restoreStatusFocus, useAnnouncerOwnership, useSaveShortcut } from '../composables/useSaveStatusUi'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 useSaveShortcut()
 const ownsRegion = useAnnouncerOwnership()
@@ -109,7 +109,7 @@ const button = [
         <path d="M8 1.75 15 14H1L8 1.75Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
         <path d="M8 6v3.5M8 11.5v.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       </svg>
-      <span class="truncate max-[399px]:sr-only" data-testid="save-status-text">{{ t(copy.full) }}</span>
+      <span class="leading-tight max-[399px]:sr-only" data-testid="save-status-text">{{ t(copy.full) }}</span>
       <span class="whitespace-nowrap min-[400px]:hidden" aria-hidden="true">{{ t(copy.short) }}</span>
     </p>
 

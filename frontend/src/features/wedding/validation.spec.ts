@@ -44,7 +44,7 @@ describe('shared wedding content model', () => {
     content.opening.weddingDate = '12/06/2027'
     content.events[0]!.startTime = '8am'
     content.events[1]!.id = content.events[0]!.id
-    ;(content.events[1] as { type: string }).type = 'party'
+    ;(content.events[1] as { type: string }).type = 'banquet'
     content.rsvp.deadline = '2027-13-01'
     const problems = validateWeddingContent(content)
     expect(problems).toEqual(

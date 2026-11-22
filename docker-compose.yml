@@ -26,7 +26,7 @@ services:
     build:
       context: ./backend
     restart: unless-stopped
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--proxy-headers"]
     environment:
       ENVIRONMENT: ${ENVIRONMENT:-development}
       POSTGRES_HOST: db
@@ -37,7 +37,11 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-168}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
       MEDIA_ROOT: /app/media
+      # Proxies whose X-Forwarded-For is trusted (never "*"). The Vite dev proxy does not send
+      # X-Forwarded-For, so locally every request is keyed by the frontend container's address.
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
     volumes:
       - ./backend:/app
       # Uploaded images live in a named volume, not in the source bind mount.

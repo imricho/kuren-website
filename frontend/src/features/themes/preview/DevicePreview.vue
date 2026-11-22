@@ -9,11 +9,21 @@
  */
 import type { WeddingContent } from '@/features/wedding/types'
 
+import type { VariantId } from '@/features/invitation/registry'
+
 import ThemeRenderer from '../core/ThemeRenderer.vue'
 
 export type Device = 'phone' | 'tablet' | 'desktop'
 
-defineProps<{ content: WeddingContent; themeId: string; device: Device; label?: string }>()
+defineProps<{
+  content: WeddingContent
+  themeId: string
+  device: Device
+  label?: string
+  /** The invitation's variant and time zone (passed through to variant-aware templates). */
+  variant?: VariantId
+  timezone?: string
+}>()
 
 const MAX_WIDTH: Record<Device, string> = { phone: '390px', tablet: '820px', desktop: '100%' }
 </script>
@@ -29,7 +39,7 @@ const MAX_WIDTH: Record<Device, string> = { phone: '390px', tablet: '820px', des
       :aria-label="`${label ?? 'Template preview'} at ${device} size — scrollable`"
       tabindex="0"
     >
-      <ThemeRenderer :content="content" :theme-id="themeId" viewport-height="100cqh" embedded />
+      <ThemeRenderer :content="content" :theme-id="themeId" :variant="variant" :timezone="timezone" viewport-height="100cqh" embedded />
     </div>
   </div>
 </template>

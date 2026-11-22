@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import WeddingEvent
+from app.models import InvitationSession
 from tests.wedding_helpers import API, create_wedding, fields
 
 ITEMS = {
@@ -125,12 +125,12 @@ def test_delete_compacts_positions(auth_client: TestClient, wid: str, db: Sessio
     ids = [auth_client.post(base, json={"title": f"E{i}"}).json()["id"] for i in range(4)]
     assert auth_client.delete(f"{base}/{ids[1]}").status_code == 204
     rows = db.execute(
-        select(WeddingEvent.public_id, WeddingEvent.position).order_by(WeddingEvent.position)
+        select(InvitationSession.public_id, InvitationSession.position).order_by(InvitationSession.position)
     ).all()
     assert [tuple(r) for r in rows] == [(ids[0], 0), (ids[2], 1), (ids[3], 2)]
     # appending after a delete continues the contiguous sequence
     new_id = auth_client.post(base, json={"title": "E4"}).json()["id"]
-    assert db.scalar(select(WeddingEvent.position).where(WeddingEvent.public_id == new_id)) == 3
+    assert db.scalar(select(InvitationSession.position).where(InvitationSession.public_id == new_id)) == 3
 
 
 def test_collection_change_bumps_updated_at(auth_client: TestClient, wid: str) -> None:

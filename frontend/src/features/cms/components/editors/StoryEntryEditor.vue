@@ -7,7 +7,7 @@ import { useAppLocale } from '@/composables/useAppLocale'
 import { storyEntryForm, storyEntryPayload } from '@/features/cms/forms'
 import { fieldId, validateStoryEntry } from '@/features/cms/validation'
 import type { StoryEntryDraft } from '@/features/wedding/draft'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
 import { useSectionDraft } from '../../composables/useSectionDraft'
 import ErrorSummary from '../ErrorSummary.vue'
@@ -16,7 +16,7 @@ import ItemEditorActions from './ItemEditorActions.vue'
 
 const props = defineProps<{ item?: StoryEntryDraft }>()
 const emit = defineEmits<{ done: [] }>()
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 const scope = `st-${props.item?.id ?? 'new'}`
 

@@ -7,7 +7,8 @@ import type { EventType } from '@/features/wedding/types'
 
 import { DEFAULT_EVENT_TYPE } from './forms'
 
-export type EventPresetKey = 'akad' | 'holy_matrimony' | 'reception' | 'ngunduh_mantu' | 'custom'
+/** Wedding presets, `variant-<n>` (the variant's registry session presets) or custom. */
+export type EventPresetKey = 'akad' | 'holy_matrimony' | 'reception' | 'ngunduh_mantu' | 'custom' | `variant-${number}`
 
 export interface EventPreset {
   key: EventPresetKey

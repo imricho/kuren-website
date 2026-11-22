@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { THEMES, FAMILIES, COLLECTIONS } from '@/features/themes/core/registry'
 import { previewRoute } from '@/features/themes/picker/routes'
+import { BRAND_NAME } from '@/features/shell/brand'
 
 const galleryPreview = (theme: typeof THEMES[number]) => ({ ...previewRoute(theme) as object, query: { from: 'gallery' } })
 const category = ref('all')
@@ -24,24 +25,24 @@ function imageFailed(id: string) { if (!failedImages.value.includes(id)) failedI
 <template>
 <div class="gallery" lang="id">
   <a class="skip" href="#collection">Lewati ke koleksi template</a>
-  <header class="header"><RouterLink to="/" class="brand">Kuren<span>✳</span></RouterLink><RouterLink to="/" class="back">← <span>Kembali ke beranda</span></RouterLink></header>
+  <header class="header"><RouterLink to="/" class="brand">{{ BRAND_NAME }}<span>✳</span></RouterLink><RouterLink to="/" class="back">← <span>Kembali ke beranda</span></RouterLink></header>
   <section class="hero" aria-labelledby="gallery-title">
-    <div class="hero-inner"><div><p class="eyebrow"><span></span> THE KUREN COLLECTION <span></span></p><h1 id="gallery-title">Sebuah awal untuk<br><em>cerita Anda.</em></h1><p class="intro">Setiap kisah punya caranya sendiri untuk dikenang. Temukan desain undangan yang terasa seperti Anda.</p><a href="#collection" class="hero-link">JELAJAHI KOLEKSI <span>↘</span></a></div><div class="hero-mark" aria-hidden="true"><span>✳</span><small>MADE FOR<br>YOUR MOMENT</small></div></div>
+    <div class="hero-inner"><div><p class="eyebrow"><span></span> THE TEMUVIBE COLLECTION <span></span></p><h1 id="gallery-title">Sebuah awal untuk<br><em>cerita Anda.</em></h1><p class="intro">Setiap kisah punya caranya sendiri untuk dikenang. Temukan desain undangan yang terasa seperti Anda.</p><a href="#collection" class="hero-link">JELAJAHI KOLEKSI <span>↘</span></a></div><div class="hero-mark" aria-hidden="true"><span>✳</span><small>MADE FOR<br>YOUR MOMENT</small></div></div>
   </section>
   <main id="collection" class="main" tabindex="-1">
-    <div class="section-heading"><div><p class="section-kicker">01 / PILIH CERITA ANDA</p><h2>Koleksi template</h2><p>Desain pilihan untuk momen yang berarti.</p></div><span class="edition">THE COLLECTION<br><b>2026 — KUREN</b></span></div>
+    <div class="section-heading"><div><p class="section-kicker">01 / PILIH CERITA ANDA</p><h2>Koleksi template</h2><p>Desain pilihan untuk momen yang berarti.</p></div><span class="edition">THE COLLECTION<br><b>2026 — TEMUVIBE</b></span></div>
     <div class="filters" role="group" aria-label="Filter gaya template"><button v-for="item in categories" :key="item.id" type="button" :class="{ active: category === item.id }" :aria-pressed="category === item.id" @click="chooseCategory(item.id)">{{ item.name }} <span>{{ item.count }}</span></button></div>
     <div class="toolbar"><p role="status"><strong>{{ matching.length }}</strong> template ditemukan</p><div class="search"><label for="public-template-search">Cari template</label><div><span aria-hidden="true">⌕</span><input id="public-template-search" v-model="query" type="search" placeholder="Cari nama atau gaya..." @input="visibleCount = 12"></div></div></div>
     <div v-if="visible.length" class="grid">
       <article v-for="(theme, index) in visible" :key="theme.id" class="card">
-        <RouterLink :to="galleryPreview(theme)" class="card-image" :aria-label="`Preview ${theme.name}`"><img v-if="!failedImages.includes(theme.id)" :src="theme.previewImage" alt="" loading="lazy" @error="imageFailed(theme.id)"><span v-else class="image-fallback">Pratinjau gambar tidak tersedia</span><span class="image-label">{{ collectionName(theme.collectionId) }}</span><span class="image-index">{{ String(index + 1).padStart(2, '0') }} / KUREN</span></RouterLink>
-        <div class="card-body"><div class="card-meta"><span>WEDDING</span><span>{{ familyName(theme.familyId) }}</span></div><h3>{{ theme.name }}</h3><p>{{ theme.tagline }}</p><div class="actions"><RouterLink :to="galleryPreview(theme)" :aria-label="`Preview ${theme.name}`">Preview <span aria-hidden="true">↗</span></RouterLink><RouterLink :to="{ name: 'use-template', params: { templateId: theme.id } }" :aria-label="`Gunakan ${theme.name}`">Gunakan <span aria-hidden="true">→</span></RouterLink></div></div>
+        <RouterLink :to="galleryPreview(theme)" class="card-image" :aria-label="`Preview ${theme.name}`"><img v-if="!failedImages.includes(theme.id)" :src="theme.previewImage" alt="" loading="lazy" @error="imageFailed(theme.id)"><span v-else class="image-fallback">Pratinjau gambar tidak tersedia</span><span class="image-label">{{ collectionName(theme.collectionId) }}</span><span class="image-index">{{ String(index + 1).padStart(2, '0') }} / TEMUVIBE</span></RouterLink>
+        <div class="card-body"><div class="card-meta"><span>{{ theme.familyId === 'temuvibe' ? 'BERAGAM ACARA' : 'PERNIKAHAN · LAMARAN' }}</span><span>{{ familyName(theme.familyId) }}</span></div><h3>{{ theme.name }}</h3><p>{{ theme.tagline }}</p><div class="actions"><RouterLink :to="galleryPreview(theme)" :aria-label="`Preview ${theme.name}`">Preview <span aria-hidden="true">↗</span></RouterLink><RouterLink :to="{ name: 'use-template', params: { templateId: theme.id } }" :aria-label="`Gunakan ${theme.name}`">Gunakan <span aria-hidden="true">→</span></RouterLink></div></div>
       </article>
     </div>
     <div v-else class="empty"><span>✳</span><h3>Belum menemukan yang cocok?</h3><p>Coba kata kunci atau pilih gaya yang lain.</p><button type="button" @click="query = ''; chooseCategory('all')">Lihat semua template</button></div>
     <button v-if="visible.length < matching.length" class="more" type="button" @click="visibleCount += 12">Tampilkan lebih banyak <span>↓</span></button>
   </main>
-  <footer><RouterLink to="/" class="brand">Kuren<span>✳</span></RouterLink><p>Undangan indah. Cerita Anda.</p><span>MADE FOR YOUR MOMENT</span></footer>
+  <footer><RouterLink to="/" class="brand">{{ BRAND_NAME }}<span>✳</span></RouterLink><p>Undangan indah. Cerita Anda.</p><span>MADE FOR YOUR MOMENT</span></footer>
 </div>
 </template>
 

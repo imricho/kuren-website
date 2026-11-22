@@ -5,6 +5,7 @@ import traditionalCover from '../traditional/assets/thumbnail.svg'
 import type { ThemeFamily } from '../core/types'
 import minimalistCover from './assets/modern-minimalist.svg'
 import rusticCover from './assets/rustic-nature.svg'
+import temuvibeCover from '../temuvibe/assets/family.svg'
 
 /** Theme families, in display order. */
 export const FAMILIES: readonly ThemeFamily[] = [
@@ -58,6 +59,15 @@ export const FAMILIES: readonly ThemeFamily[] = [
     tagline: 'Garden romance, gathered naturally',
     description: 'A garden-inspired invitation with layered greens, botanical linework and warm, paper-like surfaces.',
     coverImage: rusticCover,
+    status: 'available',
+  },
+  {
+    id: 'temuvibe',
+    name: 'Temuvibe',
+    tagline: 'Where every moment comes alive',
+    description:
+      'Schema-driven designs for every occasion — weddings, birthdays, family days, community events, seminars and company celebrations.',
+    coverImage: temuvibeCover,
     status: 'available',
   },
 ]

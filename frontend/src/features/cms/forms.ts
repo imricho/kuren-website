@@ -17,7 +17,7 @@ import type {
   StoryEntryDraft,
   StoryMetaDraft,
 } from '@/features/wedding/draft'
-import type { EventType, ImageAsset, WeddingLocale } from '@/features/wedding/types'
+import type { EventType, ImageAsset, RegistrationFieldType, RsvpContactMode, WeddingLocale } from '@/features/wedding/types'
 
 export interface ImageForm {
   src: string
@@ -103,6 +103,8 @@ export interface PersonForm {
 export interface CoupleForm {
   groom: PersonForm
   bride: PersonForm
+  /** Only switchable where the variant offers the couple as optional (anniversary). */
+  enabled: boolean
 }
 const personForm = (p: PersonDraft): PersonForm => ({
   name: s(p.name),
@@ -121,8 +123,10 @@ const personPayload = (p: PersonForm): PersonDraft =>
     parents: opt(p.parents),
     instagramUrl: opt(p.instagramUrl),
   })
-export const coupleForm = (c: CoupleDraft): CoupleForm => ({ groom: personForm(c.groom), bride: personForm(c.bride) })
-export const couplePayload = (c: CoupleForm): CoupleDraft => ({ groom: personPayload(c.groom), bride: personPayload(c.bride) })
+export const coupleForm = (c: CoupleDraft): CoupleForm => ({ groom: personForm(c.groom), bride: personForm(c.bride), enabled: c.enabled !== false })
+/** `enabled` is sent only to hide the couple (absent = shown, the backend default). */
+export const couplePayload = (c: CoupleForm): CoupleDraft =>
+  clean({ groom: personPayload(c.groom), bride: personPayload(c.bride), enabled: c.enabled ? undefined : false })
 
 // --- Story -------------------------------------------------------------------------
 export interface StoryMetaForm {
@@ -170,6 +174,15 @@ export interface EventForm {
   livestreamEnabled: boolean
   livestreamUrl: string
   livestreamLabel: string
+  /** A session guests may choose to attend (corporate variants). */
+  optional: boolean
+  /** How guests attend: in person (default), online, or both. */
+  format: 'in_person' | 'online' | 'hybrid'
+  onlineUrl: string
+  onlineLabel: string
+  onlineInstructions: string
+  /** Last day of a multi-day session (optional). */
+  endDate: string
 }
 /** Type of a new custom event (most Indonesian weddings have a reception). */
 export const DEFAULT_EVENT_TYPE: EventType = 'reception'
@@ -188,6 +201,12 @@ export const eventForm = (e?: Partial<EventDraft>): EventForm => ({
   livestreamEnabled: e?.livestream?.enabled === true,
   livestreamUrl: s(e?.livestream?.url),
   livestreamLabel: s(e?.livestream?.label),
+  optional: e?.optional === true,
+  format: e?.format === 'online' || e?.format === 'hybrid' ? e.format : 'in_person',
+  onlineUrl: s(e?.onlineUrl),
+  onlineLabel: s(e?.onlineLabel),
+  onlineInstructions: s(e?.onlineInstructions),
+  endDate: s(e?.endDate),
 })
 export const eventPayload = (e: EventForm): NewItem<'events'> =>
   clean({
@@ -207,6 +226,13 @@ export const eventPayload = (e: EventForm): NewItem<'events'> =>
       e.livestreamEnabled || opt(e.livestreamUrl) || opt(e.livestreamLabel)
         ? clean({ enabled: e.livestreamEnabled, url: opt(e.livestreamUrl), label: opt(e.livestreamLabel) })
         : undefined,
+    optional: e.optional ? true : undefined,
+    // In person is the default and is not stored; online details are kept while in person.
+    format: e.format === 'in_person' ? undefined : e.format,
+    onlineUrl: opt(e.onlineUrl),
+    onlineLabel: opt(e.onlineLabel),
+    onlineInstructions: opt(e.onlineInstructions),
+    endDate: opt(e.endDate),
   })
 
 // --- Gallery -----------------------------------------------------------------------
@@ -249,6 +275,19 @@ export interface RsvpForm {
   confirmationMessage: string
   /** Kept as text so a half-typed value can be shown and validated. */
   maxGuestsPerResponse: string
+  /** v2.0: total attending people (text, '' = no limit). */
+  capacity: string
+  collectContact: RsvpContactMode
+  allowSessionChoice: boolean
+  registrationFields: RegistrationFieldForm[]
+}
+export interface RegistrationFieldForm {
+  id: string
+  label: string
+  type: RegistrationFieldType
+  required: boolean
+  /** Select options, one input each ('' rows are dropped). */
+  options: string[]
 }
 export const rsvpForm = (r: RsvpDraft): RsvpForm => ({
   enabled: r.enabled !== false,
@@ -257,6 +296,16 @@ export const rsvpForm = (r: RsvpDraft): RsvpForm => ({
   deadline: s(r.deadline),
   confirmationMessage: s(r.confirmationMessage),
   maxGuestsPerResponse: r.maxGuestsPerResponse === undefined ? '' : String(r.maxGuestsPerResponse),
+  capacity: r.capacity === undefined ? '' : String(r.capacity),
+  collectContact: r.collectContact ?? 'none',
+  allowSessionChoice: r.allowSessionChoice === true,
+  registrationFields: (r.registrationFields ?? []).map((f) => ({
+    id: f.id,
+    label: s(f.label),
+    type: f.type,
+    required: f.required === true,
+    options: [...(f.options ?? [])],
+  })),
 })
 export const rsvpPayload = (r: RsvpForm): RsvpDraft => {
   const max = String(r.maxGuestsPerResponse).trim()
@@ -267,6 +316,20 @@ export const rsvpPayload = (r: RsvpForm): RsvpDraft => {
     deadline: opt(r.deadline),
     confirmationMessage: opt(r.confirmationMessage),
     maxGuestsPerResponse: max === '' ? undefined : Number(max),
+    capacity: r.capacity.trim() === '' ? undefined : Number(r.capacity.trim()),
+    collectContact: r.collectContact === 'none' ? undefined : r.collectContact,
+    allowSessionChoice: r.allowSessionChoice ? true : undefined,
+    registrationFields: r.registrationFields.length
+      ? r.registrationFields.map((f) =>
+          clean({
+            id: f.id,
+            label: f.label.trim(),
+            type: f.type,
+            required: f.required,
+            options: f.type === 'select' ? f.options.map((o) => o.trim()).filter(Boolean) : undefined,
+          }),
+        )
+      : undefined,
   })
 }
 

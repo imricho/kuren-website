@@ -66,7 +66,7 @@ export const sectionsId = {
   wishesIntro: 'Ruang untuk ucapan dan doa dari para tamu.',
   wishesComingSoon: 'Tamu belum dapat mengirim ucapan secara online — buku tamu segera hadir.',
 
-  rsvpOfflineNote: 'Tamu belum dapat membalas secara online — undangan Anda menampilkan batas waktu dan pesan Anda.',
+  rsvpOfflineNote: 'Tamu membalas langsung di undangan Anda. Balasan mereka tampil di menu Respons.',
 
   amplopIntro: 'Tamu dapat mengirim hadiah lewat transfer bank, QRIS, atau kiriman.',
   amplopPrivacy: 'Siapa pun yang memiliki tautan undangan Anda dapat melihat detail ini. Tambahkan hanya rekening yang nyaman Anda bagikan.',
@@ -107,7 +107,7 @@ export const sectionsId = {
   giftNote: 'Catatan atau petunjuk',
 
   guestGreeting: 'Sapaan tamu',
-  guestGreetingHint: 'Menampilkan baris seperti “Kepada Yth.” diikuti nama tamu. Nama diambil dari parameter ?to= pada tautan undangan Anda.',
+  guestGreetingHint: 'Menampilkan baris seperti “Kepada Yth.” diikuti nama tamu. Buat tautan pribadi untuk setiap tamu di Pratinjau & Terbitkan.',
   guestGreetingLabel: 'Teks sapaan',
   familyAcknowledgments: 'Turut mengundang',
   familyAcknowledgmentsHint: 'Nama keluarga yang turut mengundang. Baris baru disimpan.',

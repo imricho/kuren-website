@@ -66,7 +66,7 @@ export const sectionsId = {
   wishesIntro: 'Ruang untuk ucapan dan doa dari para tamu.',
   wishesComingSoon: 'Tamu belum dapat mengirim ucapan secara online — buku tamu segera hadir.',
 
-  rsvpOfflineNote: 'Tamu belum dapat membalas secara online — undangan Anda menampilkan batas waktu dan pesan Anda.',
+  rsvpOfflineNote: 'Tamu membalas langsung di undangan Anda. Balasan mereka tampil di menu Respons.',
 
   amplopIntro: 'Tamu dapat mengirim hadiah lewat transfer bank, QRIS, atau kiriman.',
   amplopPrivacy: 'Siapa pun yang memiliki tautan undangan Anda dapat melihat detail ini. Tambahkan hanya rekening yang nyaman Anda bagikan.',

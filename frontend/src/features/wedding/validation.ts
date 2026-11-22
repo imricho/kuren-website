@@ -1,4 +1,4 @@
-import { EVENT_TYPES, WEDDING_SCHEMA_VERSION, type ImageAsset, type WeddingContent } from './types'
+import { EVENT_TYPES, READABLE_CONTENT_VERSIONS, WEDDING_SCHEMA_VERSION, type ImageAsset, type WeddingContent } from './types'
 
 const ISO_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -26,9 +26,10 @@ export function validateWeddingContent(content: WeddingContent): string[] {
     required(value.alt, `${path}.alt`)
   }
 
-  if (content.schemaVersion !== WEDDING_SCHEMA_VERSION) problems.push('schemaVersion is not supported')
+  // 1 = created before the invitation engine, 2 = invitation engine (docs/api/invitations.md).
+  if (content.schemaVersion !== WEDDING_SCHEMA_VERSION && (content.schemaVersion as number) !== 2) problems.push('schemaVersion is not supported')
 
-  if (content.contentVersion !== undefined && content.contentVersion !== '1.1' && content.contentVersion !== '1.2') problems.push('contentVersion is not supported')
+  if (content.contentVersion !== undefined && !(READABLE_CONTENT_VERSIONS as readonly string[]).includes(content.contentVersion)) problems.push('contentVersion is not supported')
   const toggle = (value: unknown, path: string) => {
     if (value !== undefined && typeof value !== 'boolean') problems.push(`${path} must be true or false`)
   }
@@ -38,6 +39,31 @@ export function validateWeddingContent(content: WeddingContent): string[] {
       if (typeof section.enabled !== 'boolean') problems.push(`${key}.enabled must be true or false`)
     }
   }
+  // v2.0 sections (shape only; limits: features/invitation/validation).
+  for (const key of ['profiles', 'milestone', 'organization', 'agenda', 'speakers'] as const) {
+    const section = content[key]
+    if (section && typeof section.enabled !== 'boolean') problems.push(`${key}.enabled must be true or false`)
+  }
+  for (const key of ['profiles', 'speakers'] as const) {
+    const section = content[key]
+    if (!section) continue
+    if (!Array.isArray(section.people)) problems.push(`${key}.people must be a list`)
+    else section.people.forEach((p, i) => {
+      required(p.id, `${key}.people[${i}].id`)
+      required(p.name, `${key}.people[${i}].name`)
+      image(p.image, `${key}.people[${i}].image`)
+    })
+  }
+  if (content.agenda) {
+    if (!Array.isArray(content.agenda.items)) problems.push('agenda.items must be a list')
+    else content.agenda.items.forEach((item, i) => {
+      required(item.id, `agenda.items[${i}].id`)
+      required(item.title, `agenda.items[${i}].title`)
+      if (item.time !== undefined && !TIME.test(item.time)) problems.push(`agenda.items[${i}].time must be HH:mm`)
+      if (item.endTime !== undefined && !TIME.test(item.endTime)) problems.push(`agenda.items[${i}].endTime must be HH:mm`)
+    })
+  }
+  image(content.organization?.logo, 'organization.logo')
   toggle(content.story?.enabled, 'story.enabled')
   toggle(content.gallery?.enabled, 'gallery.enabled')
   for (const key of ['holyRecite1', 'holyRecite2'] as const) {
@@ -64,8 +90,11 @@ export function validateWeddingContent(content: WeddingContent): string[] {
   date(content.opening?.weddingDate, 'opening.weddingDate')
   image(content.opening?.coverImage, 'opening.coverImage')
 
-  required(content.couple?.groom?.name, 'couple.groom.name')
-  required(content.couple?.bride?.name, 'couple.bride.name')
+  // Variants without a couple section (birthday, corporate, …) carry empty names.
+  if (!content.sections || content.sections.includes('couple')) {
+    required(content.couple?.groom?.name, 'couple.groom.name')
+    required(content.couple?.bride?.name, 'couple.bride.name')
+  }
   image(content.couple?.groom?.image, 'couple.groom.image')
   image(content.couple?.bride?.image, 'couple.bride.image')
   instagram(content.couple?.groom?.instagramUrl, 'couple.groom.instagramUrl')
@@ -103,6 +132,8 @@ export function validateWeddingContent(content: WeddingContent): string[] {
   if (content.rsvp?.deadline !== undefined) date(content.rsvp.deadline, 'rsvp.deadline')
   const maxGuests = content.rsvp?.maxGuestsPerResponse
   if (maxGuests !== undefined && !isGuestCount(maxGuests)) problems.push('rsvp.maxGuestsPerResponse must be a whole number from 1 to 20')
+  const capacity = content.rsvp?.capacity
+  if (capacity !== undefined && !(Number.isInteger(capacity) && capacity >= 1 && capacity <= 100000)) problems.push('rsvp.capacity must be a whole number from 1 to 100000')
 
   required(content.closing?.message, 'closing.message')
   image(content.closing?.image, 'closing.image')

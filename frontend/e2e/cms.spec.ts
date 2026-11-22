@@ -14,6 +14,25 @@ async function myWedding(page: Page) {
   return (await res.json()) as { id: string; themeId: string | null; status: string; revision: number }
 }
 
+/**
+ * Since the invitation engine nothing is auto-created on first visit: create the wedding through
+ * the legacy API (`POST /weddings` → a `wedding_ceremony` with the pre-2.0 defaults).
+ */
+async function seedWedding(page: Page, themeId?: string) {
+  const res = await page.request.post(`${API}/weddings`, { data: themeId ? { themeId } : {} })
+  expect(res.status(), `POST /weddings → ${res.status()}`).toBe(201)
+  return res.json() as Promise<{ id: string }>
+}
+
+/** `/wedding/<slug>` redirects to the invitation editor. */
+const editorUrl = (slug: string) => new RegExp(`/invitations/[0-9a-f-]{36}/edit/${slug}$`)
+
+/** Theme selection saves to the invitation that is OPEN in the app; reach the studio in-app. */
+async function openThemesInApp(page: Page) {
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Themes' }).click()
+  await expect(page).toHaveURL(/\/themes$/)
+}
+
 async function savedContent(page: Page) {
   const w = await myWedding(page)
   const res = await page.request.get(`${API}/weddings/${w.id}/content`)
@@ -36,6 +55,7 @@ async function goToSection(page: Page, group: string, section: string) {
 
 async function fillOpening(page: Page) {
   await page.goto('/wedding/opening')
+  await expect(page).toHaveURL(editorUrl('opening'))
   const form = page.getByTestId('opening-form')
   await form.getByLabel('Groom’s name').fill('Dimas Pratama')
   await form.getByLabel('Bride’s name').fill('Ayu Lestari')
@@ -51,17 +71,25 @@ async function fillOpening(page: Page) {
 test.describe('Wedding CMS', () => {
   test('a new customer starts with an empty draft that is not published', async ({ page, freshUser }) => {
     void freshUser
+    // No more auto-created wedding: the list is empty until one is created.
     await page.goto('/dashboard')
-    await expect(page.getByTestId('website-name')).toHaveText('Your wedding website')
-    // Unbuilt features (publishing) are not advertised.
-    await expect(page.getByText(/Not published|later update/)).toHaveCount(0)
-    await expect(page.getByText(/0 of 6 required sections complete/).first()).toBeVisible()
+    await expect(page).toHaveURL(/\/invitations$/)
+    await expect(page.getByTestId('invitations-empty')).toBeVisible()
+    expect((await page.request.get(`${API}/weddings/me`)).status()).toBe(404)
+    await seedWedding(page)
+    await page.goto('/invitations')
+    await expect(page.getByTestId('card-status')).toHaveAttribute('data-state', 'draft')
+    await expect(page.getByTestId('card-url')).toHaveCount(0)
     const w = await myWedding(page)
     expect(w.status).toBe('draft')
+    const content = await savedContent(page)
+    expect(content.events).toEqual([])
+    expect(content.opening).toEqual({})
   })
 
   test('opening content is saved to PostgreSQL, survives reload and can be edited', async ({ page, freshUser }) => {
     void freshUser
+    await seedWedding(page)
     await fillOpening(page)
 
     // Persisted server-side (same data the Couple page edits — not duplicated).
@@ -85,6 +113,7 @@ test.describe('Wedding CMS', () => {
 
   test('leaving saves pending edits first and only asks when something cannot be saved', async ({ page, freshUser }) => {
     void freshUser
+    await seedWedding(page)
     await page.goto('/wedding/opening')
     const title = page.getByTestId('opening-form').getByLabel('Website title')
     const nav = page.getByTestId('section-nav')
@@ -94,7 +123,7 @@ test.describe('Wedding CMS', () => {
     await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'unsaved')
     await expect(nav.locator('a[data-section="opening"] [data-testid="unsaved-badge"]')).toHaveCount(1)
     await goToSection(page, 'events', 'events')
-    await expect(page).toHaveURL(/\/wedding\/events$/)
+    await expect(page).toHaveURL(editorUrl('events'))
     await expect(page.getByTestId('confirm-dialog').filter({ visible: true })).toHaveCount(0)
     expect((await savedContent(page)).opening.weddingTitle).toBe('Draft title')
 
@@ -107,17 +136,18 @@ test.describe('Wedding CMS', () => {
     const dialog = page.getByTestId('confirm-dialog')
     await expect(dialog).toBeVisible()
     await dialog.getByRole('button', { name: 'Keep editing' }).click()
-    await expect(page).toHaveURL(/\/wedding\/opening$/)
+    await expect(page).toHaveURL(editorUrl('opening'))
     await expect(title).toHaveValue(tooLong)
 
     await nav.locator('a[data-section="events"]').click() // the Events group is still selected
     await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Discard changes' }).click()
-    await expect(page).toHaveURL(/\/wedding\/events$/)
+    await expect(page).toHaveURL(editorUrl('events'))
     expect((await savedContent(page)).opening.weddingTitle).toBe('Draft title')
   })
 
   test('events: add, validate, reorder by keyboard and delete with confirmation', async ({ page, freshUser }) => {
     void freshUser
+    await seedWedding(page)
     await page.goto('/wedding/events')
 
     const addEvent = async (title: string, start: string, end?: string) => {
@@ -168,9 +198,14 @@ test.describe('Wedding CMS', () => {
   })
 
   test('the selected theme is stored on the wedding, not just in the browser', async ({ page, browser, freshUser }) => {
-    await page.goto('/themes/classic/romantic-floral')
+    await seedWedding(page)
+    await page.goto('/wedding/opening')
+    await expect(page.getByTestId('opening-form')).toBeVisible()
+    await openThemesInApp(page)
+    await page.locator('[data-family-card="classic"] a').click()
+    await page.locator('[data-collection-card="romantic-floral"] a').click()
     await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
-    await expect(page).toHaveURL(/\/wedding\/(opening|couple|story|events|gallery|rsvp|closing)$/)
+    await expect(page).toHaveURL(editorUrl('(opening|couple|story|events|gallery|rsvp|closing)'))
     await expect.poll(async () => (await myWedding(page)).themeId).toBe('conventional')
 
     // A completely separate browser (no localStorage) sees the same selection.
@@ -178,15 +213,16 @@ test.describe('Wedding CMS', () => {
     const otherPage = await other.newPage()
     await freshUser.loginInto(otherPage)
     await otherPage.goto('/dashboard')
-    await expect(otherPage.getByText(/Conventional \/ Classic|Blush Garden/).first()).toBeVisible()
+    await expect(otherPage.getByTestId('card-template')).toHaveText(/Conventional|Classic|Blush Garden/)
     await other.close()
   })
 
   test('category and collection browse preserve the draft; sidebar previews and explicit selection saves before Edit and Back does not repeat it', async ({ page, freshUser }) => {
     void freshUser
+    await seedWedding(page)
     await fillOpening(page)
     const before = await savedContent(page)
-    await page.goto('/themes')
+    await openThemesInApp(page)
     await page.locator('[data-family-card="traditional"] a').click()
     await expect(page).toHaveURL(/\/themes\/traditional$/)
     await page.locator('[data-collection-card="artisan-pattern"] a').click()
@@ -196,7 +232,7 @@ test.describe('Wedding CMS', () => {
     await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
     await expect(page.getByTestId('preview-pane').getByRole('heading', { name: 'Woven Indigo' })).toBeVisible()
     await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
-    await expect(page).toHaveURL(/\/wedding\/(opening|couple|story|events|gallery|rsvp|closing)$/)
+    await expect(page).toHaveURL(editorUrl('(opening|couple|story|events|gallery|rsvp|closing)'))
     expect((await myWedding(page)).themeId).toBe('ethnic')
     expect(await savedContent(page)).toEqual(before)
     await page.goBack()
@@ -206,10 +242,13 @@ test.describe('Wedding CMS', () => {
 
   test('preview renders the saved content with the selected theme', async ({ page, freshUser }) => {
     void freshUser
-    await page.goto('/themes/classic/romantic-floral')
+    await seedWedding(page)
+    await fillOpening(page)
+    await openThemesInApp(page)
+    await page.locator('[data-family-card="classic"] a').click()
+    await page.locator('[data-collection-card="romantic-floral"] a').click()
     await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
     await expect.poll(async () => (await myWedding(page)).themeId).toBe('conventional')
-    await fillOpening(page)
 
     await page.goto('/wedding/preview')
     const site = page.locator('.wedding-site[data-theme="conventional"]')
@@ -220,11 +259,12 @@ test.describe('Wedding CMS', () => {
     await expect(page.getByTestId('notice-placeholders')).toBeVisible() // events etc. not filled yet
 
     await page.getByTestId('back-to-editing').click()
-    await expect(page).toHaveURL(/\/wedding/)
+    await expect(page).toHaveURL(/\/invitations\/[0-9a-f-]{36}\/edit/)
   })
 
   test('one customer cannot read or change another customer’s wedding', async ({ page, browser, freshUser }) => {
     void freshUser
+    await seedWedding(page)
     await fillOpening(page)
     const mine = await myWedding(page)
 
@@ -258,74 +298,62 @@ test.describe('Wedding CMS', () => {
 
   test('CMS pages fit a phone screen and the section selector works', async ({ page, freshUser }) => {
     void freshUser
+    await seedWedding(page)
     // 320 CSS px is the WCAG 1.4.10 reflow width.
     await page.setViewportSize({ width: 320, height: 720 })
     for (const section of ['opening', 'couple', 'story', 'events', 'gallery', 'rsvp', 'closing']) {
       await page.goto(`/wedding/${section}`)
+      await expect(page).toHaveURL(editorUrl(section))
       await expect(page.getByTestId(/.*-form|list-editor|section-toggle/).filter({ visible: true }).first()).toBeVisible()
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
       expect(overflow, `/wedding/${section} must not scroll horizontally`).toBeLessThanOrEqual(0)
       await page.screenshot({ path: `test-results/screens/cms-${section}-phone.png`, fullPage: true })
     }
     await page.goto('/dashboard')
+    await expect(page.getByTestId('invitation-cards')).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), 'invitation list at 320px').toBeLessThanOrEqual(0)
     await page.screenshot({ path: 'test-results/screens/cms-dashboard-phone.png', fullPage: true })
 
     await page.goto('/wedding/opening')
     await goToSection(page, 'events', 'events')
-    await expect(page).toHaveURL(/\/wedding\/events$/)
+    await expect(page).toHaveURL(editorUrl('events'))
   })
 
   test('the CMS is translated when the app language is Indonesian', async ({ page, freshUser }) => {
     void freshUser
+    await seedWedding(page)
     await page.goto('/dashboard')
     await page.getByRole('button', { name: 'Bahasa Indonesia' }).click().catch(async () => {
       await page.evaluate(() => localStorage.setItem('kuren.appLocale', 'id'))
       await page.reload()
     })
-    await expect(page.getByRole('link', { name: 'Situs saya' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Undangan' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Buat undangan' })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: 'Navigasi utama' }).getByRole('link', { name: 'Tema' })).toBeVisible()
   })
 
+  // The /welcome first-run flow was replaced by the invitation list + creation wizard.
   test.describe('first run', () => {
     test.use({ welcomeSeen: false })
 
-    test('a new customer is guided through names, theme and their site, once', async ({ page, freshUser }) => {
+    test('a new customer is guided to create their first invitation, once', async ({ page, freshUser }) => {
       void freshUser
       await page.goto('/dashboard')
-      await expect(page).toHaveURL(/\/welcome/)
-      await expect(page.getByTestId('welcome-step-of')).toHaveText('Step 1 of 3')
-
-      const names = page.getByTestId('welcome-names')
-      await names.locator('#welcome-groom-name').fill('Rizky Pratama')
-      await names.locator('#welcome-groom-nickname').fill('Rizky')
-      await names.locator('#welcome-bride-name').fill('Ayu Lestari')
-      await names.locator('#welcome-bride-nickname').fill('Ayu')
-      await names.locator('#welcome-date').fill('2027-09-04')
-      await names.getByRole('button', { name: 'Save and continue' }).click()
-      await expect(page.getByTestId('welcome-step-of')).toHaveText('Step 2 of 3')
-
-      const content = await savedContent(page)
-      expect(content.couple.groom).toMatchObject({ name: 'Rizky Pratama', nickname: 'Rizky' })
-      expect(content.opening.weddingDate).toBe('2027-09-04')
-
-      await page.getByTestId('welcome-theme').locator('label[data-theme]').first().click()
-      await page.getByTestId('welcome-theme').getByRole('button', { name: 'Save and continue' }).click()
-      await expect(page.getByTestId('welcome-step-of')).toHaveText('Step 3 of 3')
+      await expect(page).toHaveURL(/\/invitations$/)
+      await page.getByTestId('invitations-empty').locator('[data-action="create-invitation"]').click()
+      await expect(page).toHaveURL(/\/invitations\/new/)
+      await page.locator('input[data-category="wedding"]').check()
+      await page.locator('[data-action="next"]').click()
+      await page.locator('input[data-variant="wedding_ceremony"]').check()
+      await page.locator('[data-action="next"]').click()
+      await page.locator('input[name="template"]').first().check()
+      await page.locator('[data-action="next"]').click()
+      await page.locator('[data-action="create"]').click()
+      await expect(page).toHaveURL(/\/invitations\/[0-9a-f-]{36}\/edit/)
       expect((await myWedding(page)).themeId).toBeTruthy()
-
-      await page.getByTestId('welcome-dashboard').click()
-      await expect(page).toHaveURL(/\/dashboard$/)
-      await expect(page.getByTestId('website-name')).toContainText('Rizky')
-      await page.reload()
-      await expect(page).toHaveURL(/\/dashboard$/) // not sent back to /welcome
-    })
-
-    test('setup can be skipped entirely', async ({ page, freshUser }) => {
-      void freshUser
       await page.goto('/dashboard')
-      await page.getByTestId('welcome-skip-all').click()
-      await expect(page).toHaveURL(/\/dashboard$/)
-      await page.goto('/dashboard')
-      await expect(page).toHaveURL(/\/dashboard$/)
+      await expect(page).toHaveURL(/\/invitations$/) // not sent to a first-run flow again
+      await expect(page.locator('[data-invitation]')).toHaveCount(1)
     })
   })
 })

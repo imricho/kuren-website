@@ -15,14 +15,19 @@ import ErrorSummary from '@/features/cms/components/ErrorSummary.vue'
 import ImageField from '@/features/cms/components/ImageField.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
 import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
+import { useVariantCopy } from '@/features/cms/composables/useVariantCopy'
+import { isKeyOffered } from '@/features/wedding/completeness'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
 import { clean, openingForm, openingPayload, type OpeningForm } from '@/features/cms/forms'
 import { fieldId, validateOpening } from '@/features/cms/validation'
 import { deriveCoupleNames } from '@/features/wedding/draft'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
+const { vt } = useVariantCopy()
+/** Couple names live here only where the variant has a couple section. */
+const hasCouple = computed(() => isKeyOffered('couple', store.variant))
 
 const toPayload = (f: OpeningForm) => ({
   opening: openingPayload(f),
@@ -87,7 +92,7 @@ const derivedNames = computed(() =>
   }),
 )
 const coupleNamesHint = computed(() =>
-  derivedNames.value ? t('coupleNamesHintDerived', { names: derivedNames.value }) : t('coupleNamesHint'),
+  hasCouple.value && derivedNames.value ? t('coupleNamesHintDerived', { names: derivedNames.value }) : vt('coupleNamesHint'),
 )
 const needed = t('neededBeforePublishing')
 const localeOptions = computed(() => [
@@ -98,8 +103,8 @@ const labels = computed<Record<string, string>>(() => ({
   'couple.groom.name': t('groomName'),
   'couple.bride.name': t('brideName'),
   weddingTitle: t('weddingTitle'),
-  weddingDate: t('weddingDate'),
-  coupleNames: t('coupleNamesLabel'),
+  weddingDate: vt('weddingDate'),
+  coupleNames: vt('coupleNamesLabel'),
   headline: t('headline'),
   introduction: t('introduction'),
   'coverImage.src': t('coverImage'),
@@ -114,7 +119,7 @@ const labels = computed<Record<string, string>>(() => ({
     <ErrorSummary :errors="draft.errorList.value" :labels="labels" />
     <p v-if="draft.formError.value" class="text-sm text-danger-600" data-testid="form-error">{{ draft.formError.value }}</p>
 
-    <fieldset class="min-w-0 space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6">
+    <fieldset v-if="hasCouple" class="min-w-0 space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6" data-testid="opening-couple">
       <legend class="px-1 font-display text-xl font-semibold">{{ t('theCouple') }}</legend>
       <p class="text-xs text-ink-500">{{ t('namesSharedHint') }}</p>
       <div class="grid min-w-0 gap-4 sm:grid-cols-2">
@@ -138,28 +143,29 @@ const labels = computed<Record<string, string>>(() => ({
     </fieldset>
 
     <fieldset class="min-w-0 space-y-4 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6">
-      <legend class="px-1 font-display text-xl font-semibold">{{ t('theWedding') }}</legend>
+      <legend class="px-1 font-display text-xl font-semibold">{{ vt('theWedding') }}</legend>
       <TextField
         :id="fieldId('weddingTitle')"
         v-model="form.weddingTitle"
         :label="t('weddingTitle')"
-        :hint="t('weddingTitleHint')"
+        :hint="vt('weddingTitleHint')"
         :error="errors.weddingTitle"
         :needed-hint="needed"
       />
       <DateField
         :id="fieldId('weddingDate')"
         v-model="form.weddingDate"
-        :label="t('weddingDate')"
+        :label="vt('weddingDate')"
         :error="errors.weddingDate"
         :needed-hint="needed"
       />
       <TextField
         :id="fieldId('coupleNames')"
         v-model="form.coupleNames"
-        :label="t('coupleNamesLabel')"
+        :label="vt('coupleNamesLabel')"
         :hint="coupleNamesHint"
         :error="errors.coupleNames"
+        :needed-hint="hasCouple ? undefined : needed"
       />
       <TextField :id="fieldId('headline')" v-model="form.headline" :label="t('headline')" :hint="t('headlineHint')" :error="errors.headline" />
       <TextAreaField

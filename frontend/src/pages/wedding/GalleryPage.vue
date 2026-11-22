@@ -16,9 +16,9 @@ import { galleryMetaForm, galleryMetaPayload } from '@/features/cms/forms'
 import { fieldId, validateGalleryMeta } from '@/features/cms/validation'
 import type { GalleryItemDraft } from '@/features/wedding/draft'
 import { focalPosition, isSafeImageSrc } from '@/features/wedding/format'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 useUnsavedChangesGuard()
 

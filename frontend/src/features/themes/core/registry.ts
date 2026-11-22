@@ -24,6 +24,7 @@ import { minimalistTheme } from '../minimalist'
 import { rusticTheme } from '../rustic'
 import { traditionalTheme } from '../traditional'
 import { royalMaroonV2Theme } from '../royal-maroon-v2'
+import { TEMUVIBE_FAMILY_ID, TEMUVIBE_TEMPLATES } from '../temuvibe'
 import {
   isRenderable,
   type RenderableTemplate,
@@ -42,6 +43,7 @@ const RENDERABLE_TEMPLATES: readonly RenderableTemplate[] = [
   minimalistTheme,
   rusticTheme,
   ...ADDITIONAL_TEMPLATES,
+  ...TEMUVIBE_TEMPLATES,
 ]
 
 /** Every template (renderable and planned), in display order. */
@@ -54,6 +56,10 @@ export const THEMES: readonly RenderableTemplate[] = Object.freeze(
 )
 
 export const DEFAULT_THEME_ID = internationalTheme.id
+
+export { TEMUVIBE_FAMILY_ID }
+/** Renders any variant; used when a stored template does not support the invitation's variant. */
+export const TEMUVIBE_FALLBACK_ID = 'temuvibe-elegant'
 
 /** Ids that would clash with picker routes (/themes/:familyId/:collectionId, /themes/:id/preview). */
 export const RESERVED_IDS: ReadonlySet<string> = new Set(['preview'])

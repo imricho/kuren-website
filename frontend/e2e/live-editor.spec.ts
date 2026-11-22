@@ -32,17 +32,20 @@ async function savedContent(page: Page) {
   return res.json()
 }
 
-/** Create the wedding (first visit creates it) and optionally pick a theme through the API. */
+/**
+ * Create the wedding through the legacy API (since the invitation engine nothing is
+ * auto-created on first visit; `POST /weddings` keeps the pre-2.0 defaults: no seeded
+ * sessions) and optionally pick a theme.
+ */
 async function seedWedding(page: Page, themeId: string | null = 'conventional'): Promise<Wedding> {
-  await page.goto('/dashboard')
-  await expect.poll(async () => (await page.request.get(`${API}/weddings/me`)).status()).toBe(200)
-  const w = await myWedding(page)
-  if (themeId) {
-    const res = await page.request.patch(`${API}/weddings/${w.id}`, { data: { themeId } })
-    expect(res.ok(), `PATCH themeId → ${res.status()}`).toBe(true)
-  }
+  const res = await page.request.post(`${API}/weddings`, { data: themeId ? { themeId } : {} })
+  expect(res.status(), `POST /weddings → ${res.status()}`).toBe(201)
   return myWedding(page)
 }
+
+/** `/wedding/<slug>` now redirects to the invitation editor route. */
+const editorUrl = (slug: string) => new RegExp(`/invitations/[0-9a-f-]{36}/edit/${slug}$`)
+const OPENING_WRITES = /\/api\/v1\/(weddings|invitations)\/[^/]+\/sections\/opening$/
 
 const saveStatus = (page: Page) => page.getByTestId('save-status')
 const previewContent = (page: Page) => page.getByTestId('preview-content')
@@ -60,7 +63,7 @@ async function expectSaved(page: Page, timeout = 15_000) {
   await expect(page.getByTestId('save-status-text')).toHaveText('All changes saved')
 }
 
-const isContentWrite = (r: Request) => r.url().includes(`${API}/weddings/`) && ['PUT', 'POST', 'DELETE'].includes(r.method())
+const isContentWrite = (r: Request) => (r.url().includes(`${API}/weddings/`) || r.url().includes(`${API}/invitations/`)) && ['PUT', 'POST', 'DELETE'].includes(r.method())
 
 /** Records every content write the page sends. */
 function watchWrites(page: Page) {
@@ -130,7 +133,7 @@ test.describe('Live editor', () => {
 
     // Events: the new-item form previews live, Add persists it ("“X” added" toast kept).
     await goToSection(page, 'events', 'events')
-    await expect(page).toHaveURL(/\/wedding\/events$/)
+    await expect(page).toHaveURL(editorUrl('events'))
     const events = site(page).locator('[data-section="events"]')
     await page.getByRole('button', { name: 'Add an event' }).click()
     const editor = page.getByTestId('event-editor').last()
@@ -278,7 +281,7 @@ test.describe('Live editor', () => {
       failures++
       await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: { code: 'internal_error', message: 'boom' } }) })
     }
-    await page.route('**/api/v1/weddings/*/sections/opening', fail)
+    await page.route(OPENING_WRITES, fail)
 
     const title = openingForm(page).getByLabel('Website title')
     await title.fill('Kept locally')
@@ -290,7 +293,7 @@ test.describe('Live editor', () => {
     await expect(site(page)).toContainText('Kept locally')
     expect((await savedContent(page)).opening.weddingTitle).toBeUndefined()
 
-    await page.unroute('**/api/v1/weddings/*/sections/opening', fail)
+    await page.unroute(OPENING_WRITES, fail)
     await page.locator('[data-action="retry-save"]').click()
     await expectSaved(page)
     expect((await savedContent(page)).opening.weddingTitle).toBe('Kept locally')
@@ -307,7 +310,7 @@ test.describe('Live editor', () => {
     let firstSeen!: () => void
     const firstArrived = new Promise<void>((r) => (firstSeen = r))
     const bodies: string[] = []
-    await page.route('**/api/v1/weddings/*/sections/opening', async (route) => {
+    await page.route(OPENING_WRITES, async (route) => {
       if (route.request().method() !== 'PUT') return route.fallback()
       bodies.push(route.request().postData() ?? '')
       if (bodies.length === 1) {
@@ -419,6 +422,10 @@ test.describe('Live editor', () => {
     await seedWedding(page)
     await openEditor(page)
     const frame = page.getByTestId('preview-frame')
+    // The editor preview now opens at desktop size (see isolated/cms-polish.spec.ts); this test
+    // measures scrolling in the phone frame, so switch to it first.
+    await expect(frame).toHaveAccessibleName('Live preview, desktop size — scrollable')
+    await page.getByTestId('preview-device').first().locator('input[data-value="phone"]').check({ force: true })
     await expect(frame).toHaveAccessibleName('Live preview, phone size — scrollable')
 
     const offsetOf = async (key: string) => {
@@ -428,7 +435,7 @@ test.describe('Live editor', () => {
     expect(await offsetOf('events')).toBeGreaterThan(100) // well below the fold at first
 
     await goToSection(page, 'events', 'events')
-    await expect(page).toHaveURL(/\/wedding\/events$/)
+    await expect(page).toHaveURL(editorUrl('events'))
     await expect.poll(() => offsetOf('events')).toBeGreaterThanOrEqual(-2)
     await expect.poll(() => offsetOf('events')).toBeLessThanOrEqual(24)
     expect(await frame.evaluate((el) => el.scrollTop)).toBeGreaterThan(0)
@@ -461,7 +468,7 @@ test.describe('Live editor', () => {
     const dialog = page.getByTestId('confirm-dialog')
     await expect(dialog).toBeVisible()
     await dialog.getByRole('button', { name: 'Keep editing' }).click()
-    await expect(page).toHaveURL(/\/wedding\/opening$/)
+    await expect(page).toHaveURL(editorUrl('opening'))
     await expect(saveStatus(page)).not.toHaveAttribute('data-state', 'saved')
     expect((await savedContent(page)).opening.weddingTitle).toBeUndefined()
   })
@@ -475,9 +482,13 @@ test.describe('Live editor', () => {
 
     await page.getByTestId('preview-theme-change').click()
     await expect(page).toHaveURL(/\/themes$/)
-    await page.goto('/themes/classic/romantic-floral')
+    // Stay in the app: selection saves to the invitation that is open (a fresh page load has
+    // none open and would start the creation wizard instead).
+    await page.locator('[data-family-card="classic"] a').click()
+    await page.locator('[data-collection-card="romantic-floral"] a').click()
+    await expect(page).toHaveURL(/\/themes\/classic\/romantic-floral$/)
     await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
-    await expect(page).toHaveURL(/\/wedding\/(opening|couple|story|events|gallery|rsvp|closing)$/)
+    await expect(page).toHaveURL(editorUrl('(opening|couple|story|events|gallery|rsvp|closing)'))
     await expect.poll(async () => (await myWedding(page)).themeId).toBe('conventional')
     await page.goto('/wedding/opening')
     await expect(page.getByTestId('live-preview')).toHaveAttribute('data-theme-id', 'conventional')
@@ -489,13 +500,13 @@ test.describe('Live editor', () => {
     const fullscreen = page.getByTestId('preview-fullscreen')
     await expect(fullscreen).toHaveAccessibleName(/Full screen/)
     await fullscreen.click()
-    await expect(page).toHaveURL(/\/wedding\/preview\?from=(%2F|\/)wedding(%2F|\/)opening$/)
+    await expect(page).toHaveURL(/\/invitations\/[0-9a-f-]{36}\/preview\?from=.*opening$/)
     const full = page.locator('.wedding-site[data-theme="conventional"]')
     await expect(full.getByText('Full Screen Groom').first()).toBeVisible()
     expect((await savedContent(page)).couple.groom.name).toBe('Full Screen Groom')
 
     await page.getByTestId('back-to-editing').click()
-    await expect(page).toHaveURL(/\/wedding\/opening$/)
+    await expect(page).toHaveURL(editorUrl('opening'))
   })
 
   test('(16a) conflict: another device saved first; "Keep mine" saves the local edit', async ({ page, freshUser }) => {

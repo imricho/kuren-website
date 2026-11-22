@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 
 import { useToast } from '@/composables/useToast'
-import { useWeddingStore } from '@/stores/wedding'
-import { installFakeWeddingApi, type FakeApiOptions } from '@/test/fakeWeddingApi'
+import { useInvitationStore } from '@/stores/invitation'
+import { installFakeInvitationApi, type FakeApiOptions } from '@/test/fakeInvitationApi'
 
 import { closingForm, closingPayload } from '../forms'
 import { validateClosing } from '../validation'
@@ -13,14 +13,14 @@ import { useSectionDraft } from './useSectionDraft'
 
 enableAutoUnmount(afterEach)
 
-const PUT = 'PUT /weddings/w1/sections/closing'
+const PUT = 'PUT /invitations/w1/sections/closing'
 
 async function setup(message = 'Saved message', apiOptions: FakeApiOptions = {}) {
-  const api = installFakeWeddingApi({ content: { closing: { message } }, ...apiOptions })
+  const api = installFakeInvitationApi({ content: { closing: { message } }, ...apiOptions })
   const pinia = createPinia()
   setActivePinia(pinia)
-  const store = useWeddingStore()
-  await store.ensureLoaded()
+  const store = useInvitationStore()
+  await store.ensureLoaded('w1')
   let draft!: ReturnType<typeof make>
   const make = () =>
     useSectionDraft({
@@ -40,7 +40,7 @@ async function setup(message = 'Saved message', apiOptions: FakeApiOptions = {})
     }),
     { global: { plugins: [pinia] }, attachTo: document.body },
   )
-  const puts = () => api.callsTo('PUT', '/weddings/w1/sections/closing')
+  const puts = () => api.callsTo('PUT', '/invitations/w1/sections/closing')
   return { api, store, draft: () => draft, wrapper, puts }
 }
 

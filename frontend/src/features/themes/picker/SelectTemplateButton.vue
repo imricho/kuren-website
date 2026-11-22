@@ -6,12 +6,18 @@
  *
  * Selecting saves to the wedding record (pessimistic): while saving the button
  * is aria-busy; if saving fails an inline error explains it and the button retries.
+ *
+ * Invitations (contract §5): with no invitation open, selecting starts the wizard with
+ * the template preselected (`/invitations/new?template=<id>`). A template that does not
+ * fit the open invitation's kind of event is shown as a note, not a button.
  */
 import { computed, ref, useId } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useAppLocale } from '@/composables/useAppLocale'
 import { useToast } from '@/composables/useToast'
+import { EDITOR_ROUTE_NAME } from '@/features/cms/editorRoutes'
+import { useInvitationStore } from '@/stores/invitation'
 import { useThemeSelectionStore } from '@/stores/themeSelection'
 
 import { getTheme } from '../core/registry'
@@ -26,6 +32,7 @@ const props = withDefaults(defineProps<{ templateId: string; templateName: strin
 })
 const errorId = `select-error-${useId()}`
 const selection = useThemeSelectionStore()
+const invitation = useInvitationStore()
 const router = useRouter()
 const route = useRoute()
 const opening = ref(false)
@@ -38,10 +45,26 @@ const selectable = computed(() => isSelectable(getTheme(props.templateId)))
 const pending = computed(() => selection.pendingThemeId === props.templateId || opening.value)
 const blocked = computed(() => selection.pendingThemeId !== null || opening.value)
 const failed = computed(() => selection.error?.themeId === props.templateId)
+const compatible = computed(() => selection.isCompatible(props.templateId))
+const incompatibleText = computed(() => t('tvSelectIncompatible'))
 
 async function choose() {
-  if (!selectable.value || blocked.value) return
+  if (!selectable.value || !compatible.value || blocked.value) return
   navigationFailed.value = false
+  if (selection.needsInvitation) {
+    // No invitation to save on: create one with this template preselected.
+    const id = getTheme(props.templateId)?.id ?? props.templateId
+    opening.value = true
+    try {
+      const failure = await router.push({ path: '/invitations/new', query: { template: id } })
+      if (failure) navigationFailed.value = true
+    } catch {
+      navigationFailed.value = true
+    } finally {
+      opening.value = false
+    }
+    return
+  }
   const origin = route.fullPath
   const ok = await selection.select(props.templateId)
   if (!ok) {
@@ -53,7 +76,9 @@ async function choose() {
   if (route.fullPath !== origin) return
   opening.value = true
   try {
-    const failure = await router.push({ name: 'wedding' })
+    // Edit the invitation the template was saved on (legacy route = latest wedding).
+    const id = invitation.invitationId
+    const failure = await router.push(id ? { name: EDITOR_ROUTE_NAME, params: { id } } : { name: 'wedding' })
     if (failure) navigationFailed.value = true
   } catch {
     navigationFailed.value = true
@@ -74,6 +99,17 @@ async function choose() {
     data-action="draft-not-selectable"
   >
     {{ action.draftNotSelectable }}
+  </span>
+  <!-- Not for this kind of event (the open invitation's variant). -->
+  <span
+    v-else-if="!compatible"
+    v-bind="$attrs"
+    class="inline-flex items-center gap-1.5 rounded-lg bg-surface px-3 py-2.5 text-sm font-medium text-ink-700 ring-1 ring-line"
+    role="note"
+    :aria-label="`${templateName}: ${incompatibleText}`"
+    data-action="incompatible"
+  >
+    {{ incompatibleText }}
   </span>
   <span v-else v-bind="$attrs" class="inline-flex flex-col items-start gap-1">
     <button

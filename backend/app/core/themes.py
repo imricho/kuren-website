@@ -1,8 +1,9 @@
-"""Allowlist of theme ids a couple may select.
+"""Allowlist of theme ids an owner may select.
 
-`selectable_theme_ids.json` is generated from the frontend template registry
-(only `available` templates; drafts and planned ones are excluded). It is
-loaded once at import time.
+`selectable_theme_ids.json` mirrors the frontend template registry (only `available`
+templates; drafts and planned ones are excluded), including the four schema-driven
+`temuvibe-*` templates. It is loaded once at import time. Which invitation variants a
+theme supports is declared in `invitation_registry.json` (`templates`).
 """
 
 import json

@@ -8,22 +8,22 @@ import { computed } from 'vue'
 
 import { useAppLocale } from '@/composables/useAppLocale'
 import type { SectionKey } from '@/features/wedding/completeness'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
 import { isMandatorySection, sectionByKey } from '../sections'
 import SectionStatusBadge from './SectionStatusBadge.vue'
 
 const props = defineProps<{ section: SectionKey; description?: string }>()
 const { t } = useAppLocale()
-const store = useWeddingStore()
+const store = useInvitationStore()
 const status = computed(() => store.completeness.sections[props.section].status)
-const mandatory = computed(() => isMandatorySection(props.section))
+const mandatory = computed(() => isMandatorySection(props.section, store.variant))
 </script>
 
 <template>
   <header class="space-y-3">
     <div class="flex flex-wrap items-center gap-3">
-      <h1 class="text-2xl font-semibold">{{ t(sectionByKey(section).label) }}</h1>
+      <h1 class="text-2xl font-semibold">{{ t(sectionByKey(section, store.variant).label) }}</h1>
       <SectionStatusBadge :status="status" />
       <span
         v-if="mandatory"

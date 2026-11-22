@@ -23,7 +23,7 @@ import { ApiError } from '@/api/http'
 import { useAppLocale } from '@/composables/useAppLocale'
 import { useForm } from '@/composables/useForm'
 import { useToast } from '@/composables/useToast'
-import { StaleError, useWeddingStore, type AutosaveHandle, type KeySaveState, type LivePatch } from '@/stores/wedding'
+import { StaleError, useInvitationStore, type AutosaveHandle, type KeySaveState, type LivePatch } from '@/stores/invitation'
 
 import { fieldId, issueMessage, type FieldIssue } from '../validation'
 
@@ -84,7 +84,7 @@ const isTransient = (err: unknown) =>
   err instanceof ApiError && (err.isNetworkError || err.status >= 500 || err.status === 408 || err.status === 429)
 
 export function useSectionDraft<F extends object, P>(options: SectionDraftOptions<F, P>) {
-  const store = useWeddingStore()
+  const store = useInvitationStore()
   const toast = useToast()
   const { t } = useAppLocale()
   const { submitting, formError, fieldErrors, submit, reset } = useForm()

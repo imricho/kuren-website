@@ -4,7 +4,7 @@ import { useAppLocale } from '@/composables/useAppLocale'
 import { galleryItemForm, galleryItemPayload } from '@/features/cms/forms'
 import { fieldId, validateGalleryItem } from '@/features/cms/validation'
 import type { GalleryItemDraft } from '@/features/wedding/draft'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
 import { useSectionDraft } from '../../composables/useSectionDraft'
 import ErrorSummary from '../ErrorSummary.vue'
@@ -13,7 +13,7 @@ import ItemEditorActions from './ItemEditorActions.vue'
 
 const props = defineProps<{ item?: GalleryItemDraft }>()
 const emit = defineEmits<{ done: [] }>()
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 const scope = `ga-${props.item?.id ?? 'new'}`
 

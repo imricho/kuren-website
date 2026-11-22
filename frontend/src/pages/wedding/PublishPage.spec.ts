@@ -2,7 +2,7 @@ import { enableAutoUnmount, flushPromises } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useToast } from '@/composables/useToast'
-import { installFakeWeddingApi } from '@/test/fakeWeddingApi'
+import { installFakeInvitationApi } from '@/test/fakeInvitationApi'
 import { mountApp } from '@/test/mountApp'
 import { publishableDraft, QRIS_SRC } from '@/test/publishFixture'
 
@@ -19,7 +19,7 @@ afterEach(() => {
 })
 
 async function open(content = publishableDraft()) {
-  const api = installFakeWeddingApi({ themeId: 'ethnic', content })
+  const api = installFakeInvitationApi({ themeId: 'ethnic', content })
   const app = await mountApp('/wedding/publish')
   await flushPromises()
   return { api, ...app, page: () => app.wrapper.get('[data-testid="publish-page"]') }
@@ -41,14 +41,14 @@ describe('Preview & Publish page', () => {
     expect(page().find('[data-privacy="physical"]').exists()).toBe(false)
     expect(page().find('[data-testid="publish-errors"]').exists()).toBe(false)
     expect(page().find('[data-testid="public-url-pending"]').exists()).toBe(true)
-    expect(page().get('[data-action="preview-draft"]').attributes('href')).toBe('/wedding/preview?from=/wedding/publish')
+    expect(page().get('[data-action="preview-draft"]').attributes('href')).toBe('/invitations/w1/preview?from=/invitations/w1/edit/publish')
 
     const button = page().get('[data-action="publish"]')
     expect(button.text()).toBe('Publish')
     expect(button.attributes('aria-disabled')).toBeUndefined()
     await button.trigger('click')
     await flushPromises()
-    expect(api.callsTo('POST', '/weddings/w1/publish')).toHaveLength(1)
+    expect(api.callsTo('POST', '/invitations/w1/publish')).toHaveLength(1)
     expect(page().get('[data-testid="publish-status"]').attributes('data-state')).toBe('published')
     expect(page().get('[data-testid="publish-status-text"]').text()).toMatch(/^Published · /)
     expect(wrapper.get('[data-testid="publish-live"]').text()).toBe('Your invitation is published.')
@@ -85,14 +85,14 @@ describe('Preview & Publish page', () => {
     expect(page().get('#publish-disabled-reason').text()).toBe('Fix the items below to publish.')
     await button.trigger('click')
     await flushPromises()
-    expect(api.callsTo('POST', '/weddings/w1/publish')).toHaveLength(0)
+    expect(api.callsTo('POST', '/invitations/w1/publish')).toHaveLength(0)
 
     const link = errors.get('[data-issue="closing.message"] a')
-    expect(link.attributes('href')).toBe('/wedding/closing#f-message')
+    expect(link.attributes('href')).toBe('/invitations/w1/edit/closing#f-message')
     await link.trigger('click')
     await flushPromises()
     await vi.waitFor(() => expect(document.activeElement?.id).toBe('f-message'))
-    expect(router.currentRoute.value.name).toBe('wedding-closing')
+    expect(router.currentRoute.value.name).toBe('editor-closing')
   })
 
   it('shows server issues from a 422 and announces the failure of a 500', async () => {
@@ -104,8 +104,8 @@ describe('Preview & Publish page', () => {
     expect(wrapper.get('[data-testid="publish-live"]').text()).toBe('Couldn’t publish yet: 1 items need attention.')
 
     // Server issues drop once a write lands; then a 500.
-    api.failNext('POST /weddings/w1/publish', { status: 500 })
-    const store = (await import('@/stores/wedding')).useWeddingStore()
+    api.failNext('POST /invitations/w1/publish', { status: 500 })
+    const store = (await import('@/stores/invitation')).useInvitationStore()
     await store.saveSection('closing', { message: 'Thanks!' })
     await flushPromises()
     await page().get('[data-action="publish"]').trigger('click')
@@ -124,7 +124,7 @@ describe('Preview & Publish page', () => {
     expect(wrapper.get('dialog').text()).toContain('Unpublish your invitation?')
     await wrapper.get('dialog [data-action="confirm"]').trigger('click')
     await flushPromises()
-    expect(api.callsTo('POST', '/weddings/w1/unpublish')).toHaveLength(1)
+    expect(api.callsTo('POST', '/invitations/w1/unpublish')).toHaveLength(1)
     expect(page().get('[data-testid="publish-status"]').attributes('data-state')).toBe('draft')
     expect(wrapper.get('[data-testid="publish-live"]').text()).toBe('Your invitation is no longer public.')
   })

@@ -16,11 +16,11 @@ import { computed, nextTick, ref, watch } from 'vue'
 
 import { FOCUS_RING } from '@/components/ui/styles'
 import { useAppLocale, type AppMessageKey } from '@/composables/useAppLocale'
-import { useWeddingStore, type SaveState } from '@/stores/wedding'
+import { useInvitationStore, type SaveState } from '@/stores/invitation'
 
 import { conflictBanners, restoreStatusFocus, useAnnouncerOwnership, useSaveShortcut } from '../composables/useSaveStatusUi'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 useSaveShortcut()
 const ownsRegion = useAnnouncerOwnership()

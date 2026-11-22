@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from app.models import Wedding, WeddingEvent, WeddingGalleryImage, WeddingStoryEntry
+from app.models import Invitation, InvitationSession, InvitationGalleryImage, InvitationStoryEntry
 from tests.wedding_helpers import API, create_wedding
 from tests.wedding_samples import SAMPLE_WEDDING, SAVED_SAMPLE
 
@@ -86,7 +86,7 @@ def test_deleting_user_cascades(auth_client: TestClient, a_wedding: str, db: Ses
     def total() -> int:
         return sum(
             db.scalar(select(func.count()).select_from(m)) or 0
-            for m in (Wedding, WeddingStoryEntry, WeddingEvent, WeddingGalleryImage)
+            for m in (Invitation, InvitationStoryEntry, InvitationSession, InvitationGalleryImage)
         )
 
     assert total() == 1 + 3 + 2 + 6

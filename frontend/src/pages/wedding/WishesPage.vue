@@ -13,9 +13,9 @@ import { useSectionDraft } from '@/features/cms/composables/useSectionDraft'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
 import { wishesForm, wishesPayload } from '@/features/cms/universalForms'
 import { fieldId, validateWishes } from '@/features/cms/validation'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 useUnsavedChangesGuard()
 

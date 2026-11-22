@@ -11,12 +11,12 @@ import { onBeforeUnmount, onMounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 
 import { useAppLocale } from '@/composables/useAppLocale'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
 import { useConfirm } from './useConfirm'
 
 export function useUnsavedChangesGuard(isDirty?: () => boolean) {
-  const store = useWeddingStore()
+  const store = useInvitationStore()
   const confirm = useConfirm()
   const { t } = useAppLocale()
   const dirty = isDirty ?? (() => store.hasUnsavedWork)

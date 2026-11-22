@@ -12,6 +12,11 @@
  *   - Optional fields may be absent; every theme must render without them.
  */
 
+import type { SectionId } from '../invitation/registry'
+import type { ContentVersion, InvitationSections, RsvpExtensions } from '../invitation/types'
+
+export * from '../invitation/types'
+
 export const WEDDING_SCHEMA_VERSION = 1 as const
 export const WEDDING_CONTENT_VERSION = '1.1' as const
 /** Fixed rendering order shared by themes, previews, and future editor controls. */
@@ -74,6 +79,8 @@ export interface GuestGreeting {
 export interface CoupleSection {
   groom: PersonProfile
   bride: PersonProfile
+  /** Only where the variant offers the couple as optional (anniversary); absent = shown. */
+  enabled?: boolean
 }
 
 export interface StoryEntry {
@@ -92,12 +99,30 @@ export interface StorySection {
   timeline: StoryEntry[]
 }
 
+/** Session types the wedding editor offers (unchanged since v1). */
+export const WEDDING_EVENT_TYPES = [
+  'engagement',
+  'akad',
+  'holy_matrimony',
+  'ceremony',
+  'reception',
+  'other',
+] as const
+/** Every session type, in registry order (v2.0 adds generic types for non-wedding variants). */
 export const EVENT_TYPES = [
   'engagement',
   'akad',
   'holy_matrimony',
   'ceremony',
   'reception',
+  'party',
+  'celebration',
+  'session',
+  'talk',
+  'workshop',
+  'gathering',
+  'prayer',
+  'dinner',
   'other',
 ] as const
 export type EventType = (typeof EVENT_TYPES)[number]
@@ -116,6 +141,11 @@ export interface WeddingEvent {
   /** Optional extras, each with its own toggle (data kept when off). */
   dressCode?: { enabled: boolean; text?: string }
   livestream?: { enabled: boolean; url?: string; label?: string }
+  /**
+   * v2.0: a session guests may choose to attend (with `rsvp.allowSessionChoice`).
+   * Stored as `events[].optional` (the backend's field; the contract text says `extras.optional`).
+   */
+  optional?: boolean
 }
 
 export interface GalleryImage extends ImageAsset {
@@ -130,7 +160,7 @@ export interface GallerySection {
   images: GalleryImage[]
 }
 
-export interface RsvpSection {
+export interface RsvpSection extends RsvpExtensions {
   title: string
   introduction?: string
   enabled: boolean
@@ -187,8 +217,14 @@ export interface AmplopDigitalSection {
 
 // --- Root ---------------------------------------------------------------------
 
-export interface WeddingContent {
-  contentVersion?: '1.1' | '1.2'
+export interface WeddingContent extends InvitationSections {
+  contentVersion?: ContentVersion
+  /**
+   * Sections the invitation's variant offers, in canonical order (set by
+   * `toPreviewContent` when the variant is known). Absent = legacy wedding content.
+   * Renderers must not render a section that is not listed.
+   */
+  sections?: SectionId[]
   holyRecite1?: HolyReciteSection
   holyRecite2?: HolyReciteSection
   greeting?: GreetingSection

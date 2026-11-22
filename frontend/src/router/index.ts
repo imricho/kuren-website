@@ -4,6 +4,7 @@ import type { AppMessageKey } from '@/composables/useAppLocale'
 import { canonicalCollection, canonicalFamily, canonicalTemplate } from '@/features/themes/picker/guards'
 import { useAuthStore } from '@/stores/auth'
 
+import { invitationRoutes } from './invitationRoutes'
 import { safeRedirect } from './redirect'
 import { isSameView } from './views'
 
@@ -39,16 +40,46 @@ function scrollBehavior(to: RouteLocationNormalized, from: RouteLocationNormaliz
 // Shared by all studio routes so navigating between levels reuses the same page instance.
 const ThemeStudioPage = () => import('@/pages/ThemeStudioPage.vue')
 
+const HolyRecitePage = () => import('@/pages/wedding/HolyRecitePage.vue')
+const invitation = invitationRoutes({
+  list: () => import('@/pages/invitation/InvitationsPage.vue'),
+  create: () => import('@/pages/invitation/NewInvitationPage.vue'),
+  responses: () => import('@/pages/invitation/ResponsesPage.vue'),
+  editorLayout: () => import('@/pages/wedding/WeddingEditorLayout.vue'),
+  preview: () => import('@/pages/wedding/WeddingPreviewPage.vue'),
+  pages: {
+    opening: () => import('@/pages/wedding/OpeningPage.vue'),
+    couple: () => import('@/pages/wedding/CouplePage.vue'),
+    story: () => import('@/pages/wedding/StoryPage.vue'),
+    events: () => import('@/pages/wedding/EventsPage.vue'),
+    gallery: () => import('@/pages/wedding/GalleryPage.vue'),
+    rsvp: () => import('@/pages/wedding/RsvpPage.vue'),
+    closing: () => import('@/pages/wedding/ClosingPage.vue'),
+    holyRecite: HolyRecitePage,
+    greeting: () => import('@/pages/wedding/GreetingPage.vue'),
+    date: () => import('@/pages/wedding/WeddingDatePage.vue'),
+    wishes: () => import('@/pages/wedding/WishesPage.vue'),
+    gifts: () => import('@/pages/wedding/AmplopDigitalPage.vue'),
+    publish: () => import('@/pages/wedding/PublishPage.vue'),
+    settings: () => import('@/pages/invitation/SettingsPage.vue'),
+    profiles: () => import('@/pages/invitation/ProfilesPage.vue'),
+    milestone: () => import('@/pages/invitation/MilestonePage.vue'),
+    organization: () => import('@/pages/invitation/OrganizationPage.vue'),
+    agenda: () => import('@/pages/invitation/AgendaPage.vue'),
+    speakers: () => import('@/pages/invitation/SpeakersPage.vue'),
+  },
+})
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'home', component: () => import('@/pages/LandingPage.vue') },
     { path: '/templates', name: 'public-templates', component: () => import('@/pages/TemplateGalleryPage.vue'), meta: { publicPage: true, titleKey: 'themes' } },
     {
+      // Landing / gallery "use this template" → the wizard with the template preselected.
       path: '/use-template/:templateId',
       name: 'use-template',
-      component: () => import('@/pages/UseTemplatePage.vue'),
-      meta: { requiresAuth: true, titleKey: 'myWebsite' },
+      redirect: (to) => ({ name: 'invitation-new', query: { template: String(to.params.templateId) } }),
     },
     {
       path: '/',
@@ -69,20 +100,8 @@ const router = createRouter({
       component: () => import('@/layouts/AppLayout.vue'),
       meta: { requiresAuth: true },
       children: [
-        {
-          path: 'dashboard',
-          name: 'dashboard',
-          component: () => import('@/pages/DashboardPage.vue'),
-          meta: { titleKey: 'dashboard' },
-        },
-        // First run: names & date → theme → see your site. The dashboard sends a fresh
-        // wedding here once (see features/shell/firstRun); always skippable.
-        {
-          path: 'welcome',
-          name: 'welcome',
-          component: () => import('@/pages/WelcomePage.vue'),
-          meta: { titleKey: 'welcomeTitle' },
-        },
+        // The invitation list is the signed-in home; /dashboard stays as its old address.
+        { path: 'dashboard', name: 'dashboard', redirect: { name: 'invitations' } },
         // Theme studio: sidebar (Family → Collection → Template) + live preview, one page.
         // Every level has its own URL; guards redirect aliases to canonical URLs.
         {
@@ -115,32 +134,7 @@ const router = createRouter({
           meta: { titleKey: 'themes', layout: 'studio' },
           beforeEnter: canonicalTemplate,
         },
-        {
-          // Website editor: section nav + one page per section. /wedding redirects to the
-          // first incomplete section once the wedding has loaded (see WeddingEditorLayout).
-          path: 'wedding',
-          name: 'wedding',
-          component: () => import('@/pages/wedding/WeddingEditorLayout.vue'),
-          // Live split editor: full width and (on desktop) the full remaining height.
-          meta: { titleKey: 'myWebsite', layout: 'studio' },
-          children: [
-            { path: 'opening', name: 'wedding-opening', component: () => import('@/pages/wedding/OpeningPage.vue'), meta: { titleKey: 'sectionOpening', layout: 'studio' } },
-            { path: 'couple', name: 'wedding-couple', component: () => import('@/pages/wedding/CouplePage.vue'), meta: { titleKey: 'sectionCouple', layout: 'studio' } },
-            { path: 'story', name: 'wedding-story', component: () => import('@/pages/wedding/StoryPage.vue'), meta: { titleKey: 'sectionStory', layout: 'studio' } },
-            { path: 'events', name: 'wedding-events', component: () => import('@/pages/wedding/EventsPage.vue'), meta: { titleKey: 'sectionEvents', layout: 'studio' } },
-            { path: 'gallery', name: 'wedding-gallery', component: () => import('@/pages/wedding/GalleryPage.vue'), meta: { titleKey: 'sectionGallery', layout: 'studio' } },
-            { path: 'rsvp', name: 'wedding-rsvp', component: () => import('@/pages/wedding/RsvpPage.vue'), meta: { titleKey: 'sectionRsvp', layout: 'studio' } },
-            { path: 'closing', name: 'wedding-closing', component: () => import('@/pages/wedding/ClosingPage.vue'), meta: { titleKey: 'sectionClosing', layout: 'studio' } },
-            // CMS v2.0 sections (canonical ids: holyRecite1, greeting, weddingDate, wishes, amplopDigital, holyRecite2).
-            { path: 'holy-recite-1', name: 'wedding-holy-recite-1', component: () => import('@/pages/wedding/HolyRecitePage.vue'), meta: { titleKey: 'sectionHolyRecite1', layout: 'studio', recite: 1 } },
-            { path: 'greeting', name: 'wedding-greeting', component: () => import('@/pages/wedding/GreetingPage.vue'), meta: { titleKey: 'sectionGreeting', layout: 'studio' } },
-            { path: 'date', name: 'wedding-date', component: () => import('@/pages/wedding/WeddingDatePage.vue'), meta: { titleKey: 'sectionWeddingDate', layout: 'studio' } },
-            { path: 'wishes', name: 'wedding-wishes', component: () => import('@/pages/wedding/WishesPage.vue'), meta: { titleKey: 'sectionWishes', layout: 'studio' } },
-            { path: 'gifts', name: 'wedding-gifts', component: () => import('@/pages/wedding/AmplopDigitalPage.vue'), meta: { titleKey: 'sectionAmplopDigital', layout: 'studio' } },
-            { path: 'holy-recite-2', name: 'wedding-holy-recite-2', component: () => import('@/pages/wedding/HolyRecitePage.vue'), meta: { titleKey: 'sectionHolyRecite2', layout: 'studio', recite: 2 } },
-            { path: 'publish', name: 'wedding-publish', component: () => import('@/pages/wedding/PublishPage.vue'), meta: { titleKey: 'sectionPublish', layout: 'studio' } },
-          ],
-        },
+        ...invitation.inLayout,
         {
           path: 'account',
           name: 'account',
@@ -158,13 +152,7 @@ const router = createRouter({
       meta: { publicPage: true, titleKey: 'templatePreview' },
       beforeEnter: canonicalTemplate,
     },
-    {
-      // The couple's own website with their SAVED content, outside the dashboard chrome.
-      path: '/wedding/preview',
-      name: 'wedding-preview',
-      component: () => import('@/pages/wedding/WeddingPreviewPage.vue'),
-      meta: { requiresAuth: true, titleKey: 'websitePreview' },
-    },
+    ...invitation.standalone,
     {
       // Published invitation for guests: no sign-in, served from the published snapshot only.
       path: '/i/:slug',

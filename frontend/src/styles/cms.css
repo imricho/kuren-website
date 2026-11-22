@@ -14,6 +14,11 @@
   --color-rose-700: #57315f;
   --shadow-soft: 0 1px 3px #3d1c4b0a, 0 5px 15px #3d1c4b0c;
   --cms-champagne: #d8b58e;
+  /* Temuvibe brand: Deep Plum primary, champagne-gold accent (invitation list, wizard, responses). */
+  --tv-plum: #241236;
+  --tv-plum-soft: #3a2150;
+  --tv-gold: #c9a46b;
+  --tv-gold-soft: #f3e6d2;
   --cms-shell: #321a39;
   --cms-sidebar-width: 212px;
   --cms-header-height: 64px;

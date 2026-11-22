@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { THEMES, FAMILIES, COLLECTIONS } from '@/features/themes/core/registry'
 import { previewRoute } from '@/features/themes/picker/routes'
+import { BRAND_NAME } from '@/features/shell/brand'
 
 const galleryPreview = (theme: typeof THEMES[number]) => ({ ...previewRoute(theme) as object, query: { from: 'gallery' } })
 const category = ref('all')
@@ -24,7 +25,7 @@ function imageFailed(id: string) { if (!failedImages.value.includes(id)) failedI
 <template>
 <div class="gallery" lang="id">
   <a class="skip" href="#collection">Lewati ke koleksi template</a>
-  <header class="header"><RouterLink to="/" class="brand">Kuren<span>✳</span></RouterLink><RouterLink to="/" class="back">← <span>Kembali ke beranda</span></RouterLink></header>
+  <header class="header"><RouterLink to="/" class="brand">{{ BRAND_NAME }}<span>✳</span></RouterLink><RouterLink to="/" class="back">← <span>Kembali ke beranda</span></RouterLink></header>
   <section class="hero" aria-labelledby="gallery-title">
     <div class="hero-inner"><div><p class="eyebrow"><span></span> THE KUREN COLLECTION <span></span></p><h1 id="gallery-title">Sebuah awal untuk<br><em>cerita Anda.</em></h1><p class="intro">Setiap kisah punya caranya sendiri untuk dikenang. Temukan desain undangan yang terasa seperti Anda.</p><a href="#collection" class="hero-link">JELAJAHI KOLEKSI <span>↘</span></a></div><div class="hero-mark" aria-hidden="true"><span>✳</span><small>MADE FOR<br>YOUR MOMENT</small></div></div>
   </section>
@@ -41,7 +42,7 @@ function imageFailed(id: string) { if (!failedImages.value.includes(id)) failedI
     <div v-else class="empty"><span>✳</span><h3>Belum menemukan yang cocok?</h3><p>Coba kata kunci atau pilih gaya yang lain.</p><button type="button" @click="query = ''; chooseCategory('all')">Lihat semua template</button></div>
     <button v-if="visible.length < matching.length" class="more" type="button" @click="visibleCount += 12">Tampilkan lebih banyak <span>↓</span></button>
   </main>
-  <footer><RouterLink to="/" class="brand">Kuren<span>✳</span></RouterLink><p>Undangan indah. Cerita Anda.</p><span>MADE FOR YOUR MOMENT</span></footer>
+  <footer><RouterLink to="/" class="brand">{{ BRAND_NAME }}<span>✳</span></RouterLink><p>Undangan indah. Cerita Anda.</p><span>MADE FOR YOUR MOMENT</span></footer>
 </div>
 </template>
 

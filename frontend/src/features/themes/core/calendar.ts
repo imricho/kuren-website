@@ -36,10 +36,14 @@ function endOf(entry: CalendarEntry): { date: string; time: string } {
   return { date: entry.date, time: `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}` }
 }
 
-export function weddingCalendarEntry(content: Pick<WeddingContent, 'opening' | 'events' | 'locale'>): CalendarEntry {
+/**
+ * Calendar entry for the main date. `title` overrides the wedding wording (non-wedding
+ * invitations pass their event title); omitted = "Wedding of <names>" as before.
+ */
+export function weddingCalendarEntry(content: Pick<WeddingContent, 'opening' | 'events' | 'locale'>, customTitle?: string): CalendarEntry {
   const date = content.opening.weddingDate
   const names = content.opening.coupleNames
-  const title = content.locale === 'id' ? `Pernikahan ${names}` : `Wedding of ${names}`
+  const title = customTitle?.trim() || (content.locale === 'id' ? `Pernikahan ${names}` : `Wedding of ${names}`)
   const event: WeddingEvent | undefined = content.events.find((e) => e.date === date)
   if (!event) return { title, date, uid: `${compactDate(date)}-wedding@kuren` }
   const location = [event.venueName, event.address].filter(Boolean).join(', ')
@@ -97,7 +101,7 @@ export function icsContent(entry: CalendarEntry, now: Date = new Date()): string
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Kuren//Wedding Invitation//EN',
+    'PRODID:-//Temuvibe//Invitation//EN',
     'CALSCALE:GREGORIAN',
     'BEGIN:VEVENT',
     `UID:${entry.uid}`,
@@ -118,9 +122,9 @@ export function icsDataUrl(entry: CalendarEntry, now?: Date): string {
   return `data:text/calendar;charset=utf-8,${encodeURIComponent(icsContent(entry, now))}`
 }
 
-/** Safe download file name, e.g. "alex-sarah-wedding.ics". */
-export function icsFileName(content: Pick<WeddingContent, 'opening'>): string {
-  const slug = content.opening.coupleNames
+/** Safe download file name, e.g. "alex-sarah-wedding.ics" (or "<title>.ics" for a custom title). */
+export function icsFileName(content: Pick<WeddingContent, 'opening'>, customTitle?: string): string {
+  const slug = (customTitle?.trim() || content.opening.coupleNames)
     .normalize('NFKD')
     .replace(/[^\w\s-]/g, '')
     .trim()
@@ -128,5 +132,6 @@ export function icsFileName(content: Pick<WeddingContent, 'opening'>): string {
     .replace(/[\s_]+/g, '-')
     .replace(/-+/g, '-')
     .slice(0, 60)
+  if (customTitle?.trim()) return `${slug || 'invitation'}.ics`
   return `${slug || 'wedding'}-wedding.ics`
 }

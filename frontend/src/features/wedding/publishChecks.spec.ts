@@ -37,8 +37,8 @@ describe('publishChecks', () => {
     d.opening.weddingDate = undefined
     d.couple.bride = {}
     const [date, bride] = blockingIssues(run(d))
-    expect(date!.to).toEqual({ name: 'wedding-opening', hash: '#f-weddingDate' })
-    expect(bride!.to).toEqual({ name: 'wedding-opening', hash: '#f-couple-bride-name' })
+    expect(date!.to).toEqual({ name: 'editor-opening', hash: '#f-weddingDate' })
+    expect(bride!.to).toEqual({ name: 'editor-opening', hash: '#f-couple-bride-name' })
     expect(bride!.message).toBe('Add the bride’s name.')
     expect(publishChecks(d, { themeId: 'ethnic', locale: 'id', today })[1]!.message).toBe('Tambahkan nama mempelai wanita.')
   })
@@ -92,17 +92,17 @@ describe('publishChecks', () => {
     d.holyRecite1 = { enabled: true, passage: 'A passage' }
     d.amplopDigital = { enabled: true, bankAccountsEnabled: false, bankAccounts: [], qrisEnabled: false, physicalGifts: { enabled: true, recipient: 'A', address: 'Street 1' } }
     const warnings = warningIssues(run(d)).map((i) => i.code)
-    expect(warnings).toEqual(expect.arrayContaining(['past_date', 'after_wedding', 'recommended', 'sample_image', 'missing_reference', 'public_address', 'info_only']))
+    expect(warnings).toEqual(expect.arrayContaining(['past_date', 'after_wedding', 'recommended', 'sample_image', 'missing_reference', 'public_address']))
     expect(blockingIssues(run(d))).toEqual([])
   })
 
   it('maps server 422 details to issues with section-relative fields', () => {
     expect(issueFromServer({ section: 'opening', field: 'opening.weddingDate', code: 'required', message: 'Wedding date is required' })).toMatchObject({
-      severity: 'error', section: 'opening', field: 'weddingDate', to: { name: 'wedding-opening', hash: '#f-weddingDate' },
+      severity: 'error', section: 'opening', field: 'weddingDate', to: { name: 'editor-opening', hash: '#f-weddingDate' },
     })
-    expect(issueFromServer({ section: 'events', field: 'events.1.venueName', code: 'required' }).to).toEqual({ name: 'wedding-events', hash: '#f-1-venueName' })
-    expect(issueFromServer({ section: 'couple', field: 'couple.groom.name', code: 'required' }).to).toEqual({ name: 'wedding-opening', hash: '#f-couple-groom-name' })
-    expect(issueFromServer({ section: 'amplopDigital', field: 'amplopDigital', code: 'incomplete' }).to).toEqual({ name: 'wedding-gifts' })
+    expect(issueFromServer({ section: 'events', field: 'events.1.venueName', code: 'required' }).to).toEqual({ name: 'editor-events', hash: '#f-1-venueName' })
+    expect(issueFromServer({ section: 'couple', field: 'couple.groom.name', code: 'required' }).to).toEqual({ name: 'editor-opening', hash: '#f-couple-groom-name' })
+    expect(issueFromServer({ section: 'amplopDigital', field: 'amplopDigital', code: 'incomplete' }).to).toEqual({ name: 'editor-gifts' })
     expect(issueFromServer({ section: 'theme', field: 'themeId', code: 'invalid' }).to).toEqual({ name: 'themes' })
   })
 

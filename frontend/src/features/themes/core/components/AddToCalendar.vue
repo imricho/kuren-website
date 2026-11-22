@@ -10,13 +10,14 @@ import type { WeddingContent } from '@/features/wedding/types'
 import { googleCalendarUrl, icsDataUrl, icsFileName, weddingCalendarEntry } from '../calendar'
 import { useIsDraftRender } from '../composables/useRenderMode'
 
-const props = defineProps<{ content: WeddingContent }>()
+/** `title`: calendar entry title for non-wedding invitations (default: wedding wording). */
+const props = defineProps<{ content: WeddingContent; title?: string }>()
 const isDraft = useIsDraftRender()
 const isId = computed(() => props.content.locale === 'id')
-const entry = computed(() => weddingCalendarEntry(props.content))
+const entry = computed(() => weddingCalendarEntry(props.content, props.title))
 const google = computed(() => googleCalendarUrl(entry.value))
 const ics = computed(() => (isDraft.value ? undefined : icsDataUrl(entry.value)))
-const fileName = computed(() => icsFileName(props.content))
+const fileName = computed(() => icsFileName(props.content, props.title))
 const labels = computed(() =>
   isId.value
     ? { group: 'Tambahkan ke kalender', google: 'Google Calendar', ics: 'Unduh file kalender (.ics)', newTab: '(membuka tab baru)', inert: 'Aktif di undangan yang diterbitkan' }

@@ -184,7 +184,8 @@ test.describe('CMS v2.0', () => {
   // (1) — four batches so the 49 templates load in parallel workers.
   const BATCHES = 4
   for (let b = 0; b < BATCHES; b++) {
-    const ids = THEME_IDS.filter((_, i) => i % BATCHES === b)
+    // Weddings take every template except the non-wedding Temuvibe presets (festive, corporate).
+    const ids = THEME_IDS.filter((id) => !['temuvibe-festive', 'temuvibe-corporate'].includes(id)).filter((_, i) => i % BATCHES === b)
     test(`(1) every registered template loads in the CMS preview — batch ${b + 1}/${BATCHES}`, async ({ page, freshUser }) => {
       void freshUser
       test.setTimeout(240_000)
@@ -363,7 +364,7 @@ test.describe('CMS v2.0', () => {
     await putSection(page, w.id, 'greeting', { enabled: true, title: 'Saved title' })
     await openEditor(page, 'greeting')
     let failures = 0
-    await page.route('**/api/v1/weddings/*/sections/greeting', async (route) => {
+    await page.route(/\/api\/v1\/(weddings|invitations)\/[^/]+\/sections\/greeting$/, async (route) => {
       if (route.request().method() !== 'PUT') return route.fallback()
       failures++
       await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: { code: 'internal_error', message: 'boom' } }) })
@@ -375,7 +376,7 @@ test.describe('CMS v2.0', () => {
     await expect(inPreview(page, 'greeting')).toContainText('Typed while offline-ish')
     expect((await getContent(page, w.id)).greeting.message).toBeUndefined()
 
-    await page.unroute('**/api/v1/weddings/*/sections/greeting')
+    await page.unroute(/\/api\/v1\/(weddings|invitations)\/[^/]+\/sections\/greeting$/)
     await page.locator('[data-action="retry-save"]').click()
     await expectSaved(page)
     expect((await getContent(page, w.id)).greeting.message).toBe('Typed while offline-ish')
@@ -463,7 +464,7 @@ test.describe('CMS v2.0', () => {
     expect(c.holyRecite2).toEqual(before)
 
     await goToSection(page, 'finishing', 'holyRecite2')
-    await expect(page).toHaveURL(/\/wedding\/holy-recite-2$/)
+    await expect(page).toHaveURL(/\/invitations\/[0-9a-f-]{36}\/edit\/holy-recite-2$/)
     await expect(page.locator('#f-passage')).toHaveValue('May your home be filled with peace.')
     await toggle(page).click()
     await expect(inPreview(page, 'holyRecite2')).toHaveCount(0)
@@ -703,7 +704,7 @@ test.describe('CMS v2.0', () => {
     expect((await getWedding(page)).status).toBe('draft')
     // Fix links go to the section.
     await errors.locator('[data-issue^="closing"] a[data-action="fix-issue"]').first().click()
-    await expect(page).toHaveURL(/\/wedding\/closing/)
+    await expect(page).toHaveURL(/\/invitations\/[0-9a-f-]{36}\/edit\/closing/)
   })
 
   test('(23) disabled optional sections do not block publication', async ({ page, freshUser }) => {

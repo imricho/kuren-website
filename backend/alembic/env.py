@@ -33,7 +33,7 @@ def run_migrations_online() -> None:
         _run_with_connection(connection)
         return
 
-    engine = create_engine(get_settings().database_url, poolclass=pool.NullPool)
+    engine = create_engine(get_settings().database_url, poolclass=pool.NullPool, hide_parameters=True)
     with engine.connect() as conn:
         _run_with_connection(conn)
 

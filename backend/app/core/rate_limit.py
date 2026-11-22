@@ -2,11 +2,11 @@
 
 PER PROCESS: each worker keeps its own counters, so N workers allow up to N x the
 limit, and counters reset on restart. Good enough to blunt scraping of public
-invitations in a single-node deployment; use a shared store (e.g. Redis) or the
+invitations and RSVP spam in a single-node deployment; use a shared store (e.g. Redis) or the
 reverse proxy's limiter when scaling out.
 
-Keyed by the socket peer address. Behind a reverse proxy that is the proxy's
-address unless uvicorn runs with `--proxy-headers` and trusted `--forwarded-allow-ips`.
+Keyed by the client address. uvicorn runs with `--proxy-headers`, so behind a trusted
+proxy (FORWARDED_ALLOW_IPS) that is the address from X-Forwarded-For; otherwise the socket peer.
 """
 
 import threading
@@ -42,4 +42,9 @@ class FixedWindowRateLimiter:
             self._counts.clear()
 
 
+#: GET /public/... (invitation pages).
 public_limiter = FixedWindowRateLimiter()
+#: POST /public/invitations/{slug}/rsvp: a separate, stricter bucket per client IP ...
+rsvp_limiter = FixedWindowRateLimiter()
+#: ... and one per invitation slug (all clients together).
+rsvp_slug_limiter = FixedWindowRateLimiter()

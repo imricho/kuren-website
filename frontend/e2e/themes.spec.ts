@@ -202,7 +202,7 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
     await expect(page).toHaveURL(/\/themes$/)
   })
 
-  test('Heritage selection saves and opens Edit; previews remain available', async ({ page }) => {
+  test('Heritage selection opens the creation wizard; previews remain available', async ({ page }) => {
     await page.goto('/themes/traditional/artisan-pattern')
     await expect(page.locator('[data-theme-card]')).toHaveCount(2)
     await expect(pane(page).getByRole('heading', { name: 'Woven Indigo' })).toBeVisible()
@@ -214,14 +214,17 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
     await page.locator('[data-theme-card="ethnic"] h4 a').click()
     await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
     await expect(page.getByTestId('preview-pane').getByRole('heading', { name: 'Woven Indigo' })).toBeVisible()
+    // No invitation open (shared account): selecting starts the creation wizard with it preselected.
     await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
-    await expect(page).toHaveURL(/\/wedding\/(opening|couple|story|events|gallery|rsvp|closing)$/)
+    await expect(page).toHaveURL(/\/invitations\/new\?template=ethnic$/)
+    await expect(page.getByTestId('new-invitation')).toBeVisible()
     await page.goBack()
     await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
-    await expect(page.getByTestId('selection-summary')).toContainText('Heritage › Artisan Pattern › Woven Indigo')
+    // Nothing was saved (no invitation open): the preview is still there to browse.
+    await expect(page.getByTestId('preview-pane').getByRole('heading', { name: 'Woven Indigo' })).toBeVisible()
   })
 
-  test('Modern Minimalist and Rustic / Nature choices open Edit', async ({ page }) => {
+  test('Modern Minimalist and Rustic / Nature choices open the creation wizard', async ({ page }) => {
     for (const [family, collection, id] of [
       ['modern-minimalist', 'quiet-form', 'still-form'],
       ['rustic-nature', 'field-notes', 'wildwood-gathering'],
@@ -232,7 +235,8 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
       await page.locator(`[data-theme-card="${id}"] h4 a`).click()
       await expect(page.getByTestId('preview-pane').locator('.wedding-site')).toHaveAttribute('data-theme', id)
       await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
-      await expect(page).toHaveURL(/\/wedding\/(opening|couple|story|events|gallery|rsvp|closing)$/)
+      await expect(page).toHaveURL(new RegExp(`/invitations/new\\?template=${id}$`))
+      await expect(page.getByTestId('new-invitation')).toBeVisible()
     }
   })
 
@@ -245,6 +249,7 @@ test.describe('theme studio: sidebar (left) + live preview (right)', () => {
   })
 
   test('Conventional / Classic has one canonical identity; aliases and legacy URLs redirect', async ({ page }) => {
+    test.slow() // loops every selectable template (53 since the four Temuvibe presets)
     await page.goto('/themes/conventional')
     await expect(page).toHaveURL(/\/themes\/classic$/)
     await page.goto('/themes/conventional/romantic-floral/conventional')
@@ -272,6 +277,7 @@ test.describe('responsive and accessible studio', () => {
 
   for (const [device, viewport] of Object.entries(VIEWPORTS)) {
     test(`studio pages fit a ${device} browser window`, async ({ page }) => {
+      test.slow()
       await page.setViewportSize(viewport)
       for (const path of PAGES) {
         await page.goto(path)
@@ -284,7 +290,7 @@ test.describe('responsive and accessible studio', () => {
     })
   }
 
-  test('narrow screens: sidebar previews and explicit selection opens Edit', async ({ page }) => {
+  test('narrow screens: sidebar previews and explicit selection opens the creation wizard', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.phone)
     await page.goto('/themes/traditional/artisan-pattern')
     const toggle = page.getByTestId('selector-toggle')
@@ -298,8 +304,10 @@ test.describe('responsive and accessible studio', () => {
     await page.locator('[data-theme-card="ethnic"] h4 a').click()
     await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
     await expect(page.getByTestId('preview-pane').getByRole('heading', { name: 'Woven Indigo' })).toBeVisible()
+    // No invitation open (shared account): selecting starts the creation wizard with it preselected.
     await page.getByTestId('preview-pane').locator('[data-action="select"]').click()
-    await expect(page).toHaveURL(/\/wedding\/(opening|couple|story|events|gallery|rsvp|closing)$/)
+    await expect(page).toHaveURL(/\/invitations\/new\?template=ethnic$/)
+    await expect(page.getByTestId('new-invitation')).toBeVisible()
     await page.goBack()
     await expect(page).toHaveURL(/\/themes\/traditional\/artisan-pattern\/woven-indigo$/)
     await expect(toggle).toHaveAttribute('aria-expanded', 'false')

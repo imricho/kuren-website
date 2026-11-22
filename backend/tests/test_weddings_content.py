@@ -108,7 +108,7 @@ def test_full_put_validation(auth_client: TestClient, wid: str) -> None:
     del body["events"]
     assert fields(auth_client.put(f"{API}/{wid}/content", json=body)) == ["events"]
 
-    body = _put_body(SAMPLE_WEDDING) | {"schemaVersion": 2}
+    body = _put_body(SAMPLE_WEDDING) | {"schemaVersion": 3}
     assert fields(auth_client.put(f"{API}/{wid}/content", json=body)) == ["schemaVersion"]
 
     body = _put_body(SAMPLE_WEDDING)
@@ -259,7 +259,7 @@ LONG = "x" * 2001
          "image.focalPoint.y"),
         ("gallery", {"src": "/sample-wedding/a.jpg", "alt": "a", "focalPoint": {"x": -1, "y": 0}}, "focalPoint.x"),
         # enums and numbers
-        ("events", {"type": "party"}, "type"),
+        ("events", {"type": "banquet"}, "type"),
         ("sections/rsvp", {"maxGuestsPerResponse": 0}, "maxGuestsPerResponse"),
         ("sections/rsvp", {"maxGuestsPerResponse": 21}, "maxGuestsPerResponse"),
         ("sections/rsvp", {"maxGuestsPerResponse": "3"}, "maxGuestsPerResponse"),

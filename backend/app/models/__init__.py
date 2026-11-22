@@ -1,23 +1,25 @@
 """Import all models here so Alembic autogenerate and relationships see them."""
 
+from app.models.invitation import (
+    Invitation,
+    InvitationAsset,
+    InvitationGalleryImage,
+    InvitationPublication,
+    InvitationRsvpResponse,
+    InvitationSession,
+    InvitationStoryEntry,
+)
 from app.models.user import User
 from app.models.user_session import UserSession
-from app.models.wedding import (
-    Wedding,
-    WeddingAsset,
-    WeddingEvent,
-    WeddingGalleryImage,
-    WeddingPublication,
-    WeddingStoryEntry,
-)
 
 __all__ = [
+    "Invitation",
+    "InvitationAsset",
+    "InvitationGalleryImage",
+    "InvitationPublication",
+    "InvitationRsvpResponse",
+    "InvitationSession",
+    "InvitationStoryEntry",
     "User",
     "UserSession",
-    "Wedding",
-    "WeddingAsset",
-    "WeddingEvent",
-    "WeddingGalleryImage",
-    "WeddingPublication",
-    "WeddingStoryEntry",
 ]

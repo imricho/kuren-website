@@ -170,7 +170,15 @@ automatically). See `.env.example` for the full list.
 | `BACKEND_HOST_PORT`, `FRONTEND_HOST_PORT` | Host ports | `8000`, `5173` |
 | `CORS_ORIGINS` | Comma-separated browser origins allowed to call the API | `http://localhost:5173` |
 | `SESSION_TTL_HOURS` | Session lifetime | `168` (7 days) |
-| `SESSION_COOKIE_SECURE` | Send cookie only over HTTPS (set `true` in production) | `false` |
+| `SESSION_COOKIE_SECURE` | Send cookie only over HTTPS (required `true` in production) | `false` |
+| `FORWARDED_ALLOW_IPS` | Proxy IPs/CIDRs whose `X-Forwarded-For` is trusted (`*` is refused) | `127.0.0.1` |
+| `RUN_MIGRATIONS` | Run `alembic upgrade head` on container start | `true` |
+| `PUBLIC_RATE_LIMIT_PER_MINUTE` | Public invitation reads per client IP | `120` |
+| `RSVP_RATE_LIMIT_PER_MINUTE`, `RSVP_SLUG_RATE_LIMIT_PER_MINUTE` | RSVP submissions per client IP / per invitation | `10`, `60` |
+| `MAX_RSVP_BODY_BYTES` | Max RSVP request body | `16384` |
+| `MAX_ASSETS_PER_INVITATION` | Uploaded images per invitation (was `MAX_ASSETS_PER_WEDDING`, no longer read) | `300` |
+
+Deploying: see `docs/operations/deploy-readiness.md` (migration 0008 needs a stop-the-world deploy).
 
 `.env` is git-ignored. Never commit real credentials.
 

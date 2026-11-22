@@ -68,6 +68,7 @@ export function applyLivePatch(d: WeddingDraft, patch: LivePatch): WeddingDraft 
       return {
         ...d,
         couple: {
+          ...d.couple,
           groom: { ...d.couple.groom, name: patch.groom || undefined },
           bride: { ...d.couple.bride, name: patch.bride || undefined },
         },
@@ -79,7 +80,7 @@ export function applyLivePatch(d: WeddingDraft, patch: LivePatch): WeddingDraft 
         case 'gallery':
           return { ...d, gallery: { ...patch.value, images: d.gallery.images } }
         case 'couple':
-          return { ...d, couple: { groom: patch.value.groom, bride: patch.value.bride } }
+          return { ...d, couple: { ...patch.value, groom: patch.value.groom, bride: patch.value.bride } }
         case 'rsvp':
           return { ...d, rsvp: { ...patch.value, enabled: patch.value.enabled ?? true } }
         default:

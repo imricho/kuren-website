@@ -169,3 +169,25 @@ Nothing else changes: the renderer, picker pages and content model pick it up au
   by someone familiar with the tradition before release.
 - **Traditional:** swap the ornament components (`TradCorner`, `TradDivider`) and palette variables.
 - Choosing a variant per wedding is a later (CMS) concern; the content model is unaffected.
+
+## Temuvibe family (multi-variant, contract §5)
+
+`temuvibe/` is ONE schema-driven renderer (`TemuvibeTheme.vue` + `sections/Tv*.vue`) with four
+presets that differ only by design tokens (`temuvibe/presets.ts` → `--tv-*` custom properties):
+`temuvibe-elegant`, `temuvibe-minimal`, `temuvibe-festive`, `temuvibe-corporate`.
+
+- **What renders**: `visibleSections(content)` — sections in `content.sections` (the variant's offer;
+  legacy content = the 13 wedding sections) that are enabled and non-empty, in `SECTION_ORDER`.
+  The date section keeps `data-section="weddingDate"` (editor scroll key).
+- **Wording**: `temuvibe/wording.ts` + `src/locales/{en,id}/templates.ts`, in the invitation's language.
+  The variant comes from `ThemeRenderer`'s `variant` prop (else it is inferred from the content).
+- **RSVP** (all 53 templates): public mode with a `slug` → the live form (`features/public/RsvpForm.vue`,
+  logic in `rsvpFormLogic.ts`); draft → a disabled, `data-editor-only` sample. The 49 pre-engine themes show
+  it via `core/components/RsvpPreview.vue` on a card coloured by `core/formTokens.ts` (from their manifest,
+  AA-checked in `core/legacyRsvp.spec.ts`).
+- **Selection**: `ThemeRenderer` renders a template only if `isTemplateCompatible(template, variant)`;
+  otherwise `temuvibe-elegant` (dev warning + `fallback` event).
+- **Manifests**: `core/manifests.ts` (`TEMPLATE_MANIFESTS`, `manifestsForVariant`). The 49 legacy
+  manifests are generated from the stylesheets (`catalog/legacyManifests.generated.ts`); regenerate with
+  `UPDATE_MANIFESTS=1 npx vitest run src/features/themes/catalog/legacyManifests.spec.ts`.
+- **Contrast**: `temuvibe/presets.spec.ts` checks every text/background token pair for WCAG AA.

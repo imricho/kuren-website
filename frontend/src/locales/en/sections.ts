@@ -71,7 +71,7 @@ export const sectionsEn = {
   wishesComingSoon: 'Guests can’t send wishes online yet — the guestbook is coming soon.',
 
   // RSVP
-  rsvpOfflineNote: 'Guests can’t reply online yet — your invitation shows the deadline and your message.',
+  rsvpOfflineNote: 'Guests reply on your invitation. Their replies appear under Responses.',
 
   // Amplop Digital
   amplopIntro: 'Let guests send a gift by bank transfer, QRIS, or post.',

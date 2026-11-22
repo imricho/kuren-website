@@ -3,9 +3,9 @@
 import { computed } from 'vue'
 
 import { useAppLocale } from '@/composables/useAppLocale'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 const text = computed(() => {
   const a = store.publishAnnouncement

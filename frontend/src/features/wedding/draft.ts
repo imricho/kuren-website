@@ -6,6 +6,22 @@
  * `toPreviewContent` turns a draft into content every theme can render, filling
  * gaps with clearly labelled placeholders and reporting what it filled.
  */
+import {
+  invitationPlaceholderTexts,
+  invitationSectionsPreview,
+  rsvpExtensionsPreview,
+  sessionOptionalPreview,
+} from '../invitation/draft'
+import { isSectionOffered, isSectionRequired, isWeddingVariant, sectionsFor, type NewSectionId, type SectionId, type VariantId } from '../invitation/registry'
+import type {
+  AgendaSection,
+  MilestoneSection,
+  OrganizationSection,
+  ProfilesSection,
+  RsvpExtensions,
+  SpeakersSection,
+} from '../invitation/types'
+
 import { eventTypeLabel, isSafeImageSrc, MEDIA_IMAGE_PATH } from './format'
 import {
   WEDDING_SCHEMA_VERSION,
@@ -50,6 +66,8 @@ export interface OpeningDraft {
 export interface CoupleDraft {
   groom: PersonDraft
   bride: PersonDraft
+  /** Only where the variant offers the couple as optional (anniversary); absent = shown. */
+  enabled?: boolean
 }
 
 export interface StoryEntryDraft {
@@ -83,6 +101,8 @@ export interface EventDraft {
   description?: string
   dressCode?: { enabled: boolean; text?: string }
   livestream?: { enabled: boolean; url?: string; label?: string }
+  /** v2.0: a session guests may pick (corporate). */
+  optional?: boolean
 }
 
 export interface GalleryItemDraft {
@@ -103,7 +123,7 @@ export interface GalleryDraft extends GalleryMetaDraft {
   images: GalleryItemDraft[]
 }
 
-export interface RsvpDraft {
+export interface RsvpDraft extends Omit<RsvpExtensions, 'full'> {
   title?: string
   introduction?: string
   enabled: boolean
@@ -119,7 +139,11 @@ export interface ClosingDraft {
   familyAcknowledgments?: string
 }
 
-export type UniversalContent = Pick<WeddingContent, 'contentVersion' | 'holyRecite1' | 'holyRecite2' | 'greeting' | 'countdown' | 'wishes' | 'amplopDigital'>
+export type UniversalContent = Pick<
+  WeddingContent,
+  | 'contentVersion' | 'holyRecite1' | 'holyRecite2' | 'greeting' | 'countdown' | 'wishes' | 'amplopDigital'
+  | 'profiles' | 'milestone' | 'organization' | 'agenda' | 'speakers'
+>
 
 export interface WeddingDraft extends UniversalContent {
   schemaVersion: typeof WEDDING_SCHEMA_VERSION
@@ -133,7 +157,7 @@ export interface WeddingDraft extends UniversalContent {
   closing: ClosingDraft
 }
 
-/** Section objects accepted by PUT /weddings/{id}/sections/{section}. */
+/** Section objects accepted by PUT /invitations/{id}/sections/{section}. */
 export interface SectionPayloads {
   opening: OpeningDraft
   couple: CoupleDraft
@@ -148,6 +172,12 @@ export interface SectionPayloads {
   countdown: CountdownSection
   wishes: WishesSection
   amplopDigital: AmplopDigitalSection
+  // v2.0 sections (contract §2); lists live inside the section object.
+  profiles: ProfilesSection
+  milestone: MilestoneSection
+  organization: OrganizationSection
+  agenda: AgendaSection
+  speakers: SpeakersSection
 }
 export type SectionName = keyof SectionPayloads
 
@@ -185,7 +215,7 @@ export function normalizeDraft(raw: Partial<WeddingDraft> | null | undefined): W
     ...base,
     ...universalContent(raw),
     opening: { ...raw.opening },
-    couple: { groom: { ...raw.couple?.groom }, bride: { ...raw.couple?.bride } },
+    couple: { groom: { ...raw.couple?.groom }, bride: { ...raw.couple?.bride }, ...(typeof raw.couple?.enabled === 'boolean' ? { enabled: raw.couple.enabled } : {}) },
     story: { ...raw.story, timeline: [...(raw.story?.timeline ?? [])] },
     events: [...(raw.events ?? [])],
     gallery: { ...raw.gallery, images: [...(raw.gallery?.images ?? [])] },
@@ -194,7 +224,8 @@ export function normalizeDraft(raw: Partial<WeddingDraft> | null | undefined): W
   }
 }
 
-const UNIVERSAL_KEYS = ['contentVersion', 'holyRecite1', 'holyRecite2', 'greeting', 'countdown', 'wishes', 'amplopDigital'] as const
+const NEW_SECTION_KEYS = ['profiles', 'milestone', 'organization', 'agenda', 'speakers'] as const satisfies readonly NewSectionId[]
+const UNIVERSAL_KEYS = ['contentVersion', 'holyRecite1', 'holyRecite2', 'greeting', 'countdown', 'wishes', 'amplopDigital', ...NEW_SECTION_KEYS] as const
 
 /**
  * Copy the shared optional content without dropping disabled stored values.
@@ -215,14 +246,16 @@ export function universalContent(value: UniversalContent): UniversalContent {
 
 /** A required value that was missing and replaced by a placeholder in the preview. */
 export interface MissingItem {
-  section: 'opening' | 'couple' | 'story' | 'events' | 'gallery' | 'rsvp' | 'closing'
+  section: 'opening' | 'couple' | 'story' | 'events' | 'gallery' | 'rsvp' | 'closing' | NewSectionId
   /** Dotted path within the section, e.g. "weddingDate", "groom.name", "0.venueName". */
   field: string
 }
 
 type PlaceholderKey =
   | 'weddingTitle'
+  | 'eventTitle'
   | 'yourNames'
+  | 'displayNames'
   | 'groomName'
   | 'brideName'
   | 'eventDetails'
@@ -234,24 +267,28 @@ type PlaceholderKey =
 const PLACEHOLDERS: Record<WeddingLocale, Record<PlaceholderKey, string>> = {
   en: {
     weddingTitle: 'Your wedding title',
+    eventTitle: 'Your event title',
     yourNames: 'Your names',
+    displayNames: 'Name to display',
     groomName: 'Groom’s name',
     brideName: 'Bride’s name',
     eventDetails: 'Event details coming soon',
     venue: 'Venue to be announced',
     address: 'Address coming soon',
-    rsvpTitle: 'RSVP',
+    rsvpTitle: 'Your RSVP heading',
     closingMessage: 'Your closing message will appear here.',
   },
   id: {
     weddingTitle: 'Judul pernikahan Anda',
+    eventTitle: 'Judul acara Anda',
     yourNames: 'Nama Anda berdua',
+    displayNames: 'Nama yang ditampilkan',
     groomName: 'Nama mempelai pria',
     brideName: 'Nama mempelai wanita',
     eventDetails: 'Detail acara segera hadir',
     venue: 'Lokasi akan diumumkan',
     address: 'Alamat segera hadir',
-    rsvpTitle: 'Konfirmasi Kehadiran',
+    rsvpTitle: 'Judul RSVP Anda',
     closingMessage: 'Pesan penutup Anda akan tampil di sini.',
   },
 }
@@ -319,6 +356,12 @@ function compact<T extends object>(value: T): T {
 export type PreviewMode = 'draft' | 'public'
 export interface PreviewOptions {
   mode?: PreviewMode
+  /**
+   * The invitation's variant. Sections it does not offer are never rendered (and
+   * never reported missing); `content.sections` lists the offered ones. Omitted =
+   * legacy wedding behaviour (all wedding sections, v2.0 sections when enabled).
+   */
+  variant?: VariantId
 }
 
 /** Trim the ends of a free-text value only (inner line breaks/spaces are kept). */
@@ -459,7 +502,12 @@ export function toPreviewContent(
   const couple: CoupleDraft = { groom: draft.couple?.groom ?? {}, bride: draft.couple?.bride ?? {} }
 
   // Couple
+  const variant = options.variant
+  const offers = (id: SectionId) => !variant || isSectionOffered(variant, id)
+  // An optional couple (anniversary) switched off is not rendered, like any hidden section.
+  const hasCouple = offers('couple') && !(variant && !isSectionRequired(variant, 'couple') && draft.couple?.enabled === false)
   const person = (p: PersonDraft, role: 'groom' | 'bride') => {
+    if (!hasCouple) return { name: '' }
     let name = text(p.name)
     if (!name) {
       missing.push({ section: 'couple', field: `${role}.name` })
@@ -478,12 +526,14 @@ export function toPreviewContent(
   const bride = person(couple.bride, 'bride')
 
   // Opening
-  let coupleNames = text(o.coupleNames) ?? deriveCoupleNames(couple)
-  if (!coupleNames) coupleNames = isPublic ? [groom.name, bride.name].filter(Boolean).join(' & ') : ph('yourNames') // missing names are reported under couple
+  let coupleNames = text(o.coupleNames) ?? (hasCouple ? deriveCoupleNames(couple) : undefined)
+  // Outside the wedding category the placeholders use event wording.
+  const genericCopy = !!variant && !isWeddingVariant(variant)
+  if (!coupleNames) coupleNames = isPublic ? [groom.name, bride.name].filter(Boolean).join(' & ') : ph(hasCouple ? 'yourNames' : 'displayNames') // missing names are reported under couple
   let weddingTitle = text(o.weddingTitle)
   if (!weddingTitle) {
     missing.push({ section: 'opening', field: 'weddingTitle' })
-    weddingTitle = isPublic ? coupleNames : ph('weddingTitle')
+    weddingTitle = isPublic ? coupleNames : ph(genericCopy ? 'eventTitle' : 'weddingTitle')
   }
   const firstEventDate = (draft.events ?? []).map((e) => e.date).find(isIsoDate)
   let weddingDate = isIsoDate(o.weddingDate) ? o.weddingDate : undefined
@@ -521,6 +571,7 @@ export function toPreviewContent(
         mapsUrl: text(e.mapsUrl),
         description: text(e.description),
         ...eventExtras(e, isPublic),
+        ...sessionOptionalPreview(e.optional),
       }) as WeddingEvent,
     ]
   })
@@ -559,12 +610,12 @@ export function toPreviewContent(
 
   const r = draft.rsvp ?? { enabled: true }
   let rsvpTitle = text(r.title)
-  let rsvpEnabled = r.enabled !== false
+  const rsvpEnabled = r.enabled !== false
   if (!rsvpTitle) {
     missing.push({ section: 'rsvp', field: 'title' })
-    rsvpTitle = ph('rsvpTitle')
-    // A published RSVP section without a heading would be an orphan: hide it.
-    if (isPublic) rsvpEnabled = false
+    // Guests get the default heading in the invitation's language (RSVP is on by
+    // default for most variants, and hiding it silently would drop the form).
+    rsvpTitle = isPublic ? (locale === 'id' ? 'RSVP Kehadiran' : 'RSVP') : ph('rsvpTitle')
   }
 
   const c = draft.closing ?? {}
@@ -582,8 +633,14 @@ export function toPreviewContent(
       : compact({ enabled: o.guestGreeting.enabled === true, label: keep(o.guestGreeting.label) })
     : undefined
 
+  const universal: UniversalContent = isPublic ? universalPublic(draft) : universalContent(draft)
+  for (const key of NEW_SECTION_KEYS) delete universal[key]
+  const v2 = invitationSectionsPreview(draft, { isPublic, uiLocale, variant, sessionIds: events.map((e) => e.id) })
+  missing.push(...v2.missing)
+
   const content: WeddingContent = {
-    ...(isPublic ? universalPublic(draft) : universalContent(draft)),
+    ...universal,
+    ...v2.sections,
     schemaVersion: WEDDING_SCHEMA_VERSION,
     locale,
     opening: compact({
@@ -606,13 +663,28 @@ export function toPreviewContent(
       deadline: isIsoDate(r.deadline) ? r.deadline : undefined,
       confirmationMessage: text(r.confirmationMessage),
       maxGuestsPerResponse: isGuestCount(r.maxGuestsPerResponse) ? r.maxGuestsPerResponse : undefined,
+      ...rsvpExtensionsPreview(r as RsvpExtensions, isPublic),
     }),
     closing: compact({ message, thankYou: text(c.thankYou), image: safeImage(c.image), familyAcknowledgments: keep(c.familyAcknowledgments) }),
   }
+  if (variant) restrictToVariant(content, variant, hasCouple)
   return { content, missing }
+}
+
+/** Drop what a variant does not offer and record the offered sections (`content.sections`). */
+function restrictToVariant(content: WeddingContent, variant: VariantId, coupleShown: boolean) {
+  const offered = sectionsFor(variant).map((s) => s.id).filter((id) => id !== 'couple' || coupleShown)
+  const has = (id: SectionId) => offered.includes(id)
+  for (const key of ['holyRecite1', 'holyRecite2', 'wishes', 'amplopDigital', 'story', 'gallery', 'countdown'] as const) {
+    if (!has(key)) delete content[key]
+  }
+  // An absent greeting means the legacy opening-text fallback; mark it explicitly off instead.
+  if (!has('greeting')) content.greeting = { enabled: false }
+  if (!has('rsvp')) content.rsvp = { ...content.rsvp, enabled: false }
+  content.sections = offered
 }
 
 /** Every placeholder string in both editor languages (tests: public content must contain none). */
 export function allPlaceholderTexts(): string[] {
-  return Object.values(PLACEHOLDERS).flatMap((dict) => Object.values(dict))
+  return [...Object.values(PLACEHOLDERS).flatMap((dict) => Object.values(dict)), ...invitationPlaceholderTexts()]
 }

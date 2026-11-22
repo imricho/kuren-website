@@ -6,8 +6,8 @@ import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 
 import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
-import { useWeddingStore } from '@/stores/wedding'
-import { installFakeWeddingApi } from '@/test/fakeWeddingApi'
+import { useInvitationStore } from '@/stores/invitation'
+import { installFakeInvitationApi } from '@/test/fakeInvitationApi'
 
 import AppLayout from './AppLayout.vue'
 
@@ -16,7 +16,7 @@ enableAutoUnmount(afterEach)
 const Page = defineComponent({ render: () => h('p', 'page') })
 
 async function setup() {
-  installFakeWeddingApi()
+  installFakeInvitationApi()
   const pinia = createPinia()
   setActivePinia(pinia)
   const auth = useAuthStore()
@@ -30,8 +30,8 @@ async function setup() {
         path: '/',
         component: AppLayout,
         children: [
-          { path: 'dashboard', name: 'dashboard', component: Page },
-          { path: 'wedding', name: 'wedding', component: Page },
+          { path: 'invitations', name: 'invitations', component: Page },
+          { path: 'invitations/:id/edit', name: 'editor', component: Page },
           { path: 'themes', name: 'themes', component: Page },
           { path: 'account', name: 'account', component: Page },
         ],
@@ -39,7 +39,9 @@ async function setup() {
       { path: '/login', name: 'login', component: Page },
     ],
   })
-  await router.push('/wedding')
+  // An open invitation adds "My invitation" to the nav.
+  await useInvitationStore().ensureLoaded('w1')
+  await router.push('/invitations/w1/edit')
   await router.isReady()
   const wrapper = mount(defineComponent({ render: () => h(RouterView) }), { global: { plugins: [pinia, router] }, attachTo: document.body })
   await flushPromises()
@@ -58,9 +60,16 @@ describe('AppLayout', () => {
   beforeEach(() => localStorage.clear())
   afterEach(() => vi.restoreAllMocks())
 
-  it('highlights "My website" on /wedding pages', async () => {
+  it('highlights "My invitation" in the editor', async () => {
     const { wrapper } = await setup()
-    expect(wrapper.get('[data-testid="main-nav"] a[aria-current="page"]').text()).toBe('My website')
+    expect(wrapper.get('[data-testid="main-nav"] a[aria-current="page"]').text()).toBe('My invitation')
+  })
+
+  it('shows only Invitations, Themes and Account before an invitation is open', async () => {
+    const { wrapper } = await setup()
+    useInvitationStore().reset()
+    await flushPromises()
+    expect(wrapper.get('[data-testid="main-nav"]').findAll('a').map((a) => a.text())).toEqual(['Invitations', 'Themes', 'Account'])
   })
 
   it('names the brand link after the brand', async () => {
@@ -87,8 +96,8 @@ describe('AppLayout', () => {
       const { wrapper } = await setup()
       await openMenu(wrapper)
       const panel = wrapper.get('[data-testid="account-menu"]')
-      expect(panel.findAll('nav a').map((a) => a.text())).toEqual(['Dashboard', 'My website', 'Themes', 'Account'])
-      expect(panel.get('nav a[aria-current="page"]').text()).toBe('My website')
+      expect(panel.findAll('nav a').map((a) => a.text())).toEqual(['Invitations', 'My invitation', 'Themes', 'Account'])
+      expect(panel.get('nav a[aria-current="page"]').text()).toBe('My invitation')
       expect(panel.find('[role="group"][aria-label="Language"]').exists()).toBe(true)
       expect(signOutButton(wrapper).exists()).toBe(true)
     })
@@ -116,7 +125,7 @@ describe('AppLayout', () => {
       await openMenu(wrapper)
       await wrapper.get('[data-testid="account-menu"] nav a').trigger('click')
       await flushPromises()
-      expect(router.currentRoute.value.name).toBe('dashboard')
+      expect(router.currentRoute.value.name).toBe('invitations')
       expect(menuButton(wrapper).attributes('aria-expanded')).toBe('false')
     })
   })
@@ -130,7 +139,7 @@ describe('AppLayout', () => {
 
   it('asks before signing out with unsaved changes; "Keep editing" stays signed in', async () => {
     const { wrapper, router, auth, logout } = await setup()
-    const wedding = useWeddingStore()
+    const wedding = useInvitationStore()
     wedding.setDirty('opening', true)
     await openMenu(wrapper)
     await signOutButton(wrapper).trigger('click')

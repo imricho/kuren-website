@@ -12,8 +12,10 @@ import { eventForm, eventPayload } from '@/features/cms/forms'
 import { fieldId, validateEvent } from '@/features/cms/validation'
 import type { EventDraft } from '@/features/wedding/draft'
 import { eventTypeLabel } from '@/features/wedding/format'
-import { EVENT_TYPES } from '@/features/wedding/types'
-import { useWeddingStore } from '@/stores/wedding'
+import { isWeddingVariant, sessionTypesFor, variantOf } from '@/features/invitation/registry'
+import { DEFAULT_EVENT_TYPE } from '@/features/cms/forms'
+import { useVariantCopy } from '../../composables/useVariantCopy'
+import { useInvitationStore } from '@/stores/invitation'
 
 import { useSectionDraft } from '../../composables/useSectionDraft'
 import DateField from '../DateField.vue'
@@ -22,14 +24,29 @@ import ItemEditorActions from './ItemEditorActions.vue'
 
 const props = defineProps<{ item?: EventDraft }>()
 const emit = defineEmits<{ done: [] }>()
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t, locale } = useAppLocale()
 const scope = `ev-${props.item?.id ?? 'new'}`
+const { vt } = useVariantCopy()
+const wedding = computed(() => !store.variant || isWeddingVariant(store.variant))
+/** Quick starts: the wedding presets, or the variant's own registry session presets. */
+const presets = computed<readonly EventPreset[]>(() =>
+  wedding.value
+    ? EVENT_PRESETS
+    : [
+        ...variantOf(store.variant).sessionPresets.map((p, i): EventPreset => ({ key: `variant-${i}`, type: p.type, title: p.title })),
+        EVENT_PRESETS.find((p) => p.key === 'custom')!,
+      ],
+)
+/** New sessions start with a type the variant offers. */
+const newType = computed(() => (wedding.value ? DEFAULT_EVENT_TYPE : variantOf(store.variant).sessionPresets[0]?.type ?? 'other'))
+/** Corporate sessions may be optional (guests pick them when RSVP allows session choice). */
+const canBeOptional = computed(() => variantOf(store.variant).category === 'corporate' && !wedding.value)
 
 const saved = () => (props.item ? (store.items('events').find((e) => e.id === props.item!.id) ?? props.item) : undefined)
 const draft = useSectionDraft({
   key: `events:${props.item?.id ?? 'new'}`,
-  source: () => eventForm(saved()),
+  source: () => eventForm(saved() ?? { type: newType.value }),
   toPayload: eventPayload,
   validate: validateEvent,
   idScope: scope,
@@ -40,12 +57,13 @@ const draft = useSectionDraft({
   // Saved items autosave; a new item is only created by an explicit Add.
   autosave: !!props.item,
   live: (payload) => ({ kind: 'item', collection: 'events', itemId: props.item?.id ?? null, value: payload }),
-  successMessage: (): string => t('itemAdded', { name: draft.form.value.title || t('event') }),
+  successMessage: (): string => t('itemAdded', { name: draft.form.value.title || vt('event') }),
   failureMessage: () => t('itemSaveFailed'),
 })
 const { form, errors } = draft
 
-const typeOptions = computed(() => EVENT_TYPES.map((type) => ({ value: type, label: eventTypeLabel(type, locale.value) })))
+// Wedding variants keep the original six types; other variants offer the generic ones too.
+const typeOptions = computed(() => sessionTypesFor(store.variant).map((type) => ({ value: type, label: eventTypeLabel(type, locale.value) })))
 const needed = t('neededBeforePublishing')
 const id = (field: string) => fieldId(field, scope)
 
@@ -93,7 +111,7 @@ function cancel() {
       <legend class="mb-2 text-sm font-medium text-ink-700">{{ t('presetLegend') }}</legend>
       <div class="flex flex-wrap gap-2">
         <button
-          v-for="preset in EVENT_PRESETS"
+          v-for="preset in presets"
           :key="preset.key"
           type="button"
           :class="[
@@ -116,12 +134,12 @@ function cancel() {
       <TextField
         :id="id('title')"
         v-model="form.title"
-        :label="t('eventTitle')"
+        :label="vt('eventTitle')"
         :error="titleError"
         :needed-hint="needed"
         @update:model-value="emptyError = false"
       />
-      <SelectField :id="id('type')" v-model="form.type" :label="t('eventType')" :options="typeOptions" :error="errors.type" />
+      <SelectField :id="id('type')" v-model="form.type" :label="vt('eventType')" :options="typeOptions" :error="errors.type" />
     </div>
     <div class="grid gap-4 sm:grid-cols-2">
       <DateField :id="id('date')" v-model="form.date" class="sm:col-span-2" :label="t('date')" :error="errors.date" :needed-hint="needed" />
@@ -139,6 +157,9 @@ function cancel() {
       inputmode="url"
     />
     <TextAreaField :id="id('description')" v-model="form.description" :label="t('additionalInfo')" :hint="t('additionalInfoHint')" :rows="3" :error="errors.description" />
+    <div v-if="canBeOptional || form.optional" class="space-y-3 rounded-lg border border-line p-4" data-testid="event-optional">
+      <SwitchField :id="id('optional')" v-model="form.optional" :label="t('sessionOptional')" :hint="t('sessionOptionalHint')" />
+    </div>
     <div class="space-y-3 rounded-lg border border-line p-4" data-testid="event-dress-code">
       <SwitchField :id="id('dressCode.enabled')" v-model="form.dressCodeEnabled" :label="t('dressCode')" />
       <div v-show="form.dressCodeEnabled || errors['dressCode.text']">

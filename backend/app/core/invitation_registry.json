@@ -1,0 +1,1407 @@
+{
+  "version": 1,
+  "defaultTimezone": "Asia/Jakarta",
+  "sectionOrder": [
+    "opening",
+    "holyRecite1",
+    "greeting",
+    "couple",
+    "profiles",
+    "organization",
+    "milestone",
+    "countdown",
+    "events",
+    "agenda",
+    "speakers",
+    "story",
+    "gallery",
+    "rsvp",
+    "wishes",
+    "amplopDigital",
+    "holyRecite2",
+    "closing"
+  ],
+  "sessionTypes": [
+    "engagement",
+    "akad",
+    "holy_matrimony",
+    "ceremony",
+    "reception",
+    "party",
+    "celebration",
+    "session",
+    "talk",
+    "workshop",
+    "gathering",
+    "prayer",
+    "dinner",
+    "other"
+  ],
+  "profileRoles": [
+    "celebrant",
+    "child",
+    "graduate",
+    "host",
+    "partner",
+    "organizer"
+  ],
+  "milestoneFields": [
+    "age",
+    "years",
+    "occasion",
+    "institution",
+    "program",
+    "degree",
+    "partyTheme"
+  ],
+  "categories": [
+    {
+      "id": "wedding",
+      "label": {
+        "en": "Wedding",
+        "id": "Pernikahan"
+      },
+      "variants": [
+        "wedding_ceremony",
+        "wedding_reception"
+      ]
+    },
+    {
+      "id": "celebration",
+      "label": {
+        "en": "Celebration",
+        "id": "Perayaan"
+      },
+      "variants": [
+        "birthday",
+        "sweet_17",
+        "khitanan",
+        "aqiqah",
+        "engagement",
+        "anniversary",
+        "graduation",
+        "religious_celebration"
+      ]
+    },
+    {
+      "id": "gathering",
+      "label": {
+        "en": "Gathering",
+        "id": "Kumpul & Komunitas"
+      },
+      "variants": [
+        "family_reunion",
+        "family_gathering",
+        "community_gathering"
+      ]
+    },
+    {
+      "id": "corporate",
+      "label": {
+        "en": "Corporate",
+        "id": "Perusahaan"
+      },
+      "variants": [
+        "corporate_event",
+        "company_celebration",
+        "seminar",
+        "workshop"
+      ]
+    }
+  ],
+  "variants": [
+    {
+      "id": "wedding_ceremony",
+      "category": "wedding",
+      "label": {
+        "en": "Wedding Ceremony",
+        "id": "Akad / Pemberkatan"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "holyRecite1",
+          "defaultEnabled": false
+        },
+        {
+          "id": "greeting",
+          "defaultEnabled": false
+        },
+        {
+          "id": "couple",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "story",
+          "defaultEnabled": false
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": false
+        },
+        {
+          "id": "wishes",
+          "defaultEnabled": false
+        },
+        {
+          "id": "amplopDigital",
+          "defaultEnabled": false
+        },
+        {
+          "id": "holyRecite2",
+          "defaultEnabled": false
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "akad",
+          "title": {
+            "en": "Akad Nikah",
+            "id": "Akad Nikah"
+          }
+        },
+        {
+          "type": "reception",
+          "title": {
+            "en": "Wedding Reception",
+            "id": "Resepsi"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "wedding_reception",
+      "category": "wedding",
+      "label": {
+        "en": "Wedding Reception",
+        "id": "Resepsi Pernikahan"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "holyRecite1",
+          "defaultEnabled": false
+        },
+        {
+          "id": "greeting",
+          "defaultEnabled": false
+        },
+        {
+          "id": "couple",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "story",
+          "defaultEnabled": false
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": false
+        },
+        {
+          "id": "wishes",
+          "defaultEnabled": false
+        },
+        {
+          "id": "amplopDigital",
+          "defaultEnabled": false
+        },
+        {
+          "id": "holyRecite2",
+          "defaultEnabled": false
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "reception",
+          "title": {
+            "en": "Wedding Reception",
+            "id": "Resepsi"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "birthday",
+      "category": "celebration",
+      "label": {
+        "en": "Birthday",
+        "id": "Ulang Tahun"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "profiles",
+          "defaultEnabled": true,
+          "roles": [
+            "celebrant"
+          ],
+          "fields": [
+            "nickname",
+            "image",
+            "description",
+            "birthDate"
+          ]
+        },
+        {
+          "id": "milestone",
+          "defaultEnabled": true,
+          "fields": [
+            "age",
+            "partyTheme"
+          ]
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "wishes",
+          "defaultEnabled": false
+        },
+        {
+          "id": "amplopDigital",
+          "defaultEnabled": false
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "party",
+          "title": {
+            "en": "Birthday Party",
+            "id": "Pesta Ulang Tahun"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "sweet_17",
+      "category": "celebration",
+      "label": {
+        "en": "Sweet 17",
+        "id": "Sweet Seventeen"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "profiles",
+          "defaultEnabled": true,
+          "roles": [
+            "celebrant"
+          ],
+          "fields": [
+            "nickname",
+            "image",
+            "description",
+            "birthDate"
+          ]
+        },
+        {
+          "id": "milestone",
+          "defaultEnabled": true,
+          "fields": [
+            "age",
+            "partyTheme"
+          ],
+          "defaults": {
+            "age": 17
+          }
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "wishes",
+          "defaultEnabled": false
+        },
+        {
+          "id": "amplopDigital",
+          "defaultEnabled": false
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "party",
+          "title": {
+            "en": "Sweet Seventeen Party",
+            "id": "Pesta Sweet Seventeen"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "khitanan",
+      "category": "celebration",
+      "label": {
+        "en": "Khitanan",
+        "id": "Khitanan"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "holyRecite1",
+          "defaultEnabled": false
+        },
+        {
+          "id": "greeting",
+          "defaultEnabled": false
+        },
+        {
+          "id": "profiles",
+          "defaultEnabled": true,
+          "roles": [
+            "child"
+          ],
+          "fields": [
+            "nickname",
+            "image",
+            "description",
+            "parents"
+          ]
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "wishes",
+          "defaultEnabled": false
+        },
+        {
+          "id": "amplopDigital",
+          "defaultEnabled": false
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "ceremony",
+          "title": {
+            "en": "Khitanan Ceremony",
+            "id": "Prosesi Khitanan"
+          }
+        },
+        {
+          "type": "celebration",
+          "title": {
+            "en": "Celebration",
+            "id": "Syukuran"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "aqiqah",
+      "category": "celebration",
+      "label": {
+        "en": "Aqiqah",
+        "id": "Aqiqah"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "holyRecite1",
+          "defaultEnabled": false
+        },
+        {
+          "id": "greeting",
+          "defaultEnabled": false
+        },
+        {
+          "id": "profiles",
+          "defaultEnabled": true,
+          "roles": [
+            "child"
+          ],
+          "fields": [
+            "nickname",
+            "image",
+            "description",
+            "parents",
+            "birthDate"
+          ]
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "wishes",
+          "defaultEnabled": false
+        },
+        {
+          "id": "amplopDigital",
+          "defaultEnabled": false
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "ceremony",
+          "title": {
+            "en": "Aqiqah Ceremony",
+            "id": "Prosesi Aqiqah"
+          }
+        },
+        {
+          "type": "celebration",
+          "title": {
+            "en": "Celebration",
+            "id": "Syukuran"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "engagement",
+      "category": "celebration",
+      "label": {
+        "en": "Engagement",
+        "id": "Lamaran / Tunangan"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "greeting",
+          "defaultEnabled": false
+        },
+        {
+          "id": "couple",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "story",
+          "defaultEnabled": false
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "wishes",
+          "defaultEnabled": false
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "engagement",
+          "title": {
+            "en": "Engagement",
+            "id": "Lamaran"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "anniversary",
+      "category": "celebration",
+      "label": {
+        "en": "Anniversary",
+        "id": "Anniversary"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "couple",
+          "defaultEnabled": true
+        },
+        {
+          "id": "profiles",
+          "defaultEnabled": false,
+          "roles": [
+            "partner",
+            "host"
+          ],
+          "fields": [
+            "image",
+            "description"
+          ]
+        },
+        {
+          "id": "milestone",
+          "defaultEnabled": true,
+          "fields": [
+            "years"
+          ]
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "story",
+          "defaultEnabled": false
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "wishes",
+          "defaultEnabled": false
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "celebration",
+          "title": {
+            "en": "Anniversary Celebration",
+            "id": "Perayaan Anniversary"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "graduation",
+      "category": "celebration",
+      "label": {
+        "en": "Graduation",
+        "id": "Wisuda"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "profiles",
+          "defaultEnabled": true,
+          "roles": [
+            "graduate"
+          ],
+          "fields": [
+            "nickname",
+            "image",
+            "description"
+          ]
+        },
+        {
+          "id": "milestone",
+          "defaultEnabled": true,
+          "fields": [
+            "institution",
+            "program",
+            "degree"
+          ]
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "wishes",
+          "defaultEnabled": false
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "ceremony",
+          "title": {
+            "en": "Graduation Ceremony",
+            "id": "Upacara Wisuda"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "religious_celebration",
+      "category": "celebration",
+      "label": {
+        "en": "Religious Celebration",
+        "id": "Perayaan Keagamaan"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "holyRecite1",
+          "defaultEnabled": false
+        },
+        {
+          "id": "greeting",
+          "defaultEnabled": false
+        },
+        {
+          "id": "profiles",
+          "defaultEnabled": true,
+          "roles": [
+            "host"
+          ],
+          "fields": [
+            "image",
+            "description"
+          ]
+        },
+        {
+          "id": "milestone",
+          "defaultEnabled": true,
+          "fields": [
+            "occasion"
+          ]
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "wishes",
+          "defaultEnabled": false
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "celebration",
+          "title": {
+            "en": "Celebration",
+            "id": "Perayaan"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "family_reunion",
+      "category": "gathering",
+      "label": {
+        "en": "Family Reunion",
+        "id": "Reuni Keluarga"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "greeting",
+          "defaultEnabled": false
+        },
+        {
+          "id": "profiles",
+          "defaultEnabled": true,
+          "roles": [
+            "host",
+            "organizer"
+          ],
+          "fields": [
+            "image",
+            "description"
+          ]
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "agenda",
+          "defaultEnabled": true
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "gathering",
+          "title": {
+            "en": "Family Reunion",
+            "id": "Reuni Keluarga"
+          }
+        }
+      ],
+      "rsvpDefaults": {
+        "maxGuestsPerResponse": 10
+      }
+    },
+    {
+      "id": "family_gathering",
+      "category": "gathering",
+      "label": {
+        "en": "Family Gathering",
+        "id": "Kumpul Keluarga"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "greeting",
+          "defaultEnabled": false
+        },
+        {
+          "id": "profiles",
+          "defaultEnabled": true,
+          "roles": [
+            "host",
+            "organizer"
+          ],
+          "fields": [
+            "image",
+            "description"
+          ]
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "agenda",
+          "defaultEnabled": true
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "gathering",
+          "title": {
+            "en": "Family Gathering",
+            "id": "Kumpul Keluarga"
+          }
+        }
+      ],
+      "rsvpDefaults": {
+        "maxGuestsPerResponse": 10
+      }
+    },
+    {
+      "id": "community_gathering",
+      "category": "gathering",
+      "label": {
+        "en": "Community Gathering",
+        "id": "Acara Komunitas"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "greeting",
+          "defaultEnabled": false
+        },
+        {
+          "id": "profiles",
+          "defaultEnabled": true,
+          "roles": [
+            "host",
+            "organizer"
+          ],
+          "fields": [
+            "image",
+            "description"
+          ]
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "agenda",
+          "defaultEnabled": true
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "gathering",
+          "title": {
+            "en": "Community Gathering",
+            "id": "Acara Komunitas"
+          }
+        }
+      ],
+      "rsvpDefaults": {
+        "maxGuestsPerResponse": 10
+      }
+    },
+    {
+      "id": "corporate_event",
+      "category": "corporate",
+      "label": {
+        "en": "Corporate Event",
+        "id": "Acara Perusahaan"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "organization",
+          "defaultEnabled": true
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "agenda",
+          "defaultEnabled": true
+        },
+        {
+          "id": "speakers",
+          "defaultEnabled": false
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "session",
+          "title": {
+            "en": "Main Session",
+            "id": "Sesi Utama"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "company_celebration",
+      "category": "corporate",
+      "label": {
+        "en": "Company Celebration",
+        "id": "Perayaan Perusahaan"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "organization",
+          "defaultEnabled": true
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "agenda",
+          "defaultEnabled": true
+        },
+        {
+          "id": "speakers",
+          "defaultEnabled": false
+        },
+        {
+          "id": "gallery",
+          "defaultEnabled": false
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "session",
+          "title": {
+            "en": "Main Session",
+            "id": "Sesi Utama"
+          }
+        }
+      ],
+      "rsvpDefaults": {}
+    },
+    {
+      "id": "seminar",
+      "category": "corporate",
+      "label": {
+        "en": "Seminar",
+        "id": "Seminar"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "organization",
+          "defaultEnabled": true
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "agenda",
+          "defaultEnabled": true
+        },
+        {
+          "id": "speakers",
+          "defaultEnabled": true
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "session",
+          "title": {
+            "en": "Main Session",
+            "id": "Sesi Utama"
+          }
+        }
+      ],
+      "rsvpDefaults": {
+        "collectContact": "email",
+        "registrationFields": [
+          {
+            "id": "company",
+            "label": {
+              "en": "Company",
+              "id": "Perusahaan / Instansi"
+            },
+            "type": "text",
+            "required": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "workshop",
+      "category": "corporate",
+      "label": {
+        "en": "Workshop",
+        "id": "Workshop"
+      },
+      "sections": [
+        {
+          "id": "opening",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "organization",
+          "defaultEnabled": true
+        },
+        {
+          "id": "countdown",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "events",
+          "required": true,
+          "defaultEnabled": true
+        },
+        {
+          "id": "agenda",
+          "defaultEnabled": true
+        },
+        {
+          "id": "speakers",
+          "defaultEnabled": true
+        },
+        {
+          "id": "rsvp",
+          "defaultEnabled": true
+        },
+        {
+          "id": "closing",
+          "required": true,
+          "defaultEnabled": true
+        }
+      ],
+      "sessionPresets": [
+        {
+          "type": "session",
+          "title": {
+            "en": "Workshop Session",
+            "id": "Sesi Workshop"
+          }
+        }
+      ],
+      "rsvpDefaults": {
+        "collectContact": "email",
+        "registrationFields": [
+          {
+            "id": "company",
+            "label": {
+              "en": "Company",
+              "id": "Perusahaan / Instansi"
+            },
+            "type": "text",
+            "required": false
+          }
+        ]
+      }
+    }
+  ],
+  "templates": [
+    {
+      "id": "temuvibe-elegant",
+      "categories": [
+        "wedding",
+        "celebration",
+        "gathering",
+        "corporate"
+      ]
+    },
+    {
+      "id": "temuvibe-minimal",
+      "categories": [
+        "wedding",
+        "celebration",
+        "gathering",
+        "corporate"
+      ]
+    },
+    {
+      "id": "temuvibe-festive",
+      "categories": [
+        "celebration",
+        "gathering"
+      ]
+    },
+    {
+      "id": "temuvibe-corporate",
+      "categories": [
+        "corporate",
+        "gathering"
+      ]
+    }
+  ],
+  "legacyTemplates": {
+    "description": "Applies to every other id in selectable_theme_ids.json (the original theme catalog).",
+    "categories": [
+      "wedding",
+      "celebration"
+    ],
+    "variants": [
+      "wedding_ceremony",
+      "wedding_reception",
+      "engagement",
+      "anniversary"
+    ]
+  }
+}

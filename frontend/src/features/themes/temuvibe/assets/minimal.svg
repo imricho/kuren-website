@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240" viewBox="0 0 320 240" role="img" aria-label="Temuvibe Minimal template">
+<rect width="320" height="240" fill="#fdfbf7"/>
+<rect width="320" height="180" fill="#fdfbf7"/>
+<line x1="120" y1="132" x2="200" y2="132" stroke="#6f5b34" stroke-width="1"/><line x1="24" y1="24" x2="296" y2="24" stroke="#e9e3da"/>
+<rect x="100" y="78" width="120" height="6" rx="3" fill="#6f5b34" fill-opacity=".9"/>
+<text x="160" y="116" fill="#241236" font-family="Arial, sans-serif" font-size="26" text-anchor="middle">Temuvibe</text>
+<rect x="116" y="128" width="88" height="4" rx="2" fill="#241236" fill-opacity=".55"/>
+<rect x="24" y="196" width="128" height="30" rx="4" fill="#ffffff" stroke="#e9e3da"/>
+<rect x="168" y="196" width="128" height="30" rx="4" fill="#ffffff" stroke="#e9e3da"/>
+<rect x="36" y="207" width="70" height="4" rx="2" fill="#2a1f33" fill-opacity=".7"/>
+<rect x="180" y="207" width="56" height="4" rx="2" fill="#2a1f33" fill-opacity=".7"/>
+</svg>

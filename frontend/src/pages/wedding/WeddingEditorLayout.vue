@@ -22,31 +22,43 @@ import PreviewPanel from '@/features/cms/preview/PreviewPanel.vue'
 import PublishAnnouncer from '@/features/cms/preview/PublishAnnouncer.vue'
 import PublishChip from '@/features/cms/preview/PublishChip.vue'
 import { useElementSize } from '@/features/cms/preview/useElementSize'
-import { EDITOR_SECTIONS, sectionByKey, sectionByRouteName } from '@/features/cms/sections'
+import { EDITOR_ROUTE_NAME, EDITOR_ROUTES } from '@/features/cms/editorRoutes'
+import { editorSectionsFor, sectionByKey, sectionByRouteName } from '@/features/cms/sections'
 import { getTheme } from '@/features/themes/core/registry'
 import { deriveCoupleNames } from '@/features/wedding/draft'
-import { SECTION_KEYS } from '@/features/wedding/completeness'
-import { useWeddingStore } from '@/stores/wedding'
+import { isKeyOffered, SECTION_KEYS } from '@/features/wedding/completeness'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const route = useRoute()
 const router = useRouter()
 const { t } = useAppLocale()
 
-onMounted(() => void store.ensureLoaded())
+/** The invitation in the URL (`/invitations/:id/edit/...`). */
+const invitationId = computed(() => (typeof route.params.id === 'string' ? route.params.id : undefined))
+onMounted(() => invitationId.value && void store.ensureLoaded(invitationId.value))
+// Switching invitations reuses this layout: load the new one (its pages remount once it is ready).
+watch(invitationId, (id) => id && void store.ensureLoaded(id))
 
 /** First incomplete required section edited here (theme lives in the studio), else Opening. */
 function firstSectionRoute() {
   const key =
     SECTION_KEYS.find((k) => k !== 'theme' && store.completeness.sections[k].required && store.completeness.sections[k].status !== 'complete') ??
     'opening'
-  return { name: sectionByKey(key).routeName }
+  return { name: sectionByKey(key, store.variant).routeName }
+}
+
+/** Section page the current route edits, unless it is one this invitation's variant doesn't offer. */
+function isOfferedRoute(name: unknown): boolean {
+  const page = EDITOR_ROUTES.find((r) => r.name === name)
+  return !page || page.key === 'publish' || page.key === 'settings' || isKeyOffered(page.key, store.variant)
 }
 
 watch(
-  () => [store.loadState, route.name] as const,
+  () => [store.loadState, route.name, store.variant] as const,
   ([state, name]) => {
-    if (state === 'ready' && name === 'wedding') void router.replace(firstSectionRoute())
+    if (state !== 'ready') return
+    if (name === EDITOR_ROUTE_NAME || !isOfferedRoute(name)) void router.replace(firstSectionRoute())
   },
   { immediate: true },
 )
@@ -59,9 +71,9 @@ const invitationTitle = computed(() => {
   const draft = store.liveDraft ?? store.content
   return draft?.opening.coupleNames || (draft?.couple && deriveCoupleNames(draft.couple)) || t('myWebsite')
 })
-const invitationSections = EDITOR_SECTIONS.filter(s => s.key !== 'theme')
-const activeSectionIndex = computed(() => Math.max(0, invitationSections.findIndex(s => s.routeName === route.name)))
-const activeSection = computed(() => sectionByRouteName(route.name))
+const invitationSections = computed(() => editorSectionsFor(store.variant).filter(s => s.key !== 'theme'))
+const activeSectionIndex = computed(() => Math.max(0, invitationSections.value.findIndex(s => s.routeName === route.name)))
+const activeSection = computed(() => sectionByRouteName(route.name, store.variant))
 const grid = ref<HTMLElement | null>(null)
 const { width: gridWidth } = useElementSize(grid)
 const bounds = computed(() => {
@@ -107,7 +119,7 @@ watch(tab, async (next, previous) => {
   await nextTick()
   window.scrollTo({ top: tabScroll[next], left: 0, behavior: 'auto' })
 })
-// --- Focus a field from a checklist link (/wedding/<section>#f-<field>) ------------------
+// --- Focus a field from a checklist link (/invitations/:id/edit/<section>#f-<field>) ------------------
 /** Wait for the section page (and any item editor) to render, then focus the field once. */
 async function focusHashField(hash: string) {
   const id = decodeURIComponent(hash.slice(1))
@@ -143,8 +155,8 @@ watch(
   class="cms-editor-root" data-testid="editor-layout">
   <PublishAnnouncer />
   <header v-if="isWide" class="cms-editor-toolbar">
-    <RouterLink :to="{ name: 'dashboard' }" class="cms-editor-back"><span
-        aria-hidden="true">‹</span>{{ t('myWebsite') }}</RouterLink>
+    <RouterLink :to="{ name: 'invitations' }" class="cms-editor-back"><span
+        aria-hidden="true">‹</span>{{ t('invitations') }}</RouterLink>
     <p class="cms-invitation-title">{{ invitationTitle }}</p>
     <div class="cms-toolbar-save">
       <SaveStatus />

@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 from app.core.config import Settings, get_settings
 from app.core.errors import BadRequestError, NotAuthenticatedError, NotFoundError, PermissionDeniedError
 from app.db.session import get_db
-from app.models import User, Wedding
-from app.services import auth_service, wedding_service
+from app.models import Invitation, User
+from app.services import auth_service, invitation_service
 
 DbSession = Annotated[Session, Depends(get_db)]
 AppSettings = Annotated[Settings, Depends(get_settings)]
@@ -56,20 +56,20 @@ def get_current_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-def get_owned_wedding(wedding_id: str, user: CurrentUser, db: DbSession) -> Wedding:
-    """Authorization: resolve `{wedding_id}` to a wedding the caller owns.
+def get_owned_invitation(invitation_id: str, user: CurrentUser, db: DbSession) -> Invitation:
+    """Authorization: resolve `{invitation_id}` to an invitation the caller owns.
 
     Missing, malformed and foreign ids all yield the same 404, so ids of other
-    users' weddings cannot be probed.
+    users' invitations cannot be probed.
     """
     try:
-        parsed = uuid.UUID(wedding_id)
+        parsed = uuid.UUID(invitation_id)
     except ValueError:
-        raise NotFoundError("Wedding not found.") from None
-    return wedding_service.get_owned_wedding(db, owner_id=user.id, wedding_id=parsed)
+        raise NotFoundError("Invitation not found.") from None
+    return invitation_service.get_owned_invitation(db, owner_id=user.id, invitation_id=parsed)
 
 
-OwnedWedding = Annotated[Wedding, Depends(get_owned_wedding)]
+OwnedInvitation = Annotated[Invitation, Depends(get_owned_invitation)]
 
 
 def parse_if_match(value: str | None) -> int | None:
@@ -85,15 +85,15 @@ def parse_if_match(value: str | None) -> int | None:
     return int(raw)
 
 
-def get_writable_wedding(
-    wedding: OwnedWedding,
+def get_writable_invitation(
+    invitation: OwnedInvitation,
     db: DbSession,
     if_match: Annotated[str | None, Header(alias="If-Match")] = None,
-) -> Wedding:
-    """An owned wedding, locked for this request's write, whose content revision
+) -> Invitation:
+    """An owned invitation, locked for this request's write, whose content revision
     matches the client's `If-Match` (409 `edit_conflict` otherwise)."""
-    wedding_service.lock_for_write(db, wedding, parse_if_match(if_match))
-    return wedding
+    invitation_service.lock_for_write(db, invitation, parse_if_match(if_match))
+    return invitation
 
 
-WritableWedding = Annotated[Wedding, Depends(get_writable_wedding)]
+WritableInvitation = Annotated[Invitation, Depends(get_writable_invitation)]

@@ -6,7 +6,7 @@
  * labelled placeholders (see toPreviewContent), and the notices explain what
  * is being shown. Opened from the editor's "Full screen" button (?from=).
  */
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import AppLanguageSwitch from '@/components/AppLanguageSwitch.vue'
@@ -20,15 +20,18 @@ import { formatTemplatePath } from '@/features/themes/picker/format'
 import DevicePreview, { type Device } from '@/features/themes/preview/DevicePreview.vue'
 import type { SectionKey } from '@/features/wedding/completeness'
 import { safeRedirect } from '@/router/redirect'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const route = useRoute()
 const { t } = useAppLocale()
 
-onMounted(() => void store.ensureLoaded())
+const invitationId = computed(() => (typeof route.params.id === 'string' ? route.params.id : undefined))
+onMounted(() => invitationId.value && void store.ensureLoaded(invitationId.value))
+watch(invitationId, (id) => id && void store.ensureLoaded(id))
 
-const backTo = computed(() => safeRedirect(route.query.from, '/wedding'))
+const editorPath = computed(() => (invitationId.value ? `/invitations/${encodeURIComponent(invitationId.value)}/edit` : '/invitations'))
+const backTo = computed(() => safeRedirect(route.query.from, editorPath.value))
 const hasTheme = computed(() => getTheme(store.themeId) !== undefined)
 const themeId = computed(() => (hasTheme.value ? store.themeId! : DEFAULT_THEME_ID))
 const theme = computed(() => getTheme(themeId.value)!)
@@ -37,7 +40,7 @@ const themePath = computed(() => formatTemplatePath(themeId.value))
 /** Sections that currently show placeholders, in editor order. */
 const placeholderSections = computed(() => {
   const keys = new Set<SectionKey>(store.previewMissing.map((m) => m.section))
-  return [...keys].map((k) => sectionByKey(k))
+  return [...keys].map((k) => sectionByKey(k, store.variant))
 })
 
 const device = ref<Device>('desktop')
@@ -105,11 +108,11 @@ onBeforeUnmount(() => media?.removeEventListener?.('change', onMedia))
       </section>
 
       <main v-if="isPhone" :aria-label="t('websitePreview')">
-        <ThemeRenderer :content="store.livePreviewContent" :theme-id="themeId" viewport-height="calc(100svh - var(--toolbar-h))" />
+        <ThemeRenderer :content="store.livePreviewContent" :theme-id="themeId" :variant="store.variant ?? undefined" :timezone="store.timezone ?? undefined" viewport-height="calc(100svh - var(--toolbar-h))" />
       </main>
       <main v-else class="h-[calc(100dvh-var(--toolbar-h)-6rem)] min-h-[32rem] px-3 pb-4 sm:px-4" :aria-label="t('websitePreview')">
         <h1 class="sr-only">{{ t('websitePreview') }}</h1>
-        <DevicePreview :content="store.livePreviewContent" :theme-id="themeId" :device="device" :label="t('websitePreview')" />
+        <DevicePreview :content="store.livePreviewContent" :theme-id="themeId" :variant="store.variant ?? undefined" :timezone="store.timezone ?? undefined" :device="device" :label="t('websitePreview')" />
       </main>
     </div>
 

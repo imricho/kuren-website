@@ -7,14 +7,14 @@
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, type ComputedRef } from 'vue'
 
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
 let shortcutUsers = 0
 let removeShortcut: (() => void) | null = null
 
 /** Ctrl+S / Cmd+S saves right away instead of opening the browser's "Save page". */
 export function useSaveShortcut() {
-  const store = useWeddingStore()
+  const store = useInvitationStore()
   onMounted(() => {
     if (shortcutUsers++ > 0) return
     const onKeydown = (event: KeyboardEvent) => {

@@ -1,7 +1,13 @@
-# Wedding CMS API contract (Workstream 3)
+# Wedding CMS API contract (Workstream 3) — legacy
 
-Source of truth for the `/api/v1/weddings` API. Backend (`backend/app/...`) and frontend
-(`frontend/src/api/weddings.ts`) both implement exactly this.
+> **Superseded by [invitations.md](invitations.md)** (invitation engine v2.0, migration 0008).
+> Weddings are now invitations with `category: "wedding"`; every `/weddings/...` route below keeps
+> working as an alias of `/invitations/...` (same handlers). This file remains the reference for the
+> shared value types, validation rules, universal sections, publishing rules and uploads, which are
+> unchanged. Differences since 0008: a user may own many invitations (`POST /weddings` no longer
+> returns `409 wedding_exists`; `/weddings/me` = most recently updated wedding), `WeddingRead` gained
+> `category`, `variant`, `title`, `timezone`, new drafts have `schemaVersion: 2` and content writes
+> stamp `contentVersion: "2.0"`, and the public payload adds `category`, `variant`, `timezone`.
 
 ## Conventions
 
@@ -12,7 +18,6 @@ Source of truth for the `/api/v1/weddings` API. Backend (`backend/app/...`) and 
   - 422 `validation_error`: `details = [{ "field": "<camelCase dotted path>", "message": "..." }]`,
     e.g. `groom.name`, `startTime`, `images.0.alt`. (No `body.` prefix.)
   - 404 `not_found`: wedding/item missing **or owned by another user** (never 403, to avoid revealing ids).
-  - 409 `wedding_exists`: POST /weddings when the user already has one.
   - 409 `limit_reached`: adding beyond a collection limit.
   - 409 `edit_conflict`: a content write whose `If-Match` is not the current revision;
     `details = { "currentRevision": number }`. Nothing is written.
@@ -56,12 +61,12 @@ interface WeddingRead {
 | Method | Path | Body | Response |
 |---|---|---|---|
 | GET | `/weddings/me` | – | 200 `WeddingRead`; 404 if the user has none |
-| POST | `/weddings` | `{ themeId?: string \| null, locale?: Locale }` | 201 `WeddingRead`; 409 `wedding_exists` |
+| POST | `/weddings` | `{ themeId?: string \| null, locale?: Locale }` | 201 `WeddingRead` (a `wedding_ceremony`) |
 | PATCH | `/weddings/{weddingId}` | `{ themeId?: string \| null, locale?: Locale }` | 200 `WeddingRead` |
 
 `themeId` must be in `backend/app/core/selectable_theme_ids.json` (generated from the frontend registry:
 only `available` templates; drafts/planned are rejected) → otherwise 422 with field `themeId`.
-MVP: one wedding per user (unique owner).
+Since migration 0008 a user may own up to 50 invitations (see invitations.md).
 
 ## Content (assembled draft)
 
@@ -205,8 +210,8 @@ Other new fields: `opening.guestGreeting?: { enabled; label? }` (e.g. "Kepada Yt
   Headers: `X-Robots-Tag: noindex, nofollow`, `Cache-Control: no-cache` (revalidated by ETag, so a republish or unpublish shows at once),
   `ETag: "<publication id>"` (`If-None-Match` match → 304, empty body), `Referrer-Policy: no-referrer`,
   `X-Content-Type-Options: nosniff`. Rate limited to 120 requests/min per client IP → 429 `too_many_requests`
-  (in-memory, **per process**: limits multiply with workers and reset on restart; keyed by the socket peer, so behind a
-  proxy run uvicorn with trusted `--proxy-headers`).
+  (in-memory, **per process**: limits multiply with workers and reset on restart; keyed by the client IP that uvicorn's
+  `--proxy-headers` resolves from proxies listed in `FORWARDED_ALLOW_IPS`).
 - New weddings start with `countdown = { enabled: true, addToCalendar: true }` (existing weddings unchanged).
 
 ### Image uploads (migration 0007)

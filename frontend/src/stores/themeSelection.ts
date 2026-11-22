@@ -1,7 +1,7 @@
 /**
  * The customer's chosen theme.
  *
- * `selectedThemeId` comes from the wedding record (PATCH /weddings/{id}); the
+ * `selectedThemeId` comes from the open invitation record (PATCH /invitations/{id}); the
  * Workstream 2 localStorage value is migrated once by the wedding store (see
  * `migrateLegacyTheme`). Previewing a template is session-only.
  */
@@ -9,14 +9,20 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import { ApiError } from '@/api/http'
+import { isTemplateCompatible } from '@/features/invitation/registry'
 import { getTheme } from '@/features/themes/core/registry'
 import { isSelectable } from '@/features/themes/core/types'
 
-import { StaleError, useWeddingStore } from './wedding'
+import { StaleError, useInvitationStore } from './invitation'
 import { useAuthStore } from './auth'
 
+/** `error.message` when no invitation is open (choose a template in the wizard instead). */
+export const NO_INVITATION = 'no_invitation'
+/** `error.message` when the template doesn't fit the open invitation's variant. */
+export const INCOMPATIBLE = 'template_incompatible'
+
 export const useThemeSelectionStore = defineStore('themeSelection', () => {
-  const wedding = useWeddingStore()
+  const wedding = useInvitationStore()
   const auth = useAuthStore()
 
   const selectedThemeId = computed<string | null>(() => wedding.themeId)
@@ -41,9 +47,10 @@ export const useThemeSelectionStore = defineStore('themeSelection', () => {
     pendingThemeId.value = id
     error.value = null
     try {
-      await wedding.ensureLoaded()
-      if ((auth.user?.id ?? null) !== ownerId) return false
-      if (wedding.loadState !== 'ready') throw new Error(wedding.loadError ?? 'Your website could not be loaded.')
+      // Templates are chosen for the open invitation; without one, start the wizard instead
+      // (`/invitations/new?template=<id>`, see `needsInvitation`).
+      if (wedding.loadState !== 'ready' || !wedding.record) throw new Error(NO_INVITATION)
+      if (!isTemplateCompatible(id, wedding.record.variant)) throw new Error(INCOMPATIBLE)
       if (wedding.themeId !== id) await wedding.setTheme(id)
       return (auth.user?.id ?? null) === ownerId
     } catch (err) {
@@ -65,5 +72,13 @@ export const useThemeSelectionStore = defineStore('themeSelection', () => {
     if (id) previewedThemeId.value = id
   }
 
-  return { selectedThemeId, selectedTheme, pendingThemeId, error, select, previewedThemeId, preview }
+  /** No invitation is open: selecting a template should start the wizard with it preselected. */
+  const needsInvitation = computed(() => wedding.loadState !== 'ready' || !wedding.record)
+  /** Whether a template fits the open invitation (true when none is open: the wizard filters). */
+  const isCompatible = (idOrAlias: string) => {
+    const theme = getTheme(idOrAlias)
+    return !!theme && (!wedding.record || isTemplateCompatible(theme.id, wedding.record.variant))
+  }
+
+  return { needsInvitation, isCompatible, selectedThemeId, selectedTheme, pendingThemeId, error, select, previewedThemeId, preview }
 })

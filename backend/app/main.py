@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import media
 from app.api.v1.router import api_router
+from app.core.cache_headers import OwnerNoStoreMiddleware
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.limits import BodySizeLimitMiddleware
@@ -36,14 +37,24 @@ def create_app() -> FastAPI:
 
     # Added last, so it runs first (outermost user middleware).
     # Image uploads get their own cap (plus room for the multipart envelope);
-    # the route itself enforces the exact file-size limit.
-    upload_path = re.compile(re.escape(settings.api_v1_prefix) + r"/weddings/[^/]+/assets")
+    # the route itself enforces the exact file-size limit. Public RSVP posts get a small one.
+    prefix = re.escape(settings.api_v1_prefix)
+    upload_path = re.compile(prefix + r"/(?:invitations|weddings)/[^/]+/assets")
+    rsvp_path = re.compile(prefix + r"/public/invitations/[^/]+/rsvp")
     app.add_middleware(
         BodySizeLimitMiddleware,
         max_body_bytes=settings.max_request_body_bytes,
-        overrides=[("POST", upload_path, settings.max_upload_bytes + 64 * 1024)],
+        overrides=[
+            ("POST", upload_path, settings.max_upload_bytes + 64 * 1024),
+            ("POST", rsvp_path, settings.max_rsvp_body_bytes),
+        ],
     )
 
+    app.add_middleware(
+        OwnerNoStoreMiddleware,
+        prefix=settings.api_v1_prefix,
+        public_paths=("/public/", "/invitation-types", "/health"),
+    )
     register_exception_handlers(app)
     app.include_router(api_router, prefix=settings.api_v1_prefix)
     app.include_router(media.router)

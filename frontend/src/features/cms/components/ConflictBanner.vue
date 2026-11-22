@@ -12,11 +12,11 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { FOCUS_RING } from '@/components/ui/styles'
 import { useAppLocale } from '@/composables/useAppLocale'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
 import { conflictBanners, restoreStatusFocus } from '../composables/useSaveStatusUi'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t } = useAppLocale()
 const busy = ref(false)
 

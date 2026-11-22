@@ -20,8 +20,8 @@ import {
 import type { ThemeCollection, ThemeFamily, ThemeTemplate } from './types'
 
 describe('theme registry — Workstream 2 compatibility', () => {
-  it('exposes all 49 available templates as selectable THEMES', () => {
-    expect(THEMES).toHaveLength(49)
+  it('exposes the 49 original templates and the 4 Temuvibe presets as selectable THEMES', () => {
+    expect(THEMES).toHaveLength(53)
     expect(THEMES.map((t) => t.id)).toEqual([
       'international', 'traditional', 'royal-maroon-v2', 'ethnic', 'conventional', 'artistic', 'still-form', 'wildwood-gathering',
       'ivory-processional', 'terracotta-geometry', 'gilded-vow', 'candlelit-hall', 'pressed-filigree', 'loomed-lines',
@@ -30,6 +30,7 @@ describe('theme registry — Workstream 2 compatibility', () => {
       'cut-paper', 'color-study', 'chromatic-vows', 'afterimage', 'sunday-collage', 'the-exhibition', 'negative-space',
       'monogram', 'soft-grid', 'paper-light', 'black-tie', 'quiet-contrast', 'outline', 'atelier',
       'meadowlight', 'olive-grove', 'orchard-table', 'coastal-pine', 'golden-hour-garden', 'gathered-branch', 'wildflower-press',
+      'temuvibe-elegant', 'temuvibe-minimal', 'temuvibe-festive', 'temuvibe-corporate',
     ])
   })
 
@@ -77,7 +78,7 @@ describe('theme hierarchy: family → collection → template', () => {
     expect(validateCatalog()).toEqual([])
   })
 
-  it('has the six families in order', () => {
+  it('has the six original families in order, then Temuvibe', () => {
     expect(FAMILIES.map((f) => f.id)).toEqual([
       'traditional',
       'international',
@@ -85,6 +86,7 @@ describe('theme hierarchy: family → collection → template', () => {
       'artistic',
       'modern-minimalist',
       'rustic-nature',
+      'temuvibe',
     ])
     expect(getFamily('modern-minimalist')?.status).toBe('available')
     expect(getFamily('rustic-nature')?.status).toBe('available')
@@ -199,16 +201,19 @@ describe('naming, aliases and counts', () => {
 
   it('counts collections by availability per family', () => {
     for (const family of FAMILIES) {
-      expect(collectionCounts(family.id)).toEqual({ total: 4, available: 4, draft: 0, comingSoon: 0 })
+      const expected = family.id === 'temuvibe' ? 1 : 4
+      expect(collectionCounts(family.id)).toEqual({ total: expected, available: expected, draft: 0, comingSoon: 0 })
     }
   })
 
   it('counts templates by availability per family and collection', () => {
     for (const family of FAMILIES) {
-      expect(templateCounts({ familyId: family.id })).toEqual({ available: family.id === 'traditional' ? 9 : 8, draft: 0, comingSoon: 0 })
+      const expected = family.id === 'traditional' ? 9 : family.id === 'temuvibe' ? 4 : 8
+      expect(templateCounts({ familyId: family.id })).toEqual({ available: expected, draft: 0, comingSoon: 0 })
     }
     for (const collection of COLLECTIONS) {
-      expect(templateCounts({ collectionId: collection.id })).toEqual({ available: collection.id === 'ceremonial-classic' ? 3 : 2, draft: 0, comingSoon: 0 })
+      const expected = collection.id === 'ceremonial-classic' ? 3 : collection.id === 'temuvibe-signature' ? 4 : 2
+      expect(templateCounts({ collectionId: collection.id })).toEqual({ available: expected, draft: 0, comingSoon: 0 })
     }
   })
 

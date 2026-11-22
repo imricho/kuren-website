@@ -54,6 +54,14 @@ const EVENT_LABELS: Record<EventType, Record<WeddingLocale, string>> = {
   ceremony: { en: 'Wedding Ceremony', id: 'Upacara Pernikahan' },
   reception: { en: 'Reception', id: 'Resepsi' },
   other: { en: 'Celebration', id: 'Acara' },
+  party: { en: 'Party', id: 'Pesta' },
+  celebration: { en: 'Celebration', id: 'Perayaan' },
+  session: { en: 'Session', id: 'Sesi' },
+  talk: { en: 'Talk', id: 'Sesi Bicara' },
+  workshop: { en: 'Workshop', id: 'Workshop' },
+  gathering: { en: 'Gathering', id: 'Kumpul Bersama' },
+  prayer: { en: 'Prayer', id: 'Doa Bersama' },
+  dinner: { en: 'Dinner', id: 'Makan Malam' },
 }
 
 export function eventTypeLabel(type: EventType, locale: WeddingLocale = 'en'): string {
@@ -137,7 +145,7 @@ export const UNSAFE_URL_CHARS = /[\x00-\x20\\]/
 /** Same-origin image paths are limited to the bundled sample photos. */
 export const SAMPLE_IMAGE_PREFIX = '/sample-wedding/'
 const SAMPLE_IMAGE_PATH = /^\/sample-wedding\/[A-Za-z0-9/_.-]+$/
-/** Couple uploads served by the API (`POST /weddings/{id}/assets` → `/media/<uuid>.<ext>`). */
+/** Couple uploads served by the API (`POST /invitations/{id}/assets` → `/media/<uuid>.<ext>`). */
 export const MEDIA_IMAGE_PATH = /^\/media\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:jpg|png|webp)$/
 
 function currentOrigin(): string {

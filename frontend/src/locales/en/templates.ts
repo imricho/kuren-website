@@ -1,0 +1,131 @@
+/**
+ * English text of the Temuvibe templates and the public RSVP form. Rendered in the
+ * INVITATION's language (`content.locale`), not the app UI language, so themes import
+ * this dictionary directly; it is also registered in useAppLocale for app pages.
+ * Keep keys in sync with ../id/templates.ts (type-checked).
+ */
+export const templatesEn = {
+  // Hero kickers per variant
+  tvKickerWedding: 'The Wedding of',
+  tvKickerEngagement: 'The engagement of',
+  tvKickerAnniversary: 'Anniversary celebration',
+  tvKickerBirthday: 'Birthday celebration',
+  tvKickerSweet17: 'Sweet Seventeen',
+  tvKickerKhitanan: 'Khitanan celebration',
+  tvKickerAqiqah: 'Aqiqah celebration',
+  tvKickerGraduation: 'Graduation celebration',
+  tvKickerReligious: 'Celebrate with us',
+  tvKickerFamilyReunion: 'Family reunion',
+  tvKickerFamilyGathering: 'Family gathering',
+  tvKickerCommunity: 'Community gathering',
+  tvKickerCorporate: 'You are invited',
+  tvKickerCompany: 'Company celebration',
+  tvKickerSeminar: 'Seminar',
+  tvKickerWorkshop: 'Workshop',
+  tvPresentedBy: 'Presented by',
+
+  // Section headings (defaults when the owner sets no title)
+  tvDateWedding: 'Wedding Date',
+  tvDateEvent: 'Save the date',
+  tvDateCorporate: 'Event date',
+  tvEventsWedding: 'The celebration',
+  tvEventsGeneric: 'Event details',
+  tvEventsSingle: 'When & where',
+  tvEventsCorporate: 'Sessions',
+  tvAgenda: 'Agenda',
+  tvSpeakers: 'Speakers',
+  tvCouple: 'The couple',
+  tvProfilesCelebrant: 'The celebrant',
+  tvProfilesKhitanan: 'Our son',
+  tvProfilesAqiqah: 'Our little one',
+  tvProfilesGraduate: 'The graduate',
+  tvProfilesHost: 'Your hosts',
+  tvProfilesOrganizer: 'Organising committee',
+  tvProfilesPartner: 'The couple',
+  tvProfilesGeneric: 'Hosted by',
+  tvMilestoneAge: 'Turning {age}',
+  tvMilestoneYears: '{years} years together',
+  tvMilestoneGraduation: 'Graduation',
+  tvMilestoneOccasion: 'The occasion',
+  tvMilestoneGeneric: 'The milestone',
+  tvYearsUnit: 'years',
+  tvAgeUnit: 'years old',
+  tvPartyTheme: 'Party theme',
+  tvInstitution: 'Institution',
+  tvProgram: 'Programme',
+  tvDegree: 'Degree',
+  tvBorn: 'Born {date}',
+  tvCeremony: 'Ceremony',
+  tvOptional: 'Optional',
+  tvOptionalNote: 'You can choose this session when you reply.',
+  tvWith: 'With {names}',
+  tvPartOf: 'Part of {session}',
+  tvVisitWebsite: 'Visit website',
+  tvOpensNewTab: '(opens in a new tab)',
+  tvAddress: 'Address',
+  tvTime: 'Time',
+  tvInvitationFor: 'Invitation',
+  tvClosingNames: 'With love,',
+
+  // RSVP (public form)
+  tvRsvpName: 'Your name',
+  tvRsvpAttendance: 'Will you attend?',
+  tvRsvpAttending: 'Yes, I’ll be there',
+  tvRsvpNotAttending: 'Sorry, I can’t make it',
+  tvRsvpPartySize: 'Number of people (including you)',
+  tvRsvpPartySizeHint: 'Up to {max}.',
+  tvRsvpEmail: 'Email',
+  tvRsvpPhone: 'Phone or WhatsApp',
+  tvRsvpContactHint: 'Add an email address or a phone number.',
+  tvRsvpSessions: 'Which optional sessions will you join?',
+  tvRsvpMessage: 'Message for the host',
+  tvRsvpMessageHint: 'Optional.',
+  tvRsvpRequired: 'required',
+  tvRsvpSelectPlaceholder: 'Choose…',
+  tvRsvpSubmit: 'Send reply',
+  tvRsvpSubmitting: 'Sending…',
+  tvRsvpBy: 'Please reply by {date}.',
+  tvRsvpSuccessTitle: 'Thank you, your reply has been sent',
+  tvRsvpSuccessDefault: 'We’ve received your reply.',
+  tvRsvpSuccessDeclined: 'Thank you for letting us know.',
+  tvRsvpReplyAgain: 'Send another reply',
+  tvRsvpAlreadyReplied: 'You already replied from this device. You can send another reply if your plans have changed.',
+  tvRsvpClosedTitle: 'Replies are closed',
+  tvRsvpClosedBody: 'This invitation is no longer accepting replies.',
+  tvRsvpFullTitle: 'Fully booked',
+  tvRsvpFullBody: 'Sorry, there are no places left for this event.',
+  tvRsvpCapacityBody: 'Sorry, there aren’t enough places left for {count}. Try a smaller number of people.',
+  tvRsvpRateLimited: 'Too many attempts. Please wait a minute and try again.',
+  tvRsvpNetwork: 'Your reply couldn’t be sent. Check your connection and try again.',
+  tvRsvpFailed: 'Something went wrong. Please try again.',
+  tvRsvpRetry: 'Try again',
+  tvRsvpErrorSummary: 'Please check {count} field(s):',
+  tvRsvpErrorSummaryOne: 'Please check this field:',
+  tvRsvpErrRequired: 'Please fill this in.',
+  tvRsvpErrChoose: 'Please choose an option.',
+  tvRsvpErrName: 'Please enter your name.',
+  tvRsvpErrTooLong: 'Use at most {max} characters.',
+  tvRsvpErrEmail: 'Enter an email address like name@example.com.',
+  tvRsvpErrPhone: 'Use digits, spaces or hyphens, with an optional leading +.',
+  tvRsvpErrPartySize: 'Choose a number from 1 to {max}.',
+  tvRsvpErrContact: 'Add an email address or a phone number.',
+  tvRsvpErrCheckbox: 'Please tick this box to continue.',
+  tvRsvpErrServer: 'Please check this value.',
+  tvRsvpSampleNote: 'Sample form — guests can reply on the published invitation.',
+  tvRsvpHoneypot: 'Leave this field empty',
+
+  // Theme studio
+  tvSelectIncompatible: 'Not available for this kind of event',
+
+  // Public page
+  tvPublicTitleSuffix: 'Invitation',
+  tvPublicDescription: '{kind} · {date}',
+} as const
+
+export type TemplatesMessageKey = keyof typeof templatesEn
+
+// Compile-time parity: Indonesian must not have keys English lacks.
+import type { templatesId } from '../id/templates'
+type Extra = Exclude<keyof typeof templatesId, TemplatesMessageKey>
+const _noExtraKeys: [Extra] extends [never] ? true : never = true
+void _noExtraKeys

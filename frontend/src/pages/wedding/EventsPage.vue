@@ -6,13 +6,15 @@ import EventEditor from '@/features/cms/components/editors/EventEditor.vue'
 import ListEditor from '@/features/cms/components/ListEditor.vue'
 import SectionHeader from '@/features/cms/components/SectionHeader.vue'
 import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedChangesGuard'
+import { useVariantCopy } from '@/features/cms/composables/useVariantCopy'
 import { eventMissing } from '@/features/wedding/completeness'
 import type { EventDraft } from '@/features/wedding/draft'
 import { eventTypeLabel, formatDate, formatTimeRange } from '@/features/wedding/format'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const { t, locale } = useAppLocale()
+const { vt, generic } = useVariantCopy()
 useUnsavedChangesGuard()
 
 const events = computed(() => store.items('events'))
@@ -25,14 +27,14 @@ const when = (e: EventDraft) =>
 
 <template>
   <div class="space-y-8">
-    <SectionHeader section="events" :description="t('eventsIntro')" />
+    <SectionHeader section="events" :description="vt('eventsIntro')" />
     <ListEditor
       :items="events"
       :item-name="name"
-      :add-label="t('addEvent')"
-      :empty-title="t('noEventsTitle')"
-      :empty-body="t('noEventsBody')"
-      :list-label="t('sectionEvents')"
+      :add-label="vt('addEvent')"
+      :empty-title="generic ? t('noSessionsTitle') : t('noEventsTitle')"
+      :empty-body="generic ? t('noSessionsBody') : t('noEventsBody')"
+      :list-label="vt('sectionEvents')"
       :max="20"
       :reorder="(ids) => store.reorder('events', ids)"
       :refresh="() => store.refreshCollection('events')"
@@ -44,6 +46,7 @@ const when = (e: EventDraft) =>
         <h2 class="mt-0.5 font-display text-xl font-semibold">{{ name(item, index) }}</h2>
         <p v-if="when(item)" class="mt-1 text-sm text-ink-700">{{ when(item) }}</p>
         <p v-if="item.venueName" class="text-sm text-ink-500">{{ item.venueName }}</p>
+        <p v-if="item.optional" class="mt-1 inline-flex rounded-full bg-canvas px-2 text-xs text-ink-700 ring-1 ring-line" data-testid="session-optional">{{ t('sessionOptionalBadge') }}</p>
         <p v-if="eventMissing(item).length" class="mt-2 text-xs text-amber-700">
           {{ t('eventIncomplete', { count: eventMissing(item).length }) }}
         </p>
@@ -52,7 +55,7 @@ const when = (e: EventDraft) =>
         <EventEditor :item="item" @done="close" />
       </template>
       <template #create="{ close }">
-        <h2 class="mb-4 font-display text-xl font-semibold">{{ t('newEvent') }}</h2>
+        <h2 class="mb-4 font-display text-xl font-semibold">{{ generic ? t('newSession') : t('newEvent') }}</h2>
         <EventEditor @done="close" />
       </template>
     </ListEditor>

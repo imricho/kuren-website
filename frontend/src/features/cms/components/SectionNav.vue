@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
  * Section navigation for the website editor (editor panel header, and the
- * mobile Edit tab): a row of five group tabs, then a horizontal chip scroller
+ * mobile Edit tab): a row of group tabs (driven by the invitation variant's
+ * sections; five for weddings), then a horizontal chip scroller
  * with only the selected group's sections (the canonical public order is
  * unchanged). The selected group follows the current route; choosing another
  * group tab only switches the chips shown (it does not navigate).
@@ -16,34 +17,27 @@ import { computed, nextTick, onMounted, ref, useId, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import { FOCUS_RING } from '@/components/ui/styles'
-import { useAppLocale, type AppMessageKey } from '@/composables/useAppLocale'
+import { useAppLocale } from '@/composables/useAppLocale'
 import type { SectionKey } from '@/features/wedding/completeness'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
 import { prefersReducedMotion } from '../motion'
-import { isSectionShown, NAV_GROUPS, navGroupByRouteName, SECTION_DRAFT_KEYS, type NavGroupKey } from '../sections'
+import { isSectionShown, navGroupByRouteName, navGroupsFor, SECTION_DRAFT_KEYS, type NavGroupKey } from '../sections'
 
 withDefaults(defineProps<{ vertical?: boolean }>(), { vertical: false })
 
-const store = useWeddingStore()
+const store = useInvitationStore()
 const route = useRoute()
 const { t } = useAppLocale()
 const uid = useId()
 const list = ref<HTMLOListElement | null>(null)
 const tabRefs = ref<HTMLButtonElement[]>([])
 
-const routeGroup = computed(() => navGroupByRouteName(route.name)?.key ?? 'wedding')
+const NAV_GROUPS = computed(() => navGroupsFor(store.variant))
+const routeGroup = computed(() => navGroupByRouteName(route.name, NAV_GROUPS.value)?.key ?? NAV_GROUPS.value[0]!.key)
 const selected = ref<NavGroupKey>(routeGroup.value)
 watch(routeGroup, (key) => (selected.value = key))
-const group = computed(() => NAV_GROUPS.find((g) => g.key === selected.value)!)
-
-const FULL_NAME: Record<NavGroupKey, AppMessageKey> = {
-  wedding: 'navGroupWeddingFull',
-  events: 'navGroupEventsFull',
-  moments: 'navGroupMomentsFull',
-  guests: 'navGroupGuestsFull',
-  finishing: 'navGroupFinishingFull',
-}
+const group = computed(() => NAV_GROUPS.value.find((g) => g.key === selected.value) ?? NAV_GROUPS.value[0]!)
 
 type Marker = 'unsaved' | 'complete' | 'needed' | 'hidden' | null
 function marker(key: SectionKey): Marker {
@@ -64,12 +58,13 @@ const chipClass = (active: boolean) => [
 
 // --- Group tabs (←/→ move and activate, Home/End jump; focus stays on the tab) ---------------
 function selectAt(index: number) {
-  const g = NAV_GROUPS[(index + NAV_GROUPS.length) % NAV_GROUPS.length]!
+  const groups = NAV_GROUPS.value
+  const g = groups[(index + groups.length) % groups.length]!
   selected.value = g.key
-  nextTick(() => tabRefs.value[NAV_GROUPS.indexOf(g)]?.focus())
+  nextTick(() => tabRefs.value[groups.indexOf(g)]?.focus())
 }
 function onTabKey(event: KeyboardEvent, index: number) {
-  const moves: Record<string, number> = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: NAV_GROUPS.length - 1 }
+  const moves: Record<string, number> = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: NAV_GROUPS.value.length - 1 }
   if (!(event.key in moves)) return
   event.preventDefault()
   selectAt(moves[event.key]!)
@@ -95,8 +90,8 @@ watch([() => route.name, selected], () => nextTick(revealCurrent))
     class="flex gap-1 overflow-x-auto pt-2 [scrollbar-width:thin]" data-testid="section-nav-groups">
     <button v-for="(g, i) in NAV_GROUPS" :id="`${uid}-tab-${g.key}`" :key="g.key" ref="tabRefs" type="button" role="tab"
       :aria-selected="selected === g.key" :aria-controls="`${uid}-panel`" :tabindex="selected === g.key ? 0 : -1"
-      :title="t(FULL_NAME[g.key])"
-      :aria-label="routeGroup === g.key && selected !== g.key ? `${t(FULL_NAME[g.key])} (${t('currentGroup')})` : t(FULL_NAME[g.key])"
+      :title="t(g.fullLabel)"
+      :aria-label="routeGroup === g.key && selected !== g.key ? `${t(g.fullLabel)} (${t('currentGroup')})` : t(g.fullLabel)"
       :class="[
           'h-9 shrink-0 rounded-md px-3 text-sm whitespace-nowrap transition-colors motion-reduce:transition-none',
           FOCUS_RING,
@@ -139,9 +134,9 @@ watch([() => route.name, selected], () => nextTick(revealCurrent))
             <span class="sr-only">{{ t('statusNeedsDetails') }}</span>
           </span>
         </RouterLink>
-        <RouterLink v-else-if="entry.kind === 'publish'" :to="entry.to"
+        <RouterLink v-else-if="entry.kind === 'page'" :to="entry.to"
           :class="chipClass(route.name === entry.routeName)"
-          :aria-current="route.name === entry.routeName ? 'page' : undefined" data-section="publish">
+          :aria-current="route.name === entry.routeName ? 'page' : undefined" :data-section="entry.key">
           {{ t(entry.label) }}
         </RouterLink>
         <p v-else
@@ -154,7 +149,7 @@ watch([() => route.name, selected], () => nextTick(revealCurrent))
   </div>
   <template v-if="vertical">
     <section v-for="g in NAV_GROUPS" :key="g.key" class="cms-nav-group">
-      <h3>{{ t(FULL_NAME[g.key]) }}</h3>
+      <h3>{{ t(g.fullLabel) }}</h3>
       <ol>
         <template v-for="entry in g.entries" :key="entry.kind === 'section' ? entry.section.key : entry.key">
           <li v-if="entry.kind !== 'note'">
@@ -177,8 +172,8 @@ watch([() => route.name, selected], () => nextTick(revealCurrent))
               <span v-else-if="marker(entry.section.key) === 'needed'" class="cms-nav-needed" data-status="needed"><span
                   aria-hidden="true">○</span><span class="sr-only">{{ t('statusNeedsDetails') }}</span></span>
             </RouterLink>
-            <RouterLink v-else-if="entry.kind === 'publish'" :to="entry.to"
-              :aria-current="route.name === entry.routeName ? 'page' : undefined" data-section="publish"><svg
+            <RouterLink v-else-if="entry.kind === 'page'" :to="entry.to"
+              :aria-current="route.name === entry.routeName ? 'page' : undefined" :data-section="entry.key"><svg
                 viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.35" aria-hidden="true">
                 <path d="m3 9 14-6-6 14-2-6-6-2Zm6 2 8-8" />
               </svg><span>{{ t(entry.label) }}</span></RouterLink>

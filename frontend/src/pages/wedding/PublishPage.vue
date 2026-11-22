@@ -9,15 +9,18 @@
  * 422 publish_blocked details (store.publishIssues) are merged in after an attempt.
  */
 import { computed, ref, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
+import { INVITATION_PREVIEW_ROUTE_NAME } from '@/features/cms/editorRoutes'
 import { sectionByKey } from '@/features/cms/sections'
 import type { SectionKey } from '@/features/wedding/completeness'
 import { blockingIssues, publicDisclosure, warningIssues, type PublishIssue } from '@/features/wedding/publishChecks'
-import { useWeddingStore } from '@/stores/wedding'
+import { useInvitationStore } from '@/stores/invitation'
 
-const store = useWeddingStore()
+const store = useInvitationStore()
+const route = useRoute()
 const { t, locale } = useAppLocale()
 
 const issues = computed<PublishIssue[]>(() => {
@@ -92,7 +95,7 @@ const hasDisclosure = computed(() => disclosure.value.bankAccounts > 0 || disclo
 function sectionLabel(section: PublishIssue['section']): string {
   if (section === 'theme') return t('sectionTheme')
   try {
-    return t(sectionByKey(section as SectionKey).label)
+    return t(sectionByKey(section as SectionKey, store.variant).label)
   } catch {
     return section
   }
@@ -112,7 +115,7 @@ async function copyLink() {
   }
 }
 
-const previewTo = computed(() => ({ name: 'wedding-preview', query: { from: '/wedding/publish' } }))
+const previewTo = computed(() => ({ name: INVITATION_PREVIEW_ROUTE_NAME, query: { from: route.fullPath } }))
 
 // The Unpublish button disappears once it succeeds; put focus on Publish instead of <body> (WCAG 2.4.3).
 async function unpublishAndRefocus() {

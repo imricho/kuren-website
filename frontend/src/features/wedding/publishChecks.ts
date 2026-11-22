@@ -8,6 +8,8 @@
  */
 import type { RouteLocationRaw } from 'vue-router'
 
+import { EDITOR_ROUTE_NAME, editorRouteName } from '@/features/cms/editorRoutes'
+import { isSectionOffered, isSectionRequired, isWeddingVariant, NEW_SECTION_IDS, type NewSectionId, type SectionId, type VariantId } from '../invitation/registry'
 import { getTheme } from '@/features/themes/core/registry'
 import { isSelectable } from '@/features/themes/core/types'
 import { publishEn, type PublishMessageKey } from '@/locales/en/publish'
@@ -22,10 +24,10 @@ import {
   type WeddingDraft,
 } from './draft'
 import { SAMPLE_IMAGE_PREFIX } from './format'
-import type { HolyReciteSection, ImageAsset, WeddingLocale, WeddingSectionId } from './types'
+import { WEDDING_SECTION_ORDER, type HolyReciteSection, type ImageAsset, type WeddingLocale, type WeddingSectionId } from './types'
 
 export type PublishIssueSeverity = 'error' | 'warning'
-export type PublishSection = WeddingSectionId | 'theme'
+export type PublishSection = WeddingSectionId | NewSectionId | 'theme'
 
 export interface PublishIssue {
   severity: PublishIssueSeverity
@@ -42,19 +44,8 @@ export interface PublishIssue {
 /** Editor route of each section (router names; theme lives in the studio). */
 export const SECTION_ROUTE: Record<PublishSection, string> = {
   theme: 'themes',
-  opening: 'wedding-opening',
-  holyRecite1: 'wedding-holy-recite-1',
-  greeting: 'wedding-greeting',
-  couple: 'wedding-couple',
-  weddingDate: 'wedding-date',
-  events: 'wedding-events',
-  story: 'wedding-story',
-  gallery: 'wedding-gallery',
-  rsvp: 'wedding-rsvp',
-  wishes: 'wedding-wishes',
-  amplopDigital: 'wedding-gifts',
-  holyRecite2: 'wedding-holy-recite-2',
-  closing: 'wedding-closing',
+  ...(Object.fromEntries(WEDDING_SECTION_ORDER.map((key) => [key, editorRouteName(key)])) as Record<WeddingSectionId, string>),
+  ...(Object.fromEntries(NEW_SECTION_IDS.map((key) => [key, editorRouteName(key)])) as Record<NewSectionId, string>),
 }
 
 /** DOM id of an editor field; same scheme as features/cms/validation `fieldId(path)`. */
@@ -64,7 +55,7 @@ export function fieldDomId(path: string): string {
 
 export function issueLocation(section: PublishSection, field: string): RouteLocationRaw {
   // Names are edited on the Opening page (ids `couple.groom.name` / `couple.bride.name`).
-  const name = section === 'couple' && /^couple\.(groom|bride)\.name$/.test(field) ? SECTION_ROUTE.opening : (SECTION_ROUTE[section] ?? 'wedding')
+  const name = section === 'couple' && /^couple\.(groom|bride)\.name$/.test(field) ? SECTION_ROUTE.opening : (SECTION_ROUTE[section] ?? EDITOR_ROUTE_NAME)
   return field && section !== 'theme' ? { name, hash: `#${fieldDomId(field)}` } : { name }
 }
 
@@ -82,6 +73,9 @@ function message(locale: WeddingLocale, key: PublishMessageKey, vars: Record<str
 }
 
 const has = (value: string | undefined): value is string => !!value && value.trim() !== ''
+/** Milestone values may be numbers (age, years) as well as text. */
+const present = (value: unknown): boolean =>
+  typeof value === 'number' ? Number.isFinite(value) : typeof value === 'string' && value.trim() !== ''
 
 function toLocalIso(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
@@ -93,6 +87,8 @@ export interface PublishCheckOptions {
   /** Language of the messages (the editor UI language). */
   locale?: WeddingLocale
   today?: Date
+  /** The invitation's variant: only offered sections are checked; non-wedding wording. */
+  variant?: VariantId | null
 }
 
 /**
@@ -103,6 +99,10 @@ export function publishChecks(draft: WeddingDraft, options: PublishCheckOptions)
   const locale = options.locale ?? 'en'
   const today = toLocalIso(options.today ?? new Date())
   const issues: PublishIssue[] = []
+  const variant = options.variant ?? undefined
+  const offers = (id: SectionId) => !variant || isSectionOffered(variant, id)
+  const wedding = !variant || isWeddingVariant(variant)
+  const coupleShown = offers('couple') && !(variant && !isSectionRequired(variant, 'couple') && draft.couple?.enabled === false)
   const add = (severity: PublishIssueSeverity, section: PublishSection, field: string, code: string, key: PublishMessageKey, vars?: Record<string, string | number>) =>
     issues.push({ severity, section, field, code, message: message(locale, key, vars), to: issueLocation(section, field) })
   const error = (section: PublishSection, field: string, code: string, key: PublishMessageKey, vars?: Record<string, string | number>) =>
@@ -116,16 +116,16 @@ export function publishChecks(draft: WeddingDraft, options: PublishCheckOptions)
 
   // Opening & couple (names are edited on the Opening page)
   const o = draft.opening ?? {}
-  if (!isIsoDate(o.weddingDate)) error('opening', 'weddingDate', 'required', 'checkWeddingDate')
-  if (!has(draft.couple?.groom?.name)) error('couple', 'couple.groom.name', 'required', 'checkGroomName')
-  if (!has(draft.couple?.bride?.name)) error('couple', 'couple.bride.name', 'required', 'checkBrideName')
+  if (!isIsoDate(o.weddingDate)) error('opening', 'weddingDate', 'required', wedding ? 'checkWeddingDate' : 'checkEventDate')
+  if (coupleShown && !has(draft.couple?.groom?.name)) error('couple', 'couple.groom.name', 'required', 'checkGroomName')
+  if (coupleShown && !has(draft.couple?.bride?.name)) error('couple', 'couple.bride.name', 'required', 'checkBrideName')
   if (!o.coverImage) warn('opening', 'coverImage', 'recommended', 'warnCover')
 
   // Holy Recite 1, Greeting
-  holyRecite('holyRecite1', draft.holyRecite1)
+  if (offers('holyRecite1')) holyRecite('holyRecite1', draft.holyRecite1)
   const g = draft.greeting
   // Server rule: title or message (a prayer alone does not count).
-  if (g?.enabled && !has(g.title) && !has(g.message)) error('greeting', 'message', 'incomplete', 'checkGreeting')
+  if (offers('greeting') && g?.enabled && !has(g.title) && !has(g.message)) error('greeting', 'message', 'incomplete', 'checkGreeting')
 
   // Events: at least one, and EVERY event complete (server checks each, in display order).
   const events = draft.events ?? []
@@ -149,22 +149,33 @@ export function publishChecks(draft: WeddingDraft, options: PublishCheckOptions)
   })
 
   // Story & gallery: when shown they need content (server blocks; turning them off is the fix).
-  if (draft.story?.enabled !== false && !(draft.story?.timeline ?? []).some((s) => has(s.title) && has(s.description)))
+  if (offers('story') && draft.story?.enabled !== false && !(draft.story?.timeline ?? []).some((s) => has(s.title) && has(s.description)))
     error('story', 'timeline', 'incomplete', 'warnStoryEmpty')
-  if (draft.gallery?.enabled !== false && (draft.gallery?.images?.length ?? 0) === 0) error('gallery', 'images', 'incomplete', 'warnGalleryEmpty')
+  if (offers('gallery') && draft.gallery?.enabled !== false && (draft.gallery?.images?.length ?? 0) === 0) error('gallery', 'images', 'incomplete', 'warnGalleryEmpty')
 
   // RSVP
   const r = draft.rsvp
   if (r?.enabled !== false) {
-    // RSVP never blocks; without a title it is hidden on the published page.
+    // RSVP never blocks; without a title guests see the default heading.
     if (!has(r?.title)) warn('rsvp', 'title', 'missing_title', 'checkRsvpTitle')
-    if (isIsoDate(r?.deadline) && isIsoDate(o.weddingDate) && r!.deadline! > o.weddingDate!) warn('rsvp', 'deadline', 'after_wedding', 'warnRsvpDeadline')
-    warn('rsvp', 'enabled', 'info_only', 'warnRsvpInfoOnly')
+    if (isIsoDate(r?.deadline) && isIsoDate(o.weddingDate) && r!.deadline! > o.weddingDate!)
+      warn('rsvp', 'deadline', 'after_wedding', wedding ? 'warnRsvpDeadline' : 'warnRsvpDeadlineEvent')
+    if (r?.allowSessionChoice && !events.some((e) => e.optional)) warn('rsvp', 'allowSessionChoice', 'no_optional_sessions', 'warnSessionChoiceNoOptional')
   }
+
+  // v2.0 sections (only where offered and shown)
+  const p2 = draft.profiles
+  if (offers('profiles') && p2?.enabled && !(p2.people ?? []).some((x) => has(x.name))) error('profiles', 'people', 'incomplete', 'checkProfiles')
+  const m = draft.milestone
+  if (offers('milestone') && m?.enabled && !Object.entries(m).some(([k, v]) => k !== 'enabled' && k !== 'title' && present(v)))
+    warn('milestone', '', 'empty', 'warnMilestoneEmpty')
+  if (offers('organization') && draft.organization?.enabled && !has(draft.organization.name)) warn('organization', 'name', 'empty', 'warnOrganizationEmpty')
+  if (offers('agenda') && draft.agenda?.enabled && !(draft.agenda.items ?? []).some((i) => has(i.title))) warn('agenda', 'items', 'empty', 'warnAgendaEmpty')
+  if (offers('speakers') && draft.speakers?.enabled && !(draft.speakers.people ?? []).some((x) => has(x.name))) warn('speakers', 'people', 'empty', 'warnSpeakersEmpty')
 
   // Amplop Digital
   // Every method that is ON needs complete content, and at least one method must be on.
-  const a = draft.amplopDigital
+  const a = offers('amplopDigital') ? draft.amplopDigital : undefined
   if (a?.enabled) {
     if (!a.bankAccountsEnabled && !a.qrisEnabled && !a.physicalGifts?.enabled) error('amplopDigital', '', 'incomplete', 'checkAmplopMethod')
     if (a.bankAccountsEnabled) {
@@ -188,7 +199,7 @@ export function publishChecks(draft: WeddingDraft, options: PublishCheckOptions)
   }
 
   // Holy Recite 2, Closing
-  holyRecite('holyRecite2', draft.holyRecite2)
+  if (offers('holyRecite2')) holyRecite('holyRecite2', draft.holyRecite2)
   if (!has(draft.closing?.message)) error('closing', 'message', 'required', 'checkClosing')
 
   // Images: alt text and leftover sample photos (one warning each kind)

@@ -16,6 +16,7 @@ import { computed, nextTick, onErrorCaptured, ref, watch } from 'vue'
 
 import { FOCUS_RING } from '@/components/ui/styles'
 import { useAppLocale } from '@/composables/useAppLocale'
+import type { VariantId } from '@/features/invitation/registry'
 import ThemeRenderer from '@/features/themes/core/ThemeRenderer.vue'
 import type { WeddingContent } from '@/features/wedding/types'
 
@@ -35,8 +36,11 @@ const props = withDefaults(
     section?: string | null
     /** False while the panel is hidden (mobile Edit tab). */
     visible?: boolean
+    /** The invitation's variant and time zone (variant-aware templates). */
+    variant?: VariantId
+    timezone?: string
   }>(),
-  { section: null, visible: true },
+  { section: null, visible: true, variant: undefined, timezone: undefined },
 )
 
 const { t } = useAppLocale()
@@ -158,7 +162,7 @@ defineExpose({ scroller, box })
       >
         <p id="preview-visual-only" class="sr-only">{{ t('previewVisualOnly') }}</p>
         <div inert aria-hidden="true" data-testid="preview-content">
-          <ThemeRenderer :key="attempt" :content="content" :theme-id="themeId" viewport-height="100cqh" embedded />
+          <ThemeRenderer :key="attempt" :content="content" :theme-id="themeId" :variant="variant" :timezone="timezone" viewport-height="100cqh" embedded />
         </div>
       </div>
     </div>

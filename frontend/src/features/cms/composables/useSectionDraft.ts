@@ -16,6 +16,10 @@
  *   Server 422 field errors are mapped inline.
  * - `autosave: false` (the new-item form): saved only by an explicit `save()`,
  *   which ignores repeated calls while one is running (no duplicate records).
+ * - Interrupted sessions: while dirty, the working copy is kept on the device
+ *   (draftRecovery.ts) until it is saved or discarded. A draft that finds such an entry
+ *   on mount offers Restore / Discard through the store (`registerRecovery`); nothing is
+ *   applied automatically. New-item forms (`…:new`) are not recovered.
  */
 import { computed, isProxy, nextTick, onScopeDispose, ref, toRaw, watch, type Ref } from 'vue'
 
@@ -23,7 +27,10 @@ import { ApiError } from '@/api/http'
 import { useAppLocale } from '@/composables/useAppLocale'
 import { useForm } from '@/composables/useForm'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 import { StaleError, useInvitationStore, type AutosaveHandle, type KeySaveState, type LivePatch } from '@/stores/invitation'
+
+import { loadRecovery, removeRecovery, saveRecovery } from '../draftRecovery'
 
 import { fieldId, issueMessage, type FieldIssue } from '../validation'
 
@@ -110,6 +117,24 @@ export function useSectionDraft<F extends object, P>(options: SectionDraftOption
     if (autosave) store.setKeyState(options.key, next)
   }
 
+  // --- Interrupted-session recovery ------------------------------------------------
+  const auth = useAuthStore()
+  const recoveryScope = (() => {
+    const userId = auth.user?.id
+    const invitationId = store.invitationId
+    return autosave && !options.key.endsWith(':new') && userId && invitationId ? { userId: String(userId), invitationId } : null
+  })()
+  /** Keep (or drop) the unsaved working copy on the device. Called after user edits and saves. */
+  function persistRecovery() {
+    if (!recoveryScope || disposedRecovery) return
+    const { userId, invitationId } = recoveryScope
+    if (isDirty.value) saveRecovery(userId, invitationId, options.key, { form: clone(form.value), baseline: baselineJson.value, at: Date.now() })
+    else removeRecovery(userId, invitationId, options.key)
+    store.bumpRecovery()
+  }
+  let disposedRecovery = false
+  let unregisterRecovery: () => void = () => {}
+
   // Dirty registry + live preview: synchronous, so the preview follows every keystroke.
   watch(isDirty, (dirty) => store.setDirty(options.key, dirty), { immediate: true, flush: 'sync' })
   const publish = () =>
@@ -157,6 +182,7 @@ export function useSectionDraft<F extends object, P>(options: SectionDraftOption
     () => {
       if (internal || disposed) return
       editSeq++
+      persistRecovery()
       if (!autosave) return
       attempts = 0
       clearRetry()
@@ -186,6 +212,11 @@ export function useSectionDraft<F extends object, P>(options: SectionDraftOption
       if (saved !== null && !isDirty.value && !inFlight) resync()
     },
   )
+
+  // A save (or reload) moved the baseline: drop the device copy once nothing is unsaved.
+  watch(baselineJson, () => {
+    if (!isDirty.value) persistRecovery()
+  })
 
   const errors = computed<Record<string, string>>(() => {
     const out: Record<string, string> = {}
@@ -377,6 +408,7 @@ export function useSectionDraft<F extends object, P>(options: SectionDraftOption
     attempted.value = false
     reset()
     if (autosave) setState('idle')
+    persistRecovery()
   }
 
   /** Save now (Save now button, Enter, Add). Resolves true when saved / nothing to save. Never throws. */
@@ -403,12 +435,51 @@ export function useSectionDraft<F extends object, P>(options: SectionDraftOption
       clearRetry()
       resync()
       setState('idle')
+      persistRecovery()
     },
+  }
+
+  // Unsaved changes left by an interrupted session: offer them, never apply them silently.
+  if (recoveryScope) {
+    const { userId, invitationId } = recoveryScope
+    const found = loadRecovery(userId, invitationId, options.key)
+    if (found) {
+      let recoveredPayload: string | null = null
+      try {
+        recoveredPayload = serialize(options.toPayload({ ...clone(baseline.value), ...(found.form as Partial<F>) } as F))
+      } catch {
+        recoveredPayload = null // shape changed since: unusable
+      }
+      if (recoveredPayload === null || recoveredPayload === baselineJson.value) {
+        removeRecovery(userId, invitationId, options.key) // nothing left to recover
+        store.bumpRecovery()
+      } else {
+        unregisterRecovery = store.registerRecovery(options.key, {
+          at: found.at,
+          stale: found.baseline !== baselineJson.value,
+          restore: () => {
+            unregisterRecovery()
+            unregisterRecovery = () => {}
+            // Assigned as a user edit: autosave picks it up and the device copy is refreshed.
+            form.value = clone({ ...clone(baseline.value), ...(found.form as Partial<F>) } as F)
+          },
+          discard: () => {
+            unregisterRecovery()
+            unregisterRecovery = () => {}
+            removeRecovery(userId, invitationId, options.key)
+            store.bumpRecovery()
+          },
+        })
+      }
+    }
   }
   const unregister = autosave ? store.registerAutosave(options.key, handle) : () => {}
 
   onScopeDispose(() => {
     disposed = true
+    // The device copy stays (that is the point); only stop offering it from this instance.
+    disposedRecovery = true
+    unregisterRecovery()
     const hadPending = debounce !== null || retryTimer !== null
     clearDebounce()
     clearRetry()

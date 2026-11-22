@@ -201,7 +201,7 @@ describe('Responses page', () => {
     expect(first.text()).toContain('g1@example.com')
     expect(first.text()).toContain('Workshop A')
     expect(first.text()).toContain('Company: Acme')
-    expect(first.text()).toContain('veg: Yes')
+    expect(first.text()).toContain('Removed question (veg): Yes') // an answer to a question no longer on the form
     expect(wrapper.get('[data-action="export-csv"]').attributes()).toMatchObject({ href: '/api/v1/invitations/x1/rsvp-responses.csv', download: '' })
     expect(wrapper.find('[data-testid="responses-cards"]').exists()).toBe(true)
   })

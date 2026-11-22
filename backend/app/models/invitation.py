@@ -179,6 +179,9 @@ class InvitationAsset(Base):
     width: Mapped[int] = mapped_column(Integer, nullable=False)
     height: Mapped[int] = mapped_column(Integer, nullable=False)
     bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    #: Deleted by the owner while the live page still showed it: hidden from the owner and
+    #: never usable again; file and row are removed once no live publication uses it.
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -45,6 +45,14 @@ def rsvp_rate_limit(slug: str, request: Request, settings: AppSettings) -> None:
         raise RateLimitedError()
 
 
+def rsvp_edit_rate_limit(request: Request, settings: AppSettings) -> None:
+    """A guest changing their own reply: per client IP only. Edits do not draw on the
+    invitation-wide budget, so outsiders flooding the slug cannot stop guests from
+    correcting their replies (each reply also allows at most 50 changes)."""
+    if not rsvp_limiter.hit(_client_key(request), settings.rsvp_rate_limit_per_minute):
+        raise RateLimitedError()
+
+
 def _etag_matches(if_none_match: str | None, etag: str) -> bool:
     if not if_none_match:
         return False
@@ -123,7 +131,7 @@ def read_own_rsvp(slug: str, db: DbSession, token: RsvpToken = None) -> JSONResp
 @router.put(
     "/invitations/{slug}/rsvp/mine",
     response_model=RsvpSubmitted,
-    dependencies=[Depends(rsvp_rate_limit)],
+    dependencies=[Depends(rsvp_edit_rate_limit)],
     responses={404: {"description": "`not_found` or `rsvp_link_invalid`"}},
 )
 def update_own_rsvp(slug: str, payload: RsvpSubmission, db: DbSession, token: RsvpToken = None) -> JSONResponse:

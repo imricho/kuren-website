@@ -23,7 +23,7 @@ rotation on the real hosts.
 | `MAX_ASSETS_PER_INVITATION` | no | `300` | Renamed from `MAX_ASSETS_PER_WEDDING` (the old name is ignored) |
 | `MAX_REQUEST_BODY_BYTES`, `MAX_RSVP_BODY_BYTES` | no | 1 MiB, 16 KiB | The RSVP cap also covers `PUT …/rsvp/mine` |
 | `PUBLIC_RATE_LIMIT_PER_MINUTE` | no | `120` | Per client IP |
-| `RSVP_RATE_LIMIT_PER_MINUTE`, `RSVP_SLUG_RATE_LIMIT_PER_MINUTE` | no | `10`, `60` | Per client IP / per invitation (new, changed and "read my reply" requests) |
+| `RSVP_RATE_LIMIT_PER_MINUTE`, `RSVP_SLUG_RATE_LIMIT_PER_MINUTE` | no | `10`, `300` | Per client IP (new and changed replies) / per invitation (new replies only; reading your own reply uses the public-page limit) |
 | `RUN_MIGRATIONS` | no | `true` | `false` on app containers once migrations run as a one-off job |
 
 Frontend: the production build reads no runtime secrets (`VITE_*` are dev-server settings only).

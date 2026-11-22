@@ -8,7 +8,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from tests.invitation_helpers import INV, PUBLIC_INV, create_invitation, make_publishable, publish
-from tests.test_migration_0008 import _alembic
+from tests.test_migration_0008 import _alembic, _head
 
 
 def test_backfill_keeps_the_public_timezone_and_replies(auth_client: TestClient, engine: Engine, db: Session) -> None:
@@ -46,4 +46,4 @@ def test_downgrade_refuses_multi_day_sessions_ending_earlier_in_the_day(
     with pytest.raises(RuntimeError, match="multi-day"):
         _alembic(engine, "downgrade", "0008")
     with engine.connect() as conn:
-        assert conn.scalar(text("SELECT version_num FROM alembic_version")) == "0009"
+        assert conn.scalar(text("SELECT version_num FROM alembic_version")) == _head()  # nothing ran

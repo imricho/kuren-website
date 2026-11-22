@@ -293,6 +293,7 @@ export function localizeServerIssue(detail: ServerPublishDetail, ctx: ServerIssu
     'holyRecite2:incomplete': 'checkHolyRecite',
     'greeting:incomplete': 'checkGreeting',
   }
+  if (code === 'foreign_image') return t('checkForeignImage', { section: ctx.sectionName?.(section as PublishSection) ?? section })
   if (section === 'couple') return t(field.includes('bride') ? 'checkBrideName' : 'checkGroomName')
   if (section === 'amplopDigital') {
     if (field.endsWith('bankAccounts')) return t('checkBankAccounts')

@@ -7,6 +7,7 @@ import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 
 import { ApiError } from '@/api/http'
+import { clearRecoveries } from '@/features/cms/draftRecovery'
 import { invitationsApi, type InvitationCreate, type InvitationRead, type InvitationSummary } from '@/api/invitations'
 import type { CategoryId } from '@/features/invitation/registry'
 
@@ -94,6 +95,7 @@ export const useInvitationsStore = defineStore('invitations', () => {
     } catch (err) {
       if (!(err instanceof ApiError && err.status === 404)) throw err
     }
+    clearRecoveries({ invitationId: id })
     if (gen !== generation) return
     items.value = items.value.filter((item) => item.id !== id)
     // The open invitation no longer exists: drop it from the editor.

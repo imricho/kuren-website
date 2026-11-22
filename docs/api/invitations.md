@@ -331,7 +331,7 @@ RSVP deadline) only after the next publish.
 
 Validated against the **published** snapshot's RSVP config, in this order:
 
-1. Rate limits (`RATE_LIMIT_BACKEND`: per process in development, shared in production): 10/min per client IP (own bucket), then 60/min per
+1. Rate limits (`RATE_LIMIT_BACKEND`: per process in development, shared in production): 10/min per client IP (own bucket), then 300/min per
    invitation slug → 429. Body > 16 KiB → 413. Behind a reverse proxy the client IP comes from
    `X-Forwarded-For` only when the proxy is listed in `FORWARDED_ALLOW_IPS` (see `infrastructure/nginx/README.md`).
 2. Unknown/unpublished slug → 404.
@@ -362,8 +362,8 @@ guest read and replace THIS reply; replies are never matched by name or email.
 ### A guest's own reply
 
 `GET /public/invitations/{slug}/rsvp/mine` and `PUT /public/invitations/{slug}/rsvp/mine`, with
-header `X-RSVP-Token: <editToken>` (never in the URL). Same rate limits and body cap as a new
-reply; `Cache-Control: no-store`.
+header `X-RSVP-Token: <editToken>` (never in the URL). GET uses the public-page limit; PUT the
+per-IP RSVP limit only (not the per-invitation one); 16 KiB body cap; `Cache-Control: no-store`.
 
 - Unknown, malformed or foreign token (or a reply made before 0009) → 404 `rsvp_link_invalid`;
   unpublished invitation → 404 `not_found`.

@@ -180,7 +180,7 @@ def test_entrypoint_refuses_wildcard_proxy_trust(value: str, code: int) -> None:
 
 def test_rsvp_per_slug_bucket(auth_client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(get_settings(), "rsvp_slug_rate_limit_per_minute", 3)
-    assert get_settings().model_fields["rsvp_slug_rate_limit_per_minute"].default == 60
+    assert get_settings().model_fields["rsvp_slug_rate_limit_per_minute"].default == 300
     first, second = _published(auth_client), _published(auth_client)
     for _ in range(3):
         assert auth_client.post(f"{PUBLIC_INV}/{first['slug']}/rsvp", json=GUEST).status_code == 201

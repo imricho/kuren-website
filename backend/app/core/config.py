@@ -50,7 +50,8 @@ class Settings(BaseSettings):
     # Public RSVP submissions: a separate, stricter bucket (per client IP per minute, per process),
     # plus a per-invitation bucket so one slug cannot be flooded from many addresses.
     rsvp_rate_limit_per_minute: int = Field(default=10, ge=1)
-    rsvp_slug_rate_limit_per_minute: int = Field(default=60, ge=1)
+    # Well above the per-IP limit, so a handful of addresses cannot lock real guests out.
+    rsvp_slug_rate_limit_per_minute: int = Field(default=300, ge=1)
 
     # Reverse proxies whose X-Forwarded-For uvicorn trusts (uvicorn reads the same env var,
     # FORWARDED_ALLOW_IPS). Comma-separated IPs/CIDRs; "*" is refused: anyone could then

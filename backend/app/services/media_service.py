@@ -12,6 +12,7 @@ Security model:
 
 import io
 import json
+import logging
 import os
 import re
 import uuid
@@ -27,6 +28,8 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.errors import LimitReachedError, NotFoundError, PayloadTooLargeError, UnsupportedImageError
 from app.models import Invitation, InvitationAsset, InvitationPublication
+
+logger = logging.getLogger(__name__)
 
 AssetKind = Literal["image", "qris"]
 
@@ -162,7 +165,9 @@ def create_asset(db: Session, invitation: Invitation, *, kind: AssetKind, data: 
     encoded = encode(data, kind)  # CPU work before taking the lock
     # Lock the invitation row so concurrent uploads cannot both pass the limit check.
     db.scalar(select(Invitation.id).where(Invitation.id == invitation.id).with_for_update())
-    count = db.scalar(select(func.count()).select_from(InvitationAsset).where(InvitationAsset.invitation_id == invitation.id))
+    count = db.scalar(select(func.count()).select_from(InvitationAsset).where(
+        InvitationAsset.invitation_id == invitation.id, InvitationAsset.deleted_at.is_(None),
+    ))
     if (count or 0) >= settings.max_assets_per_invitation:
         db.rollback()
         raise LimitReachedError("You have uploaded the maximum number of images. Delete some first.")
@@ -186,20 +191,47 @@ def create_asset(db: Session, invitation: Invitation, *, kind: AssetKind, data: 
 
 
 def delete_asset(db: Session, invitation: Invitation, asset_id: str) -> None:
-    """Delete the record (owner only). The file is removed now unless the LIVE
-    publication still shows it; such files are left for a later cleanup job."""
+    """Delete an image (owner only). Removed at once unless the LIVE publication still shows
+    it: then it is tombstoned (`deleted_at`) and removed by `sweep_deleted_assets` as soon as
+    the live page stops using it (publish, unpublish, invitation delete)."""
     try:
         parsed = uuid.UUID(asset_id)
     except ValueError:
         raise NotFoundError("Image not found.") from None
-    asset = db.scalar(select(InvitationAsset).where(InvitationAsset.id == parsed, InvitationAsset.invitation_id == invitation.id))
+    asset = db.scalar(select(InvitationAsset).where(
+        InvitationAsset.id == parsed, InvitationAsset.invitation_id == invitation.id, InvitationAsset.deleted_at.is_(None),
+    ))
     if asset is None:
         raise NotFoundError("Image not found.")
     filename = asset.filename
+    if _referenced_by_live_publication(db, invitation, filename):
+        asset.deleted_at = func.now()
+        db.commit()
+        return
     db.delete(asset)
     db.commit()
-    if not _referenced_by_live_publication(db, invitation, filename):
-        (media_root() / filename).unlink(missing_ok=True)
+    (media_root() / filename).unlink(missing_ok=True)
+
+
+def sweep_deleted_assets(db: Session, invitation: Invitation) -> None:
+    """Remove tombstoned images the live publication no longer shows (file first, then row).
+    Call after the live publication changed (publish / unpublish)."""
+    rows = list(db.scalars(select(InvitationAsset).where(
+        InvitationAsset.invitation_id == invitation.id, InvitationAsset.deleted_at.is_not(None),
+    )))
+    removed = False
+    for row in rows:
+        if _referenced_by_live_publication(db, invitation, row.filename):
+            continue
+        try:
+            (media_root() / row.filename).unlink(missing_ok=True)
+        except OSError:
+            logger.warning("Could not remove a deleted media file")
+            continue
+        db.delete(row)
+        removed = True
+    if removed:
+        db.commit()
 
 
 def _referenced_by_live_publication(db: Session, invitation: Invitation, filename: str) -> bool:

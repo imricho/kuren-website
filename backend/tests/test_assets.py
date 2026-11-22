@@ -216,7 +216,7 @@ def test_media_is_served_with_strict_headers(auth_client: TestClient, wid: str) 
     assert response.headers["content-type"] == "image/webp"
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["content-security-policy"] == "default-src 'none'"
-    assert response.headers["cache-control"] == "public, max-age=31536000, immutable"
+    assert response.headers["cache-control"] == "public, max-age=86400"  # deletable: caches let go after a day
     assert "set-cookie" not in response.headers
 
 

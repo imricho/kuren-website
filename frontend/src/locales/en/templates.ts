@@ -100,6 +100,7 @@ export const templatesEn = {
   tvRsvpUpdatedOn: 'Last changed {date}.',
   tvRsvpChange: 'Change my reply',
   tvRsvpSeparateHint: 'Replying for someone else? A separate reply is counted on its own; it does not change yours.',
+  tvRsvpNotMe: 'Not you? Reply as someone else on this device',
   tvRsvpEditing: 'You are changing the reply you sent on {date}. Saving replaces it, so it is never counted twice.',
   tvRsvpSave: 'Save changes',
   tvRsvpSaving: 'Saving…',

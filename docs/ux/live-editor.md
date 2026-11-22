@@ -88,3 +88,24 @@ Use `behavior: auto` for all scrolling. No width, scale or divider transitions. 
 - SaveStatus shrinks to icon + short word (Saved/Tersimpan, Unsaved/Belum disimpan, Saving…/Menyimpan…, Failed/Gagal, Offline, Conflict/Konflik). Full text stays sr-only and the action button stays visible (`h-9`).
 - Fit gives s ≈ 0.74. Horizontal scroll only inside the stage, never on the page.
 - The conflict banner stacks its buttons full-width.
+
+## Recovering unsaved changes after an interrupted session (2026-11-23)
+
+Autosave sends a change about one second after typing stops. If the page closes, the
+browser crashes, the connection drops or a save fails before that, the change used to be
+lost. Now:
+
+- While a section (or an open item such as a session) has unsaved changes, its form values
+  are kept in `localStorage` (`features/cms/draftRecovery.ts`), keyed by the signed-in user,
+  the invitation and the draft key. The copy is removed as soon as the change is saved or
+  discarded. New-item forms are not kept.
+- On the next visit the editor shows **"Unsaved changes found on this device"**
+  (`RecoveryBanner`, above the section content) listing each affected section with the time
+  of the change. For sections whose editor is open it offers **Restore** (puts the values back
+  as an edit, so autosave saves them) and **Discard**; for others it links to the page.
+  Nothing is applied automatically.
+- If the section was saved again after the change (another device, or a later save), the
+  banner says that restoring replaces the saved version. Saving still goes through the
+  normal revision check, so a newer server version is never silently overwritten.
+- Copies expire after 14 days, are never shown to another account on the same browser and
+  are all removed on sign-out (and an invitation's copies when it is deleted).

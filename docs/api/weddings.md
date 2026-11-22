@@ -225,12 +225,14 @@ Other new fields: `opening.guestGreeting?: { enabled; label? }` (e.g. "Kepada Yt
     stored, upright size). `image`: long edge ≤ 2560 px, JPEG q85 (`.jpg`), or WebP q85 (`.webp`) when it has
     transparency. `qris`: lossless PNG (`.png`) at its original size, never resampled.
 - `DELETE /weddings/{id}/assets/{assetId}` → 204 (owner only; unknown/foreign/malformed id → 404). The record is
-  deleted and the file removed at once, unless the **live publication** still shows it (then it keeps being served
-  until a later cleanup). Drafts that still reference a deleted image show it broken.
+  deleted and the file removed at once, unless the **live publication** still shows it: then the asset is marked
+  deleted (`deleted_at`, migration 0010), keeps being served to guests, and its file and record are removed as soon as
+  the live page stops showing it (next publish, unpublish or invitation delete). A deleted or foreign image can never be
+  published again (422 `publish_blocked`, code `foreign_image`). Drafts that still reference a deleted image show it broken.
 - `GET /media/<uuid>.<ext>` (app root, not under `/api`; no auth) serves only names matching
   `^[0-9a-f-]{36}\.(png|jpg|webp)$`, else 404. Headers: exact `Content-Type` (`image/png|jpeg|webp`),
   `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'`,
-  `Cache-Control: public, max-age=31536000, immutable`, `Cross-Origin-Resource-Policy: same-site`.
+  `Cache-Control: public, max-age=86400` (a file can be deleted, so caches keep it for a day), `Cross-Origin-Resource-Policy: same-site`.
 - `ImageAsset.src` also accepts `/media/<lowercase uuid>.(jpg|png|webp)` (any wedding's upload; ownership is only
   enforced for the QRIS image at publish time).
 - QRIS images must be uploads (`/media/…`) owned by the same wedding to publish (any `kind`; upload with

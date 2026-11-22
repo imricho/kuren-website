@@ -21,6 +21,16 @@ export const editorId = {
   parentsHint: 'Opsional. Tulis seperti di undangan Anda.',
   parentsPlaceholderGroom: 'Putra dari Bapak … & Ibu …',
   parentsPlaceholderBride: 'Putri dari Bapak … & Ibu …',
+  recoveryTitle: 'Ada perubahan yang belum tersimpan di perangkat ini',
+  recoveryIntro: 'Perubahan ini dibuat di sini tetapi belum sampai ke server (halaman tertutup, koneksi terputus, atau penyimpanan gagal). Pulihkan untuk menyimpannya sekarang, atau buang.',
+  recoveryFrom: 'diubah {when}',
+  recoveryStale: 'Bagian ini sudah disimpan lagi setelah perubahan tersebut. Memulihkan akan menggantikan versi tersimpan.',
+  recoveryRestore: 'Pulihkan',
+  recoveryDiscard: 'Buang',
+  recoveryOpen: 'Buka untuk memulihkan',
+  recoveryOpenItem: 'Buka butirnya untuk memulihkan',
+  recoveryRestored: '{section}: perubahan dipulihkan. Sedang menyimpan.',
+  recoveryDiscarded: '{section}: perubahan dibuang.',
 } as const satisfies Record<EditorMessageKey, string>
 
 // Compile-time parity: Indonesian must not have keys English lacks.

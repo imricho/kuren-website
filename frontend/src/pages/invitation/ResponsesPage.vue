@@ -55,8 +55,13 @@ const s = computed(() => page.value?.summary)
 const capacityLeft = computed(() => (s.value && s.value.capacity != null ? Math.max(0, s.value.capacity - s.value.attendingPeople) : null))
 const csvUrl = computed(() => invitationsApi.rsvpResponsesCsvUrl(id.value))
 
-const sessionTitle = (sid: string) => store.content?.events.find((e) => e.id === sid)?.title?.trim() || sid
-const fieldLabel = (fid: string) => store.content?.rsvp.registrationFields?.find((f) => f.id === fid)?.label || fid
+// Sessions and questions can be removed after guests replied: the reply keeps its data, and
+// the organizer sees what it was instead of a bare id.
+const sessionTitle = (sid: string) => {
+  const session = store.content?.events.find((e) => e.id === sid)
+  return session ? session.title?.trim() || t('untitledSession') : t('removedSession', { id: sid })
+}
+const fieldLabel = (fid: string) => store.content?.rsvp.registrationFields?.find((f) => f.id === fid)?.label || t('removedQuestion', { id: fid })
 const contact = (r: RsvpResponse) => [r.email, r.phone].filter(Boolean).join(' · ')
 const answers = (r: RsvpResponse) =>
   Object.entries(r.answers).map(([k, v]) => `${fieldLabel(k)}: ${typeof v === 'boolean' ? t(v ? 'answerYes' : 'answerNo') : v}`)

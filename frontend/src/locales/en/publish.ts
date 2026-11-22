@@ -85,6 +85,7 @@ export const publishEn = {
   checkThemeInvalid: 'This template is no longer available. Choose another one.',
   checkThemeIncompatible: 'This template doesn’t support this type of invitation. Choose another one.',
   checkServerGeneric: '{section} needs attention before publishing.',
+  checkForeignImage: '{section}: an image was not uploaded to this invitation (or was deleted). Upload it again here.',
   serverCheckPending: 'Checking with the server…',
   serverCheckFailed: 'Couldn’t confirm with the server. Publishing will still check everything.',
   warnRsvpDeadlineEvent: 'The RSVP deadline is after the event date.',

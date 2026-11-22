@@ -184,7 +184,7 @@ automatically). See `.env.example` for the full list.
 | `RUN_MIGRATIONS` | Run `alembic upgrade head` on container start | `true` |
 | `RATE_LIMIT_BACKEND` | `memory` (per process; development) or `database` (shared by all workers/replicas; **required in production**) | `memory` |
 | `PUBLIC_RATE_LIMIT_PER_MINUTE` | Public invitation reads per client IP | `120` |
-| `RSVP_RATE_LIMIT_PER_MINUTE`, `RSVP_SLUG_RATE_LIMIT_PER_MINUTE` | RSVP submissions per client IP / per invitation | `10`, `60` |
+| `RSVP_RATE_LIMIT_PER_MINUTE`, `RSVP_SLUG_RATE_LIMIT_PER_MINUTE` | RSVP submissions per client IP / per invitation | `10`, `300` |
 | `MAX_RSVP_BODY_BYTES` | Max RSVP request body | `16384` |
 | `MAX_ASSETS_PER_INVITATION` | Uploaded images per invitation (was `MAX_ASSETS_PER_WEDDING`, no longer read) | `300` |
 

@@ -94,6 +94,7 @@ export const templatesId = {
   tvRsvpUpdatedOn: 'Terakhir diubah {date}.',
   tvRsvpChange: 'Ubah konfirmasi saya',
   tvRsvpSeparateHint: 'Mengonfirmasi untuk orang lain? Konfirmasi terpisah dihitung sendiri dan tidak mengubah milik Anda.',
+  tvRsvpNotMe: 'Bukan Anda? Kirim konfirmasi sebagai orang lain di perangkat ini',
   tvRsvpEditing: 'Anda sedang mengubah konfirmasi yang dikirim pada {date}. Menyimpan akan menggantinya, jadi tidak pernah dihitung dua kali.',
   tvRsvpSave: 'Simpan perubahan',
   tvRsvpSaving: 'Menyimpan…',

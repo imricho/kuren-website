@@ -28,7 +28,7 @@ from app.core.themes import is_selectable_theme
 from app.models import Invitation, InvitationAsset, InvitationPublication, InvitationRsvpResponse
 from app.models.invitation import SLUG_MAX_LENGTH, SLUG_REGEX
 from app.schemas.invitation import CONTENT_VERSION, MEDIA_SRC
-from app.services import invitation_content_service, invitation_service
+from app.services import invitation_content_service, invitation_service, media_service
 
 Variant = registry.VariantConfig
 
@@ -121,10 +121,32 @@ def _owned_media_asset(db: Session, invitation: Invitation, src: str | None) -> 
     filename = src.removeprefix("/media/")
     found = db.scalar(
         select(InvitationAsset.id).where(
-            InvitationAsset.invitation_id == invitation.id, InvitationAsset.filename == filename
+            InvitationAsset.invitation_id == invitation.id, InvitationAsset.filename == filename,
+            InvitationAsset.deleted_at.is_(None),
         )
     )
     return found is not None
+
+
+_MEDIA_IN_TEXT = re.compile(r"/media/[0-9a-f-]{36}\.(?:png|jpg|webp)")
+
+
+def _foreign_media(db: Session, invitation: Invitation, draft: dict[str, Any]) -> list[tuple[str, str]]:
+    """(section, src) for every uploaded-image URL in the draft that is NOT an image uploaded
+    to this invitation (another account's upload, or one deleted since). Publishing such a
+    URL would serve someone else's file under this invitation, so it blocks."""
+    found: dict[str, str] = {}
+    for section, value in draft.items():
+        for src in _MEDIA_IN_TEXT.findall(json.dumps(value)):
+            found.setdefault(src, section)
+    if not found:
+        return []
+    owned = set(db.scalars(select(InvitationAsset.filename).where(
+        InvitationAsset.invitation_id == invitation.id,
+        InvitationAsset.filename.in_([src.removeprefix("/media/") for src in found]),
+        InvitationAsset.deleted_at.is_(None),
+    )))
+    return [(section, src) for src, section in found.items() if src.removeprefix("/media/") not in owned]
 
 
 def _shown(variant: Variant, draft: dict[str, Any], section: str, default: bool) -> bool:
@@ -270,6 +292,15 @@ def validate_for_publish(db: Session, invitation: Invitation, draft: dict[str, A
         if methods == 0:
             add(_issue("amplopDigital", "amplopDigital", "incomplete",
                        "Turn on at least one gift option, or hide the digital envelope."))
+
+    # Every uploaded image must belong to this invitation (QRIS is reported above already).
+    reported = {i["section"] for i in issues if i["code"] == "invalid" and i["field"].endswith("qrisImage")}
+    for section, _src in _foreign_media(db, invitation, draft):
+        if section in reported:
+            continue
+        reported.add(section)
+        add(_issue(section, section, "foreign_image",
+                   "An image here was not uploaded to this invitation (or was deleted). Upload it again from this editor."))
 
     return issues
 
@@ -675,6 +706,7 @@ def publish(db: Session, invitation: Invitation) -> Invitation:
         db.rollback()
         raise
     db.refresh(invitation)
+    media_service.sweep_deleted_assets(db, invitation)
     return invitation
 
 
@@ -687,6 +719,7 @@ def unpublish(db: Session, invitation: Invitation) -> Invitation:
         invitation_service.touch(invitation, content=False)
     db.commit()
     db.refresh(invitation)
+    media_service.sweep_deleted_assets(db, invitation)
     return invitation
 
 

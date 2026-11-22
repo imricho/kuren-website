@@ -105,6 +105,21 @@ function retryOwnReply() {
   void loadOwnReply()
 }
 
+/**
+ * Shared device (family tablet, venue kiosk): someone else wants to reply. Forget this
+ * device's link to the previous guest's reply (they still have their personal link) and
+ * start a blank, separate reply.
+ */
+async function notMe() {
+  storeEditToken(props.slug, null)
+  token.value = null
+  ownReply.value = null
+  linkLost.value = false
+  replyAgain()
+  await nextTick()
+  document.getElementById(id('name'))?.focus()
+}
+
 function forgetToken() {
   storeEditToken(props.slug, null)
   token.value = null
@@ -351,6 +366,7 @@ const fieldMax = (type: keyof typeof FIELD_MAX) => FIELD_MAX[type] || undefined
         <button v-if="!closedState" type="button" class="tvf-link" data-action="rsvp-again" :aria-describedby="id('separate-hint')" @click="replyAgain">{{ t('tvRsvpReplyAgain') }}</button>
       </div>
       <p v-if="!closedState" :id="id('separate-hint')" class="tvf-note">{{ t('tvRsvpSeparateHint') }}</p>
+      <button v-if="!closedState" type="button" class="tvf-link" data-action="rsvp-not-me" @click="notMe">{{ t('tvRsvpNotMe') }}</button>
     </div>
 
     <div v-else-if="phase === 'success'" ref="successEl" class="tvf-state tvf-state--success" role="status" tabindex="-1" data-testid="rsvp-success">

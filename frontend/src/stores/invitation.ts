@@ -89,6 +89,15 @@ export type SaveState = 'saved' | 'unsaved' | 'invalid' | 'saving' | 'failed' | 
 export type KeySaveState = 'idle' | 'pending' | 'invalid' | 'saving' | 'retrying' | 'failed' | 'offline' | 'conflict'
 
 /** What an autosaved working copy lets the store do (see useSectionDraft). */
+/** A mounted draft that found unsaved changes from an interrupted session. */
+export interface RecoveryHandle {
+  at: number
+  /** The section was saved again (elsewhere) after these changes were made. */
+  stale: boolean
+  restore: () => void
+  discard: () => void
+}
+
 export interface AutosaveHandle {
   /** Save now if dirty, skipping the debounce; waits for an in-flight save. True when nothing is left to save. */
   flush(): Promise<boolean>
@@ -213,6 +222,21 @@ export const useInvitationStore = defineStore('invitation', () => {
     else keyStates.set(key, state)
   }
   /** Register a working copy's autosave; returns the unregister function. */
+  // --- Interrupted-session recovery (features/cms/draftRecovery.ts) -----------------
+  /** Bumped whenever a recovery entry is written or removed, so lists re-read storage. */
+  const recoveryVersion = ref(0)
+  const bumpRecovery = () => recoveryVersion.value++
+  /** Restore/discard actions of the drafts that are mounted right now, by draft key. */
+  const recoveryHandles = shallowReactive(new Map<string, RecoveryHandle>())
+  function registerRecovery(key: string, handle: RecoveryHandle): () => void {
+    recoveryHandles.set(key, handle)
+    bumpRecovery()
+    return () => {
+      if (recoveryHandles.get(key) === handle) recoveryHandles.delete(key)
+      bumpRecovery()
+    }
+  }
+
   function registerAutosave(key: string, handle: AutosaveHandle): () => void {
     savers.set(key, handle)
     return () => {
@@ -844,6 +868,10 @@ export const useInvitationStore = defineStore('invitation', () => {
     keepMine,
     reloadLatest,
     registerAutosave,
+    recoveryVersion,
+    bumpRecovery,
+    recoveryHandles,
+    registerRecovery,
     setKeyState,
     trackDetachedSave,
     record,

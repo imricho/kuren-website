@@ -81,6 +81,7 @@ export const publishId = {
   checkThemeInvalid: 'Templat ini sudah tidak tersedia. Pilih templat lain.',
   checkThemeIncompatible: 'Templat ini tidak mendukung jenis undangan ini. Pilih templat lain.',
   checkServerGeneric: '{section} perlu diperbaiki sebelum dipublikasikan.',
+  checkForeignImage: '{section}: ada gambar yang tidak diunggah ke undangan ini (atau sudah dihapus). Unggah ulang di sini.',
   serverCheckPending: 'Memeriksa ke server…',
   serverCheckFailed: 'Tidak dapat memastikan ke server. Publikasi tetap akan memeriksa semuanya.',
   warnRsvpDeadlineEvent: 'Batas RSVP setelah tanggal acara.',

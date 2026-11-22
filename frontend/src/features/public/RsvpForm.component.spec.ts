@@ -184,6 +184,19 @@ describe('RsvpForm', () => {
     expect(w.find('[data-action="rsvp-change"]').exists()).toBe(false)
   })
 
+  it('"Not you?" forgets the previous guest on a shared device and starts a blank reply', async () => {
+    localStorage.setItem('temuvibe.rsvp.token.acme-abc123', 'H'.repeat(43))
+    vi.spyOn(publishingApi, 'getOwnRsvp').mockResolvedValue({ id: 'r1', name: 'Previous Guest', attendance: 'attending', partySize: 1, email: 'prev@example.com', sessionIds: [], answers: {}, createdAt: '2026-11-22T05:00:00Z', updatedAt: null })
+    const w = mountForm(seminar())
+    await flushPromises()
+    await w.get('[data-action="rsvp-not-me"]').trigger('click')
+    await flushPromises()
+    expect(localStorage.getItem('temuvibe.rsvp.token.acme-abc123')).toBeNull()
+    expect(w.get<HTMLInputElement>('input[name="name"]').element.value).toBe('')
+    expect(w.get<HTMLInputElement>('input[name="email"]').element.value).toBe('')
+    expect(w.text()).not.toContain('Previous Guest')
+  })
+
   it('a lost or revoked link is forgotten and explained; the guest can still send a new reply', async () => {
     localStorage.setItem('temuvibe.rsvp.token.acme-abc123', 'B'.repeat(43))
     vi.spyOn(publishingApi, 'getOwnRsvp').mockRejectedValue(new ApiError(404, 'rsvp_link_invalid', 'nope'))

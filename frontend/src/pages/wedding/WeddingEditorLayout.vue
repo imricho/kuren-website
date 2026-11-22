@@ -13,6 +13,7 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import { useAppLocale } from '@/composables/useAppLocale'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import ConflictBanner from '@/features/cms/components/ConflictBanner.vue'
+import RecoveryBanner from '@/features/cms/components/RecoveryBanner.vue'
 import SaveStatus from '@/features/cms/components/SaveStatus.vue'
 import SectionNav from '@/features/cms/components/SectionNav.vue'
 import EditorDivider from '@/features/cms/preview/EditorDivider.vue'
@@ -213,6 +214,7 @@ watch(
     <div ref="editorBody" :class="isDesktop ? 'min-h-0 flex-1 overflow-y-auto px-6 py-6' : 'px-4 py-6'"
       data-testid="editor-body">
       <div class="max-w-xl">
+        <RecoveryBanner />
         <RouterView />
       </div>
     </div>

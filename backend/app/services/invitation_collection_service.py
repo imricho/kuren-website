@@ -105,6 +105,17 @@ def _event_columns(item: EventIn) -> dict[str, Any]:
                 if value is not None
             },
             **({"optional": item.optional} if item.optional is not None else {}),
+            **{
+                key: value
+                for key, value in (
+                    ("format", item.format),
+                    ("onlineUrl", item.online_url),
+                    ("onlineLabel", item.online_label),
+                    ("onlineInstructions", item.online_instructions),
+                    ("endDate", item.end_date.isoformat() if item.end_date else None),
+                )
+                if value is not None
+            },
         },
     }
 
@@ -125,6 +136,10 @@ def _event_out(row: InvitationSession) -> dict[str, Any]:
                 "description": row.description,
                 **{k: v for k, v in (row.extras or {}).items() if k in ("dressCode", "livestream") and isinstance(v, dict)},
                 "optional": row.extras.get("optional") if isinstance((row.extras or {}).get("optional"), bool) else None,
+                **{
+                    k: v for k, v in (row.extras or {}).items()
+                    if k in ("format", "onlineUrl", "onlineLabel", "onlineInstructions", "endDate") and isinstance(v, str)
+                },
             }
         ),
     }

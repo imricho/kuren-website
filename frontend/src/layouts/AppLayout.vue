@@ -21,8 +21,39 @@ const router = useRouter()
 const route = useRoute()
 const signingOut = ref(false)
 
-/** The open invitation's editor, once one is open (the list is the home). */
-const editorTo = computed(() => (wedding.invitationId ? { name: 'editor', params: { id: wedding.invitationId } } : null))
+/**
+ * The invitation the CURRENT page is about (its editor or responses). Invitation-specific
+ * links appear only there, so while creating a new invitation (or on the list) they never
+ * point at whichever invitation happened to be edited before.
+ */
+const activeInvitationId = computed(() => {
+  const id = typeof route.params.id === 'string' ? route.params.id : null
+  return id && id === wedding.invitationId ? id : null
+})
+const activeInvitationName = computed(() => wedding.title?.trim() || t('myInvitation'))
+const editorTo = computed(() => (activeInvitationId.value ? { name: 'editor', params: { id: activeInvitationId.value } } : null))
+
+// Collapsible sidebar (wide screens): collapsed by default in the editor, where the form and
+// the live preview need the room; the person's own choice is remembered on this device.
+const SIDEBAR_KEY = 'temuvibe.cms.sidebar'
+function storedSidebar(): 'collapsed' | 'expanded' | null {
+  try {
+    const v = localStorage.getItem(SIDEBAR_KEY)
+    return v === 'collapsed' || v === 'expanded' ? v : null
+  } catch {
+    return null
+  }
+}
+const sidebarChoice = ref(storedSidebar())
+const sidebarCollapsed = computed(() => (sidebarChoice.value ? sidebarChoice.value === 'collapsed' : route.meta.layout === 'studio'))
+function toggleSidebar() {
+  sidebarChoice.value = sidebarCollapsed.value ? 'expanded' : 'collapsed'
+  try {
+    localStorage.setItem(SIDEBAR_KEY, sidebarChoice.value)
+  } catch {
+    // Not remembered; still toggles.
+  }
+}
 const navItems = computed(() =>
   [
     { name: 'invitations', label: 'invitations' as const, to: { name: 'invitations' } },
@@ -51,7 +82,7 @@ const SHORTCUTS = [
   { section: 'publish', label: 'sectionPublish', icon: 'm3 10 18-7-7 18-3-8-8-3Zm8 3L21 3' },
 ] as const
 const visibleSidebarItems = computed(() => {
-  const id = wedding.invitationId
+  const id = activeInvitationId.value
   const base = id ? `/invitations/${encodeURIComponent(id)}` : null
   return [
     { path: '/invitations', label: 'invitations' as const, icon: 'M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9', divider: false },
@@ -114,7 +145,7 @@ async function signOut() {
 </script>
 
 <template>
-  <div class="kuren-cms">
+  <div class="kuren-cms" :data-sidebar="sidebarCollapsed ? 'collapsed' : 'expanded'">
     <a class="cms-skip-link" href="#cms-main">{{ locale === 'id' ? 'Lewati ke konten utama' : 'Skip to main content' }}</a>
     <header class="cms-header">
       <div class="cms-header-inner">
@@ -137,16 +168,26 @@ async function signOut() {
       </div>
     </header>
 
-    <aside class="cms-sidebar" :aria-label="locale === 'id' ? 'Navigasi ruang kerja' : 'Workspace navigation'">
-      <nav>
-        <RouterLink v-for="item in visibleSidebarItems" :key="item.path" :to="item.path"
-          class="cms-sidebar-link" :class="{ 'is-active': isSidebarActive(item), 'cms-sidebar-divider': item.divider }"
-          :aria-current="isSidebarActive(item) ? 'page' : undefined">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path :d="item.icon" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" /></svg>
-          <span>{{ t(item.label) }}</span>
-        </RouterLink>
+    <aside class="cms-sidebar" :data-collapsed="sidebarCollapsed ? 'true' : undefined" :aria-label="locale === 'id' ? 'Navigasi ruang kerja' : 'Workspace navigation'">
+      <button type="button" class="cms-sidebar-toggle" :aria-expanded="sidebarCollapsed ? 'false' : 'true'" aria-controls="cms-sidebar-nav" data-action="toggle-sidebar" @click="toggleSidebar">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path :d="sidebarCollapsed ? 'm9 6 6 6-6 6' : 'm15 6-6 6 6 6'" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        <span :class="{ 'sr-only': sidebarCollapsed }">{{ sidebarCollapsed ? t('expandSidebar') : t('collapseSidebar') }}</span>
+      </button>
+      <nav id="cms-sidebar-nav">
+        <template v-for="item in visibleSidebarItems" :key="item.path">
+          <p v-if="item.label === 'myInvitation' && !sidebarCollapsed" class="cms-sidebar-context" data-testid="sidebar-active-invitation">
+            <span>{{ t('editingInvitation') }}</span><strong dir="auto">{{ activeInvitationName }}</strong>
+          </p>
+          <RouterLink :to="item.path"
+            class="cms-sidebar-link" :class="{ 'is-active': isSidebarActive(item), 'cms-sidebar-divider': item.divider }"
+            :aria-current="isSidebarActive(item) ? 'page' : undefined"
+            :title="sidebarCollapsed ? t(item.label) : undefined">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path :d="item.icon" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <span :class="{ 'sr-only': sidebarCollapsed }">{{ t(item.label) }}</span>
+          </RouterLink>
+        </template>
       </nav>
-      <p class="cms-sidebar-caption">{{ locale === 'id' ? 'Cerita Anda, dirangkai dengan indah.' : 'Your story, beautifully told.' }}</p>
+      <p v-if="!sidebarCollapsed" class="cms-sidebar-caption">{{ locale === 'id' ? 'Cerita Anda, dirangkai dengan indah.' : 'Your story, beautifully told.' }}</p>
     </aside>
 
     <main id="cms-main" tabindex="-1" class="cms-workspace" :class="route.meta.layout === 'studio' ? 'cms-workspace--studio' : 'cms-workspace--page'">

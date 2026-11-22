@@ -66,7 +66,7 @@ describe('wedding store publishing', () => {
     api.blockNextPublish([{ section: 'closing', field: 'closing.message', code: 'required', message: 'Closing message is required' }])
     expect(await store.publish()).toBe('blocked')
     expect(store.publishIssues).toEqual([
-      expect.objectContaining({ severity: 'error', section: 'closing', field: 'message', message: 'Closing message is required', to: { name: 'editor-closing', hash: '#f-message' } }),
+      expect.objectContaining({ severity: 'error', section: 'closing', field: 'message', message: 'Add a closing message.', to: { name: 'editor-closing', hash: '#f-message' } }),
     ])
     expect(store.publishState).toBe('draft')
     expect(store.publishAnnouncement).toMatchObject({ kind: 'blocked', count: 1 })

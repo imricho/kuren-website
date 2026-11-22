@@ -176,6 +176,13 @@ export interface EventForm {
   livestreamLabel: string
   /** A session guests may choose to attend (corporate variants). */
   optional: boolean
+  /** How guests attend: in person (default), online, or both. */
+  format: 'in_person' | 'online' | 'hybrid'
+  onlineUrl: string
+  onlineLabel: string
+  onlineInstructions: string
+  /** Last day of a multi-day session (optional). */
+  endDate: string
 }
 /** Type of a new custom event (most Indonesian weddings have a reception). */
 export const DEFAULT_EVENT_TYPE: EventType = 'reception'
@@ -195,6 +202,11 @@ export const eventForm = (e?: Partial<EventDraft>): EventForm => ({
   livestreamUrl: s(e?.livestream?.url),
   livestreamLabel: s(e?.livestream?.label),
   optional: e?.optional === true,
+  format: e?.format === 'online' || e?.format === 'hybrid' ? e.format : 'in_person',
+  onlineUrl: s(e?.onlineUrl),
+  onlineLabel: s(e?.onlineLabel),
+  onlineInstructions: s(e?.onlineInstructions),
+  endDate: s(e?.endDate),
 })
 export const eventPayload = (e: EventForm): NewItem<'events'> =>
   clean({
@@ -215,6 +227,12 @@ export const eventPayload = (e: EventForm): NewItem<'events'> =>
         ? clean({ enabled: e.livestreamEnabled, url: opt(e.livestreamUrl), label: opt(e.livestreamLabel) })
         : undefined,
     optional: e.optional ? true : undefined,
+    // In person is the default and is not stored; online details are kept while in person.
+    format: e.format === 'in_person' ? undefined : e.format,
+    onlineUrl: opt(e.onlineUrl),
+    onlineLabel: opt(e.onlineLabel),
+    onlineInstructions: opt(e.onlineInstructions),
+    endDate: opt(e.endDate),
   })
 
 // --- Gallery -----------------------------------------------------------------------

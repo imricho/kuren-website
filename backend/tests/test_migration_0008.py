@@ -156,7 +156,7 @@ def test_downgrade_refuses_owners_of_several_invitations(auth_client: TestClient
     with pytest.raises(RuntimeError, match="own more than one invitation"):
         _alembic(engine, "downgrade", "0007")
     with engine.connect() as conn:
-        assert conn.scalar(text("SELECT version_num FROM alembic_version")) == "0008"
+        assert conn.scalar(text("SELECT version_num FROM alembic_version")) == "0009"  # head: nothing ran
     assert len(auth_client.get(INV).json()["items"]) == 2
 
 
@@ -167,7 +167,7 @@ def test_downgrade_refuses_non_wedding_invitations(auth_client: TestClient, engi
     with pytest.raises(RuntimeError, match="not weddings"):
         _alembic(engine, "downgrade", "0007")
     with engine.connect() as conn:
-        assert conn.scalar(text("SELECT version_num FROM alembic_version")) == "0008"
+        assert conn.scalar(text("SELECT version_num FROM alembic_version")) == "0009"  # head: nothing ran
     assert auth_client.get(INV).json()["items"][0]["variant"] == "seminar"
 
 

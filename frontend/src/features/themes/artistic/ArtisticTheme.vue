@@ -108,7 +108,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
               </div>
             </dl>
             <p v-if="event.description" class="art-body">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
-            <a class="art-link" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} ↗</a>
+            <a class="art-link" v-if="event.mapHref" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} ↗</a>
           </div>
         </div>
       </div>

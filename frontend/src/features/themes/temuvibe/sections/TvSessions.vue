@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** Sessions (events): when, where, map, dress code / livestream, optional flag. */
+/** Sessions (events): when, where (venue and/or online access), map, dress code / livestream, optional flag. */
 import { computed } from 'vue'
 
 import { eventTypeLabel, formatDate, formatTimeRange, labels, mapsLink } from '@/features/wedding/format'
@@ -17,9 +17,12 @@ const sessions = computed(() =>
     ...e,
     // "Wedding Ceremony" is the wedding wording of `ceremony`; other variants say "Ceremony".
     typeLabel: e.type === 'ceremony' && !isWedding(variant.value) ? t.value('tvCeremony') : eventTypeLabel(e.type, locale.value),
-    dateText: formatDate(e.date, locale.value, 'full'),
+    dateText: e.endDate && e.endDate > e.date
+      ? `${formatDate(e.date, locale.value, 'full')} – ${formatDate(e.endDate, locale.value, 'full')}`
+      : formatDate(e.date, locale.value, 'full'),
     timeText: formatTimeRange(e.startTime, e.endTime, locale.value),
-    mapHref: mapsLink(e),
+    // Online-only sessions have no venue and no map.
+    mapHref: e.format === 'online' || !(e.venueName || e.address) ? '' : mapsLink(e),
   })),
 )
 const offersChoice = computed(() => props.content.rsvp.enabled && props.content.rsvp.allowSessionChoice === true)
@@ -37,12 +40,12 @@ const offersChoice = computed(() => props.content.rsvp.enabled && props.content.
           </p>
           <h3 class="tv-h3" dir="auto">{{ s.title }}</h3>
           <p class="tv-session__when"><time :datetime="s.date">{{ s.dateText }}</time><br />{{ s.timeText }}</p>
-          <p class="tv-session__venue" dir="auto">{{ s.venueName }}</p>
-          <p class="tv-muted tv-pre" dir="auto">{{ s.address }}</p>
+          <p v-if="s.venueName" class="tv-session__venue" dir="auto">{{ s.venueName }}</p>
+          <p v-if="s.address" class="tv-muted tv-pre" dir="auto">{{ s.address }}</p>
           <p v-if="s.description" class="tv-body tv-pre" dir="auto">{{ s.description }}</p>
           <EventExtras :event="s" :locale="locale" />
           <p v-if="s.optional && offersChoice" class="tv-muted tv-small">{{ t('tvOptionalNote') }}</p>
-          <a class="tv-link" :href="s.mapHref" target="_blank" rel="noopener noreferrer">{{ l.viewMap }}<span aria-hidden="true"> ↗</span><span class="universal-visually-hidden"> {{ t('tvOpensNewTab') }}</span></a>
+          <a v-if="s.mapHref" class="tv-link" :href="s.mapHref" target="_blank" rel="noopener noreferrer">{{ l.viewMap }}<span aria-hidden="true"> ↗</span><span class="universal-visually-hidden"> {{ t('tvOpensNewTab') }}</span></a>
         </article>
       </div>
     </div>

@@ -13,8 +13,16 @@
 # ...
 # real_ip_header CF-Connecting-IP;
 
+# Privacy-conscious access log: $uri has NO query string, so older `?to=<guest name>` links
+# never put guest names in the log (new personal links use `#to=`, which browsers never
+# send). Keep the retention short (e.g. logrotate daily, rotate 14) and do not ship these
+# logs to third parties without a data-processing agreement.
+log_format temuvibe_privacy '$remote_addr - [$time_local] "$request_method $uri $server_protocol" '
+                            '$status $body_bytes_sent $request_time';
+
 server {
     listen 80;
+    access_log /var/log/nginx/access.log temuvibe_privacy;
     server_name _;
 
     root /usr/share/nginx/html;   # built frontend (frontend/dist)

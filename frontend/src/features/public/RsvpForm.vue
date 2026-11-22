@@ -9,12 +9,17 @@
  * success message receives focus. The honeypot (`website`) is visually hidden,
  * `aria-hidden`, out of the tab order and never autofilled.
  *
- * Privacy: nothing the guest types is stored on the device; only a "you already
- * replied" flag is kept after a successful reply.
+ * Privacy: nothing the guest types is stored on the device. After a reply the device
+ * keeps a "you already replied" flag and the reply's private edit token, which lets
+ * THIS guest change THIS reply (never matched by name or email). The token is sent in
+ * a header, and the personal link carries it in the URL fragment (never sent to servers).
+ *
+ * Changing a reply REPLACES it (same row on the server: totals and capacity count only
+ * the latest answer). "Send a separate reply" adds a new one, e.g. for another person.
  */
-import { computed, nextTick, reactive, ref, useId, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useId, watch } from 'vue'
 
-import { publishingApi, type PublicRsvpReceipt } from '@/api/publishing'
+import { publishingApi, type PublicOwnReply, type PublicRsvpReceipt } from '@/api/publishing'
 import { formatDate } from '@/features/wedding/format'
 import type { WeddingContent } from '@/features/wedding/types'
 
@@ -29,10 +34,15 @@ import {
   hasReplied,
   initialValues,
   isPastDeadline,
+  editLink,
   markReplied,
   outcomeOf,
+  storeEditToken,
+  storedEditToken,
+  takeTokenFromFragment,
   toSubmission,
   validate,
+  valuesFromReply,
   type FieldErrorCode,
   type FieldErrors,
 } from './rsvpFormLogic'
@@ -60,14 +70,120 @@ function syncAnswers() {
   )
 }
 
-type Phase = 'form' | 'submitting' | 'success'
+type Phase = 'loading' | 'existing' | 'form' | 'submitting' | 'success'
 const phase = ref<Phase>('form')
+/** new = POST a new reply; edit = PUT over the guest's own reply (needs `token`). */
+const mode = ref<'new' | 'edit'>('new')
+const token = ref<string | null>(null)
+const ownReply = ref<PublicOwnReply | null>(null)
+const linkLost = ref(false)
+const copied = ref(false)
+const lastWasUpdate = ref(false)
 const errors = ref<FieldErrors>({})
 const banner = ref<{ kind: 'rateLimited' | 'network' | 'failed' | 'capacity'; extra?: string[] } | null>(null)
 const serverClosed = ref<'closed' | 'full' | null>(null)
 const receipt = ref<PublicRsvpReceipt | null>(null)
 const showSummary = ref(false)
 const alreadyReplied = ref(hasReplied(props.slug))
+const existingEl = ref<HTMLElement | null>(null)
+
+async function loadOwnReply(): Promise<void> {
+  if (!token.value) return
+  try {
+    ownReply.value = await publishingApi.getOwnRsvp(props.slug, token.value)
+    phase.value = 'existing'
+  } catch (err) {
+    if (outcomeOf(err, config.value).kind === 'linkInvalid') forgetToken()
+    else ownLoadFailed.value = true // offline / busy: say so, keep the token, offer a retry
+    phase.value = 'form'
+  }
+}
+const ownLoadFailed = ref(false)
+function retryOwnReply() {
+  ownLoadFailed.value = false
+  phase.value = 'loading'
+  void loadOwnReply()
+}
+
+function forgetToken() {
+  storeEditToken(props.slug, null)
+  token.value = null
+  ownReply.value = null
+  linkLost.value = true
+  mode.value = 'new'
+}
+
+onMounted(() => {
+  token.value = takeTokenFromFragment(props.slug) ?? storedEditToken(props.slug)
+  if (token.value) {
+    phase.value = 'loading'
+    void loadOwnReply()
+  }
+  window.addEventListener('hashchange', onHashChange)
+})
+onBeforeUnmount(() => window.removeEventListener('hashchange', onHashChange))
+
+/** A personal link opened in a tab that already shows this invitation. */
+function onHashChange() {
+  const fromLink = takeTokenFromFragment(props.slug)
+  if (!fromLink || fromLink === token.value) return
+  token.value = fromLink
+  linkLost.value = false
+  mode.value = 'new'
+  phase.value = 'loading'
+  void loadOwnReply()
+}
+
+function fillFrom(next: ReturnType<typeof initialValues>) {
+  Object.assign(values, next)
+  for (const f of config.value.fields) {
+    const v = next.answers[f.id]
+    if (f.type === 'checkbox') checkAnswers[f.id] = v === true
+    else textAnswers[f.id] = typeof v === 'string' ? v : ''
+  }
+}
+
+async function startEdit() {
+  if (!ownReply.value) return
+  fillFrom(valuesFromReply(config.value, ownReply.value))
+  errors.value = {}
+  banner.value = null
+  mode.value = 'edit'
+  phase.value = 'form'
+  await nextTick()
+  document.getElementById(id('name'))?.focus()
+}
+
+async function cancelEdit() {
+  mode.value = 'new'
+  phase.value = ownReply.value ? 'existing' : 'form'
+  await nextTick()
+  existingEl.value?.focus()
+}
+
+async function copyLink() {
+  if (!token.value) return
+  try {
+    await navigator.clipboard.writeText(editLink(props.slug, token.value))
+    copied.value = true
+    setTimeout(() => (copied.value = false), 2500)
+  } catch {
+    document.getElementById(id('edit-link'))?.focus()
+    ;(document.getElementById(id('edit-link')) as HTMLInputElement | null)?.select()
+  }
+}
+const personalLink = computed(() => (token.value ? editLink(props.slug, token.value) : ''))
+const people = (n: number) => (n === 1 ? t.value('tvRsvpPerson') : t.value('tvRsvpPeople'))
+const replyDate = (iso: string | null | undefined) => {
+  if (!iso) return ''
+  try {
+    return new Intl.DateTimeFormat(props.content.locale === 'id' ? 'id-ID' : 'en-GB', {
+      dateStyle: 'long', timeStyle: 'short', timeZone: props.timezone || undefined,
+    }).format(new Date(iso))
+  } catch {
+    return iso.slice(0, 10)
+  }
+}
 
 const summaryEl = ref<HTMLElement | null>(null)
 const successEl = ref<HTMLElement | null>(null)
@@ -80,6 +196,10 @@ const closedState = computed<'closed' | 'full' | null>(() => {
   if (pastDeadline.value) return 'closed'
   return null
 })
+/** The guest may change their own reply while the RSVP is open; a full event still lets them
+ *  change it (their own seats are not counted twice), only the deadline closes it. */
+const canChange = computed(() => !!ownReply.value && !!token.value && closedState.value !== 'closed')
+const editing = computed(() => mode.value === 'edit' && canChange.value)
 const deadlineText = computed(() => (props.content.rsvp.deadline ? formatDate(props.content.rsvp.deadline, props.content.locale, 'long') : ''))
 const attending = computed(() => values.attendance === 'attending')
 const partyOptions = computed(() => Array.from({ length: config.value.partyLimit }, (_, i) => i + 1))
@@ -122,7 +242,7 @@ function focusField(key: string) {
 }
 
 async function submit() {
-  if (phase.value === 'submitting' || closedState.value) return
+  if (phase.value === 'submitting' || (closedState.value && !editing.value)) return
   banner.value = null
   syncAnswers()
   const found = validate(values, config.value)
@@ -135,17 +255,34 @@ async function submit() {
   }
   showSummary.value = false
   phase.value = 'submitting'
+  const isEdit = editing.value
   try {
-    receipt.value = await publishingApi.submitRsvp(props.slug, toSubmission(values, config.value, props.guestName))
+    const body = toSubmission(values, config.value, props.guestName)
+    receipt.value = isEdit
+      ? await publishingApi.updateOwnRsvp(props.slug, token.value!, body)
+      : await publishingApi.submitRsvp(props.slug, body)
+    if (!isEdit && receipt.value.editToken) {
+      token.value = receipt.value.editToken
+      storeEditToken(props.slug, token.value)
+      linkLost.value = false
+    }
+    lastWasUpdate.value = isEdit
+    mode.value = 'new'
     phase.value = 'success'
     markReplied(props.slug)
     alreadyReplied.value = true
+    if (token.value) publishingApi.getOwnRsvp(props.slug, token.value).then((r) => (ownReply.value = r)).catch(() => undefined)
     await nextTick()
     successEl.value?.focus()
   } catch (err) {
     phase.value = 'form'
     const outcome = outcomeOf(err, config.value)
     switch (outcome.kind) {
+      case 'linkInvalid':
+        forgetToken()
+        await nextTick()
+        bannerEl.value?.focus()
+        return
       case 'closed':
       case 'limit':
         serverClosed.value = 'closed'
@@ -170,12 +307,14 @@ async function submit() {
   }
 }
 
+/** A separate, NEW reply (e.g. for another person). It never changes the guest's own reply. */
 function replyAgain() {
   Object.assign(values, initialValues(config.value, props.guestName))
   for (const k of Object.keys(textAnswers)) textAnswers[k] = ''
   for (const k of Object.keys(checkAnswers)) checkAnswers[k] = false
   errors.value = {}
   receipt.value = null
+  mode.value = 'new'
   phase.value = 'form'
 }
 
@@ -198,21 +337,55 @@ const fieldMax = (type: keyof typeof FIELD_MAX) => FIELD_MAX[type] || undefined
 
 <template>
   <div class="tvf" data-testid="rsvp-live">
-    <!-- Closed: deadline passed (invitation time zone), RSVP full, or the server said so. -->
-    <div v-if="closedState" class="tvf-state" role="status" :data-state="closedState" data-testid="rsvp-closed">
+    <p v-if="phase === 'loading'" class="tvf-note" role="status" data-testid="rsvp-loading">{{ t('tvRsvpLoadingOwn') }}</p>
+
+    <!-- The guest's own reply (they hold its edit token): change it, or add a separate one. -->
+    <div v-else-if="phase === 'existing' && ownReply" ref="existingEl" class="tvf-state tvf-own" tabindex="-1" data-testid="rsvp-own">
+      <p class="tvf-state__title">{{ t('tvRsvpYourReply') }}</p>
+      <p data-testid="rsvp-own-summary"><strong dir="auto">{{ ownReply.name }}</strong> ·
+        {{ ownReply.attendance === 'attending' ? t('tvRsvpYouAttend', { count: ownReply.partySize, people: people(ownReply.partySize) }) : t('tvRsvpYouDecline') }}</p>
+      <p class="tvf-note">{{ ownReply.updatedAt ? t('tvRsvpUpdatedOn', { date: replyDate(ownReply.updatedAt) }) : t('tvRsvpSentOn', { date: replyDate(ownReply.createdAt) }) }}</p>
+      <p v-if="closedState === 'closed'" class="tvf-note" role="status" data-testid="rsvp-own-closed">{{ t('tvRsvpClosedBody') }}</p>
+      <div class="tvf-actions">
+        <button v-if="canChange" type="button" class="tvf-submit" data-action="rsvp-change" @click="startEdit">{{ t('tvRsvpChange') }}</button>
+        <button v-if="!closedState" type="button" class="tvf-link" data-action="rsvp-again" :aria-describedby="id('separate-hint')" @click="replyAgain">{{ t('tvRsvpReplyAgain') }}</button>
+      </div>
+      <p v-if="!closedState" :id="id('separate-hint')" class="tvf-note">{{ t('tvRsvpSeparateHint') }}</p>
+    </div>
+
+    <div v-else-if="phase === 'success'" ref="successEl" class="tvf-state tvf-state--success" role="status" tabindex="-1" data-testid="rsvp-success">
+      <p class="tvf-state__title">{{ lastWasUpdate ? t('tvRsvpUpdatedTitle') : t('tvRsvpSuccessTitle') }}</p>
+      <p dir="auto" class="tvf-pre">{{ successMessage }}</p>
+      <div v-if="token" class="tvf-editlink" data-testid="rsvp-edit-link">
+        <label class="tvf-label" :for="id('edit-link')">{{ t('tvRsvpLinkTitle') }}</label>
+        <div class="tvf-editlink__row">
+          <input :id="id('edit-link')" class="tvf-input" type="text" readonly :value="personalLink" :aria-describedby="id('edit-link-hint')" @focus="($event.target as HTMLInputElement).select()" />
+          <button type="button" class="tvf-copy" data-action="rsvp-copy-link" @click="copyLink">{{ copied ? t('tvRsvpCopied') : t('tvRsvpCopyLink') }}</button>
+        </div>
+        <p :id="id('edit-link-hint')" class="tvf-note">{{ t('tvRsvpLinkHint') }}</p>
+        <span class="universal-visually-hidden" aria-live="polite">{{ copied ? t('tvRsvpCopied') : '' }}</span>
+      </div>
+      <div class="tvf-actions">
+        <button v-if="canChange" type="button" class="tvf-link" data-action="rsvp-change" @click="startEdit">{{ t('tvRsvpChange') }}</button>
+        <button v-if="!closedState" type="button" class="tvf-link" data-action="rsvp-again" @click="replyAgain">{{ t('tvRsvpReplyAgain') }}</button>
+      </div>
+    </div>
+
+    <!-- Closed for NEW replies: deadline passed (published time zone), RSVP full, or the server said so. -->
+    <div v-else-if="closedState && !editing" class="tvf-state" role="status" :data-state="closedState" data-testid="rsvp-closed">
       <p class="tvf-state__title">{{ closedState === 'full' ? t('tvRsvpFullTitle') : t('tvRsvpClosedTitle') }}</p>
       <p>{{ closedState === 'full' ? t('tvRsvpFullBody') : t('tvRsvpClosedBody') }}</p>
     </div>
 
-    <div v-else-if="phase === 'success'" ref="successEl" class="tvf-state tvf-state--success" role="status" tabindex="-1" data-testid="rsvp-success">
-      <p class="tvf-state__title">{{ t('tvRsvpSuccessTitle') }}</p>
-      <p dir="auto" class="tvf-pre">{{ successMessage }}</p>
-      <button type="button" class="tvf-link" data-action="rsvp-again" @click="replyAgain">{{ t('tvRsvpReplyAgain') }}</button>
-    </div>
-
-    <form v-else class="tvf-form" novalidate :aria-busy="phase === 'submitting' ? 'true' : undefined" data-testid="rsvp-form" @submit.prevent="submit">
+    <form v-else class="tvf-form" novalidate :aria-busy="phase === 'submitting' ? 'true' : undefined" :data-mode="mode" data-testid="rsvp-form" @submit.prevent="submit">
       <p v-if="deadlineText" class="tvf-note">{{ t('tvRsvpBy', { date: deadlineText }) }}</p>
-      <p v-if="alreadyReplied" class="tvf-note" data-testid="rsvp-already">{{ t('tvRsvpAlreadyReplied') }}</p>
+      <p v-if="editing && ownReply" class="tvf-note tvf-note--strong" data-testid="rsvp-editing">{{ t('tvRsvpEditing', { date: replyDate(ownReply.createdAt) }) }}</p>
+      <p v-else-if="linkLost" class="tvf-note" role="status" data-testid="rsvp-link-lost">{{ t('tvRsvpLinkLost') }}</p>
+      <div v-else-if="ownLoadFailed && token" class="tvf-note" role="status" data-testid="rsvp-own-failed">
+        {{ t('tvRsvpOwnLoadFailed') }}
+        <button type="button" class="tvf-link" data-action="rsvp-retry-own" @click="retryOwnReply">{{ t('tvRsvpRetry') }}</button>
+      </div>
+      <p v-else-if="alreadyReplied && !token" class="tvf-note" data-testid="rsvp-already">{{ t('tvRsvpAlreadyReplied') }}</p>
 
       <div v-if="showSummary && errorList.length" ref="summaryEl" class="tvf-summary" tabindex="-1" role="alert" data-testid="rsvp-error-summary">
         <p class="tvf-summary__title">{{ errorList.length === 1 ? t('tvRsvpErrorSummaryOne') : t('tvRsvpErrorSummary', { count: errorList.length }) }}</p>
@@ -324,9 +497,13 @@ const fieldMax = (type: keyof typeof FIELD_MAX) => FIELD_MAX[type] || undefined
         <input :id="id('website')" v-model="values.website" type="text" name="website" tabindex="-1" autocomplete="off" />
       </div>
 
-      <button type="submit" class="tvf-submit" :disabled="phase === 'submitting'" data-action="rsvp-submit">
-        {{ phase === 'submitting' ? t('tvRsvpSubmitting') : t('tvRsvpSubmit') }}
-      </button>
+      <div class="tvf-actions">
+        <button type="submit" class="tvf-submit" :disabled="phase === 'submitting'" data-action="rsvp-submit">
+          <template v-if="mode === 'edit'">{{ phase === 'submitting' ? t('tvRsvpSaving') : t('tvRsvpSave') }}</template>
+          <template v-else>{{ phase === 'submitting' ? t('tvRsvpSubmitting') : t('tvRsvpSubmit') }}</template>
+        </button>
+        <button v-if="mode === 'edit'" type="button" class="tvf-link" data-action="rsvp-cancel-edit" @click="cancelEdit">{{ t('tvRsvpCancel') }}</button>
+      </div>
     </form>
   </div>
 </template>
@@ -369,6 +546,17 @@ const fieldMax = (type: keyof typeof FIELD_MAX) => FIELD_MAX[type] || undefined
 .tvf-state p { margin: 0 0 0.5rem; }
 .tvf-state__title { font-family: var(--tv-font-display, inherit); font-size: 1.35rem; font-weight: 600; color: var(--tv-primary, inherit); }
 .tvf-pre { white-space: pre-line; overflow-wrap: anywhere; }
+.tvf-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem 1rem; }
+.tvf-form .tvf-actions { justify-content: flex-start; }
+.tvf-note--strong { color: var(--tv-ink, #222); font-weight: 600; }
+.tvf-editlink { display: grid; gap: 0.4rem; margin: 1rem 0; text-align: start; }
+.tvf-editlink__row { display: flex; gap: 0.5rem; }
+.tvf-editlink__row .tvf-input { min-width: 0; font-size: 0.85rem; }
+.tvf-copy {
+  flex: none; min-height: 2.75rem; padding: 0 1rem; font: inherit; font-weight: 600; cursor: pointer;
+  color: var(--tv-primary, #241236); background: transparent; border: 1px solid currentColor; border-radius: var(--tv-radius, 0.25rem);
+}
+.tvf-copy:focus-visible { outline: 3px solid var(--tv-accent-ink, currentColor); outline-offset: 2px; }
 /* Honeypot: off-screen, zero-size, never focusable by tab. */
 .tvf-hp { position: absolute !important; left: -10000px !important; top: auto !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
 </style>

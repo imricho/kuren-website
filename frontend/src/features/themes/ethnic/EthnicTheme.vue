@@ -104,7 +104,7 @@ const view = useWeddingView(props)
             <p class="eth-event__venue">{{ event.venueName }}</p>
             <p class="eth-body">{{ event.address }}</p>
             <p v-if="event.description" class="eth-body eth-event__note">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
-            <a class="eth-button" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }}</a>
+            <a class="eth-button" v-if="event.mapHref" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }}</a>
           </div>
         </div>
       </div>

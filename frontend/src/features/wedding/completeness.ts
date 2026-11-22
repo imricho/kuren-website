@@ -76,12 +76,22 @@ function status(missing: string[], started: boolean): SectionStatus {
 
 export const EVENT_REQUIRED_FIELDS = ['title', 'date', 'startTime', 'venueName', 'address'] as const
 
+/** in_person unless the session says online/hybrid (sessions saved before formats existed). */
+export function eventFormat(event: Pick<EventDraft, 'format'>): 'in_person' | 'online' | 'hybrid' {
+  return event.format === 'online' || event.format === 'hybrid' ? event.format : 'in_person'
+}
+
+/** Same rules as the server: venue + address unless online; online access unless in person. */
 export function eventMissing(event: EventDraft): string[] {
-  return EVENT_REQUIRED_FIELDS.filter((f) => {
+  const format = eventFormat(event)
+  const missing: string[] = EVENT_REQUIRED_FIELDS.filter((f) => {
+    if ((f === 'venueName' || f === 'address') && format === 'online') return false
     if (f === 'date') return !isIsoDate(event.date)
     if (f === 'startTime') return !isTime(event.startTime)
     return !has(event[f])
   })
+  if (format !== 'in_person' && !has(event.onlineUrl) && !has(event.onlineInstructions)) missing.push('onlineUrl')
+  return missing
 }
 
 /**
@@ -139,11 +149,8 @@ export function computeCompleteness(
 
   const r = d?.rsvp ?? { enabled: true }
   const rsvpStarted = anySet(r, ['enabled'])
-  sections.rsvp = {
-    status: r.enabled === false || !rsvpStarted ? 'optional' : has(r.title) ? 'complete' : 'in_progress',
-    missing: r.enabled !== false && rsvpStarted && !has(r.title) ? ['title'] : [],
-    required: false,
-  }
+  // The heading is optional: guests see a default one ("RSVP" / "RSVP Kehadiran").
+  sections.rsvp = { status: r.enabled === false || !rsvpStarted ? 'optional' : 'complete', missing: [], required: false }
 
   for (const key of ['holyRecite1', 'holyRecite2'] as const) {
     const h = d?.[key]
@@ -198,8 +205,14 @@ export function computeCompleteness(
   // Sections the variant does not offer never show progress.
   for (const key of SECTION_KEYS) if (!isKeyOffered(key, variant)) sections[key] = { status: 'optional', missing: [], required: false }
 
-  const total = requiredKeys.length
-  const done = requiredKeys.filter((k) => sections[k].status === 'complete').length
+  // Counted: every required section, plus every optional section that is SHOWN (it then
+  // blocks publishing until it has content, exactly like the server's publish check), so
+  // "all complete" never appears while publishing would still be refused.
+  const counted = SECTION_KEYS.filter(
+    (k) => requiredKeys.includes(k) || (!sections[k].required && (sections[k].status === 'in_progress' || sections[k].status === 'complete')),
+  )
+  const total = counted.length
+  const done = counted.filter((k) => sections[k].status === 'complete').length
   const ordered = Object.fromEntries(SECTION_KEYS.map((k) => [k, sections[k]])) as Record<SectionKey, SectionCompleteness>
   return { sections: ordered, done, total, percent: Math.round((done / total) * 100) }
 }

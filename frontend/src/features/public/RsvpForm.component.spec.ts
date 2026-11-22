@@ -103,6 +103,7 @@ describe('RsvpForm', () => {
     const success = w.get('[data-testid="rsvp-success"]')
     expect(success.text()).toContain('Thanks, see you!')
     expect(document.activeElement).toBe(success.element)
+    // Only the replied flag (no edit token in this mocked reply); nothing the guest typed.
     const stored = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)!)
     expect(stored).toEqual(['temuvibe.rsvp.replied.acme-abc123'])
     expect(localStorage.getItem(stored[0]!)).toBe('1')
@@ -111,6 +112,97 @@ describe('RsvpForm', () => {
     const again = mountForm(seminar())
     expect(again.find('[data-testid="rsvp-already"]').exists()).toBe(true)
     expect(again.find('[data-testid="rsvp-form"]').exists()).toBe(true)
+  })
+
+  it('keeps the private edit token, offers the personal link, and a later visit shows "your reply"', async () => {
+    const token = 'T'.repeat(43)
+    vi.spyOn(publishingApi, 'submitRsvp').mockResolvedValue({ id: 'r1', attendance: 'attending', partySize: 2, confirmationMessage: null, editToken: token })
+    const own = { id: 'r1', name: 'Budi Santoso', attendance: 'attending' as const, partySize: 2, email: 'budi@example.com', sessionIds: ['e2'], answers: { company: 'Acme', agree: true }, createdAt: '2026-11-22T05:00:00Z', updatedAt: null }
+    const getOwn = vi.spyOn(publishingApi, 'getOwnRsvp').mockResolvedValue(own)
+    const w = mountForm(seminar())
+    await fillValid(w)
+    await submit(w)
+    expect(localStorage.getItem('temuvibe.rsvp.token.acme-abc123')).toBe(token)
+    const link = w.get<HTMLInputElement>('[data-testid="rsvp-edit-link"] input')
+    expect(link.element.value).toBe(`${location.origin}/i/acme-abc123#rsvp=${token}`)
+    expect(w.get(`label[for="${link.attributes('id')}"]`).text()).toContain('private link')
+    w.unmount()
+
+    const again = mountForm(seminar())
+    await flushPromises()
+    expect(getOwn).toHaveBeenCalledWith('acme-abc123', token)
+    const card = again.get('[data-testid="rsvp-own"]')
+    expect(card.text()).toContain('Budi Santoso')
+    expect(card.text()).toContain('Attending · 2 people')
+    expect(again.find('[data-testid="rsvp-form"]').exists()).toBe(false)
+  })
+
+  it('changing a reply PUTs over the same reply with the token (never a new POST)', async () => {
+    const token = 'A'.repeat(43)
+    localStorage.setItem('temuvibe.rsvp.token.acme-abc123', token)
+    const own = { id: 'r1', name: 'Budi Santoso', attendance: 'attending' as const, partySize: 2, email: 'budi@example.com', sessionIds: [], answers: { company: 'Acme', agree: true }, createdAt: '2026-11-22T05:00:00Z', updatedAt: null }
+    vi.spyOn(publishingApi, 'getOwnRsvp').mockResolvedValue(own)
+    const post = vi.spyOn(publishingApi, 'submitRsvp')
+    const put = vi.spyOn(publishingApi, 'updateOwnRsvp').mockResolvedValue({ id: 'r1', attendance: 'not_attending', partySize: 0, confirmationMessage: null, updatedAt: '2026-11-22T06:00:00Z' })
+    const w = mountForm(seminar())
+    await flushPromises()
+    await w.get('[data-action="rsvp-change"]').trigger('click')
+    await flushPromises()
+    // Prefilled from the saved reply, with a clear note that saving replaces it.
+    expect(w.get<HTMLInputElement>('input[name="name"]').element.value).toBe('Budi Santoso')
+    expect(w.get('[data-testid="rsvp-editing"]').text()).toContain('replaces it')
+    expect(document.activeElement).toBe(w.get('input[name="name"]').element)
+    await w.get('input[value="not_attending"]').setValue(true)
+    expect(w.get('[data-action="rsvp-submit"]').text()).toBe('Save changes')
+    await submit(w)
+    expect(post).not.toHaveBeenCalled()
+    expect(put).toHaveBeenCalledWith('acme-abc123', token, expect.objectContaining({ name: 'Budi Santoso', attendance: 'not_attending', partySize: 0 }))
+    expect(w.get('[data-testid="rsvp-success"]').text()).toContain('updated')
+  })
+
+  it('when the event is full the guest can still change (e.g. decline) their own reply; new replies stay blocked', async () => {
+    localStorage.setItem('temuvibe.rsvp.token.acme-abc123', 'F'.repeat(43))
+    const own = { id: 'r1', name: 'Budi', attendance: 'attending' as const, partySize: 2, sessionIds: [], answers: {}, createdAt: '2026-11-22T05:00:00Z', updatedAt: null }
+    vi.spyOn(publishingApi, 'getOwnRsvp').mockResolvedValue(own)
+    const w = mountForm(seminar((c) => (c.rsvp.full = true)))
+    await flushPromises()
+    expect(w.find('[data-action="rsvp-change"]').exists()).toBe(true)
+    expect(w.find('[data-action="rsvp-again"]').exists()).toBe(false)
+    await w.get('[data-action="rsvp-change"]').trigger('click')
+    await flushPromises()
+    expect(w.find('[data-testid="rsvp-form"]').exists()).toBe(true)
+    expect(w.find('[data-testid="rsvp-closed"]').exists()).toBe(false)
+  })
+
+  it('after the deadline the own reply is shown read-only', async () => {
+    localStorage.setItem('temuvibe.rsvp.token.acme-abc123', 'G'.repeat(43))
+    vi.spyOn(publishingApi, 'getOwnRsvp').mockResolvedValue({ id: 'r1', name: 'Budi', attendance: 'not_attending', partySize: 0, sessionIds: [], answers: {}, createdAt: '2026-11-01T05:00:00Z', updatedAt: null })
+    const w = mountForm(seminar((c) => (c.rsvp.deadline = '2026-11-01')))
+    await flushPromises()
+    expect(w.get('[data-testid="rsvp-own"]').text()).toContain('Not attending')
+    expect(w.find('[data-testid="rsvp-own-closed"]').exists()).toBe(true)
+    expect(w.find('[data-action="rsvp-change"]').exists()).toBe(false)
+  })
+
+  it('a lost or revoked link is forgotten and explained; the guest can still send a new reply', async () => {
+    localStorage.setItem('temuvibe.rsvp.token.acme-abc123', 'B'.repeat(43))
+    vi.spyOn(publishingApi, 'getOwnRsvp').mockRejectedValue(new ApiError(404, 'rsvp_link_invalid', 'nope'))
+    const w = mountForm(seminar())
+    await flushPromises()
+    expect(localStorage.getItem('temuvibe.rsvp.token.acme-abc123')).toBeNull()
+    expect(w.get('[data-testid="rsvp-link-lost"]').text()).toContain('no longer works')
+    expect(w.find('[data-testid="rsvp-form"]').exists()).toBe(true)
+  })
+
+  it('takes a token from the #rsvp= personal link and removes it from the address bar', async () => {
+    const token = 'C'.repeat(43)
+    history.replaceState(null, '', `/i/acme-abc123#to=Budi&rsvp=${token}`)
+    vi.spyOn(publishingApi, 'getOwnRsvp').mockRejectedValue(new ApiError(0, 'network_error', 'offline'))
+    mountForm(seminar())
+    await flushPromises()
+    expect(location.hash).toBe('#to=Budi')
+    expect(localStorage.getItem('temuvibe.rsvp.token.acme-abc123')).toBe(token)
+    history.replaceState(null, '', '/')
   })
 
   it('a declining guest sends partySize 0', async () => {

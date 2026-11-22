@@ -37,6 +37,7 @@ from app.models.invitation import EVENT_TYPES, TIMEZONE_MAX_LENGTH, TITLE_MAX_LE
 from app.schemas.text import check_controls_deep
 
 Locale = Literal["en", "id"]
+SessionFormat = Literal["in_person", "online", "hybrid"]
 EventType = Literal[
     "engagement", "akad", "holy_matrimony", "ceremony", "reception", "party", "celebration",
     "session", "talk", "workshop", "gathering", "prayer", "dinner", "other",
@@ -311,6 +312,13 @@ Timezone = Annotated[str | None, BeforeValidator(_validate_timezone), Field(defa
 Title = _opt_str(TITLE_MAX_LENGTH)
 
 
+class SessionSeed(RequestModel):
+    """A session to create with the invitation (the creation wizard's choices)."""
+
+    type: EventType
+    title: Str120
+
+
 class InvitationCreate(RequestModel):
     category: CategoryId
     variant: VariantId
@@ -318,6 +326,9 @@ class InvitationCreate(RequestModel):
     title: Title
     locale: Locale = "en"
     timezone: Timezone
+    #: Sessions to start with, in order, replacing the variant's presets (e.g. ceremony only,
+    #: or ceremony + reception). Omit to use the presets; [] starts with no sessions.
+    sessions: list[SessionSeed] | None = Field(default=None, max_length=6)
 
     @model_validator(mode="after")
     def _valid_pair(self) -> "InvitationCreate":
@@ -363,6 +374,9 @@ class PublicationSummary(ResponseModel):
     #: Content revision that was published.
     revision: int
     theme_id: str
+    #: Time zone and language guests see until the next publish.
+    timezone: str | None = None
+    locale: str | None = None
 
 
 class InvitationRead(ResponseModel):
@@ -585,6 +599,8 @@ class EventIn(RequestModel):
     type: Annotated[EventType, BeforeValidator(lambda v: "other" if v is None else v)] = "other"
     title: Str120
     date: OptDate
+    #: Last day of a multi-day session (inclusive); unset = same day as `date`.
+    end_date: OptDate
     start_time: OptTime
     end_time: OptTime
     venue_name: Str160
@@ -595,12 +611,31 @@ class EventIn(RequestModel):
     livestream: Livestream | None = None
     #: A session guests may choose to attend (with `rsvp.allowSessionChoice`).
     optional: bool | None = Field(default=None, strict=True)
+    #: in_person (default when unset; every session created before formats existed),
+    #: online (no venue needed) or hybrid (venue AND online access).
+    format: SessionFormat | None = None
+    online_url: HttpsUrl
+    online_label: Str120
+    #: How to join when there is no link yet (e.g. "The Zoom link is emailed on the day").
+    online_instructions: Str1000
+
+    @field_validator("end_date")
+    @classmethod
+    def _end_date_after_date(cls, value: date | None, info: ValidationInfo) -> date | None:
+        start = info.data.get("date")
+        if value is not None and start is not None and value < start:
+            raise ValueError("must not be before date")
+        return value
 
     @field_validator("end_time")
     @classmethod
     def _end_after_start(cls, value: time | None, info: ValidationInfo) -> time | None:
+        if "end_date" not in info.data:
+            return value  # endDate itself is invalid: report that one error, not two
         start = info.data.get("start_time")
-        if value is not None and start is not None and value <= start:
+        day, last_day = info.data.get("date"), info.data.get("end_date")
+        multi_day = day is not None and last_day is not None and last_day > day
+        if value is not None and start is not None and value <= start and not multi_day:
             raise ValueError("must be later than startTime")
         return value
 
@@ -981,6 +1016,11 @@ class EventOut(ResponseModel):
     dress_code: DressCodeOut | None = None
     livestream: LivestreamOut | None = None
     optional: bool | None = None
+    format: SessionFormat | None = None
+    online_url: str | None = None
+    online_label: str | None = None
+    online_instructions: str | None = None
+    end_date: str | None = None
 
 
 class GalleryItemOut(ResponseModel):
@@ -1175,3 +1215,16 @@ SECTION_OUT_MODELS: dict[str, type[ResponseModel]] = {
 
 #: Every section id has exactly one storage model (core column or `universal_content`).
 assert set(SECTION_MODELS) | set(UNIVERSAL_SECTION_MODELS) | {"events"} == set(registry.SECTION_IDS)
+
+
+class PublishIssueOut(ResponseModel):
+    section: str
+    field: str
+    code: str
+    message: str
+
+
+class PublishCheckOut(ResponseModel):
+    revision: int
+    ready: bool
+    issues: list[PublishIssueOut]

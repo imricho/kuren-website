@@ -13,7 +13,7 @@ from app.api.deps import AppSettings, DbSession
 from app.core.errors import RateLimitedError
 from app.core.rate_limit import public_limiter, rsvp_limiter, rsvp_slug_limiter
 from app.schemas.invitation import PublicInvitationOut
-from app.schemas.rsvp import RsvpSubmission, RsvpSubmitted
+from app.schemas.rsvp import RsvpOwnReply, RsvpSubmission, RsvpSubmitted
 from app.services import invitation_publish_service, rsvp_service
 
 router = APIRouter(prefix="/public", tags=["public"])
@@ -94,4 +94,41 @@ def submit_rsvp(slug: str, payload: RsvpSubmission, db: DbSession) -> JSONRespon
         RsvpSubmitted.model_validate(body).model_dump(mode="json", by_alias=True),
         status_code=status.HTTP_201_CREATED,
         headers=_RSVP_HEADERS,
+    )
+
+
+# --- Guest's own reply (private edit token; no name/email matching) ----------------------
+# The token travels in a header, never in the URL, so it is not written to access logs.
+# The guest page keeps it on the device and offers it as a personal link in the URL
+# FRAGMENT (`#rsvp=...`), which browsers never send to the server either.
+
+RsvpToken = Annotated[str | None, Header(alias="X-RSVP-Token", max_length=200)]
+
+
+@router.get(
+    "/invitations/{slug}/rsvp/mine",
+    response_model=RsvpOwnReply,
+    # A read (the token is 256 bits, so guessing is not a concern): the public-page budget,
+    # not the strict RSVP-write one, so opening the page never uses up the guest's replies.
+    dependencies=[Depends(rate_limit)],
+    responses={404: {"description": "`not_found` or `rsvp_link_invalid`"}},
+)
+def read_own_rsvp(slug: str, db: DbSession, token: RsvpToken = None) -> JSONResponse:
+    body = rsvp_service.get_own(db, slug, token)
+    return JSONResponse(
+        RsvpOwnReply.model_validate(body).model_dump(mode="json", by_alias=True), headers=_RSVP_HEADERS
+    )
+
+
+@router.put(
+    "/invitations/{slug}/rsvp/mine",
+    response_model=RsvpSubmitted,
+    dependencies=[Depends(rsvp_rate_limit)],
+    responses={404: {"description": "`not_found` or `rsvp_link_invalid`"}},
+)
+def update_own_rsvp(slug: str, payload: RsvpSubmission, db: DbSession, token: RsvpToken = None) -> JSONResponse:
+    """Replace the guest's own reply; validated like a new one against the PUBLISHED config."""
+    body = rsvp_service.update(db, slug, token, payload)
+    return JSONResponse(
+        RsvpSubmitted.model_validate(body).model_dump(mode="json", by_alias=True), headers=_RSVP_HEADERS
     )

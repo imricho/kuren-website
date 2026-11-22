@@ -36,6 +36,9 @@ export interface InvitationPublication {
   /** What was published (snapshot); optional for servers that predate the engine. */
   category?: CategoryId
   variant?: VariantId
+  /** Time zone / language guests see until the next publish. */
+  timezone?: string | null
+  locale?: WeddingLocale | null
 }
 
 /** `GET /invitations/{id}` (= the former `WeddingRead` + category, variant, title, timezone). */
@@ -88,6 +91,8 @@ export interface InvitationCreate {
   title?: string | null
   locale?: WeddingLocale
   timezone?: string
+  /** Sessions to start with (the wizard's choices); omitted = the variant's presets. */
+  sessions?: { type: string; title?: string | null }[]
 }
 
 /** `PATCH /invitations/{id}` — category and variant are immutable. */
@@ -149,6 +154,11 @@ export interface RsvpResponse {
   message: string | null
   guestLabel: string | null
   createdAt: string
+  /** Set when the guest changed this reply through their private link. */
+  updatedAt?: string | null
+  editCount?: number
+  /** Another reply shares the name, email or phone: shown to the organizer, never merged. */
+  possibleDuplicate?: boolean
 }
 
 export interface RsvpSummary {
@@ -157,6 +167,7 @@ export interface RsvpSummary {
   notAttending: number
   attendingPeople: number
   capacity: number | null
+  possibleDuplicates?: number
 }
 
 export interface RsvpResponsePage {

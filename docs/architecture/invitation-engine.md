@@ -276,3 +276,26 @@ section nav is driven by the variant's section config.
 Guest data (RSVP names, contacts, answers) is owner-only, never in snapshots, never logged.
 Public POST: honeypot, rate limit, strict body size (16 KB), extra=forbid, string limits,
 no HTML rendering (text only). CSV export escapes formulas. Deleting an invitation deletes its replies.
+
+## 8. Changes on 2026-11-23 (audit follow-up, migration 0009)
+
+- **RSVP changes:** every new reply gets a private edit token (hash stored). The guest can
+  read/replace their own reply (`/rsvp/mine`, `X-RSVP-Token` header); a change replaces the
+  row, so totals/capacity never double-count. Possible duplicates are flagged, never merged.
+- **Publish rule:** shown-but-empty optional sections block publishing on both client and
+  server; the editor asks the server (`GET …/publish-check`) before saying "all clear" and
+  re-words server issues from stable codes (Indonesian/English). Completion counts include
+  every shown section. The RSVP heading is optional (default heading when empty).
+- **Published time zone:** stored on each publication; public payload, calendar links and the
+  RSVP deadline use it; the public ETag is a digest of the response.
+- **Sessions:** `format` in_person/online/hybrid with `onlineUrl`/`onlineLabel`/
+  `onlineInstructions`, and `endDate` for multi-day sessions (stored in session `extras`).
+- **Calendar:** times converted from the published zone to UTC (DST-aware); a missing end time
+  uses a disclosed 2-hour assumption; multi-day sessions without an end time are all-day.
+- **Presets:** wedding_ceremony starts with one neutral ceremony; the wizard picks akad /
+  pemberkatan / neutral and an optional reception (reception variant: optional ceremony);
+  khitanan/aqiqah start with the celebration (procession optional); graduation can add a
+  private celebration; company_celebration uses celebration wording. Existing invitations'
+  sessions are never changed.
+- **Personal guest links:** `#to=<name>` (fragment); `?to=` still works.
+

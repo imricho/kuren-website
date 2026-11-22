@@ -2,6 +2,7 @@
 
 import csv
 import io
+import re
 import threading
 from datetime import datetime, timezone
 from typing import Any
@@ -54,7 +55,8 @@ def test_successful_reply(auth_client: TestClient, client: TestClient, db: Sessi
     response = rsvp(client, inv["slug"], {**GUEST, "message": "Selamat!", "guestLabel": "Keluarga Rina"})
     assert response.status_code == 201, response.text
     body = response.json()
-    assert set(body) == {"id", "attendance", "partySize", "confirmationMessage"}
+    assert set(body) == {"id", "attendance", "partySize", "confirmationMessage", "editToken", "updatedAt"}
+    assert re.fullmatch(r"[A-Za-z0-9_-]{43}", body["editToken"]) and body["updatedAt"] is None
     assert (body["attendance"], body["partySize"], body["confirmationMessage"]) == ("attending", 2, "Sampai jumpa!")
     assert "set-cookie" not in response.headers
     assert response.headers["cache-control"] == "no-store"
@@ -234,8 +236,8 @@ def test_capacity_race_admits_exactly_one(
 
     real_count = rsvp_service.attending_people
 
-    def slow_count(db: Session, invitation_id: Any) -> int:
-        count = real_count(db, invitation_id)
+    def slow_count(db: Session, invitation_id: Any, *, exclude: Any = None) -> int:
+        count = real_count(db, invitation_id, exclude=exclude)
         threading.Event().wait(0.3)  # widen the window between the check and the insert
         return count
 
@@ -314,7 +316,9 @@ def test_list_summary_pagination_and_delete(auth_client: TestClient) -> None:
     assert page.headers["cache-control"] == "no-store"
     body = page.json()
     assert body["total"] == 4 and len(body["items"]) == 2
-    assert body["summary"] == {"responses": 4, "attending": 3, "notAttending": 1, "attendingPeople": 6, "capacity": 50}
+    assert body["summary"] == {
+        "responses": 4, "attending": 3, "notAttending": 1, "attendingPeople": 6, "capacity": 50, "possibleDuplicates": 0,
+    }
     assert body["items"][0]["name"] == "Absent"  # newest first
     assert set(body["items"][1]) >= {"id", "name", "attendance", "partySize", "email", "sessionIds", "answers", "createdAt"}
     rest = auth_client.get(base, params={"limit": 2, "offset": 2}).json()["items"]
@@ -342,8 +346,10 @@ def test_csv_export_is_formula_safe(auth_client: TestClient) -> None:
     raw = response.content.decode("utf-8")
     assert raw.startswith("﻿")
     rows = list(csv.reader(io.StringIO(raw.removeprefix("﻿"))))
-    assert rows[0] == ["Submitted at", "Name", "Attendance", "Party size", "Email", "Phone", "Sessions",
-                       "Guest label", "Message", "'=Company"]
+    assert rows[0] == ["Submitted at", "Updated at", "Possible duplicate", "Name", "Attendance", "Party size",
+                       "Email", "Phone", "Sessions", "Guest label", "Message", "'=Company"]
+    # The rest of this test indexes the original columns: drop the two new ones.
+    rows = [row[:1] + row[3:] for row in rows]
     newest, oldest = rows[1], rows[2]
     assert newest[1:4] == ['Dewi, "Sari"', "not_attending", "0"] and newest[8] == "Baris 1\nBaris 2"
     assert oldest[1] == "'=HYPERLINK(\"http://evil\",\"x\")"

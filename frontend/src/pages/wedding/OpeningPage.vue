@@ -21,11 +21,17 @@ import { useUnsavedChangesGuard } from '@/features/cms/composables/useUnsavedCha
 import { clean, openingForm, openingPayload, type OpeningForm } from '@/features/cms/forms'
 import { fieldId, validateOpening } from '@/features/cms/validation'
 import { deriveCoupleNames } from '@/features/wedding/draft'
+import { variantOf } from '@/features/invitation/registry'
 import { useInvitationStore } from '@/stores/invitation'
 
 const store = useInvitationStore()
 const { t } = useAppLocale()
 const { vt } = useVariantCopy()
+/** The headline example fits the kind of event (no "Two hearts…" on a seminar). */
+const headlineHintKey = computed(() => {
+  const category = store.variant ? variantOf(store.variant).category : 'wedding'
+  return ({ wedding: 'headlineHint', celebration: 'headlineHintCelebration', gathering: 'headlineHintGathering', corporate: 'headlineHintCorporate' } as const)[category]
+})
 /** Couple names live here only where the variant has a couple section. */
 const hasCouple = computed(() => isKeyOffered('couple', store.variant))
 
@@ -167,7 +173,7 @@ const labels = computed<Record<string, string>>(() => ({
         :error="errors.coupleNames"
         :needed-hint="hasCouple ? undefined : needed"
       />
-      <TextField :id="fieldId('headline')" v-model="form.headline" :label="t('headline')" :hint="t('headlineHint')" :error="errors.headline" />
+      <TextField :id="fieldId('headline')" v-model="form.headline" :label="t('headline')" :hint="t(headlineHintKey)" :error="errors.headline" />
       <TextAreaField
         :id="fieldId('introduction')"
         v-model="form.introduction"

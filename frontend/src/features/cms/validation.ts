@@ -30,6 +30,7 @@ export type IssueCode =
   | 'invalidDate'
   | 'invalidTime'
   | 'endBeforeStart'
+  | 'endDateBeforeDate'
   | 'invalidUrl'
   | 'invalidInstagram'
   | 'invalidImage'
@@ -201,8 +202,15 @@ export function validateEvent(f: EventForm): FieldIssue[] {
   c.date('date', f.date)
   c.time('startTime', f.startTime)
   c.time('endTime', f.endTime)
-  if (isTime(f.startTime.trim()) && isTime(f.endTime.trim()) && f.endTime.trim() <= f.startTime.trim())
+  c.date('endDate', f.endDate)
+  const multiDay = isIsoDate(f.endDate.trim()) && isIsoDate(f.date.trim()) && f.endDate.trim() > f.date.trim()
+  if (isIsoDate(f.endDate.trim()) && isIsoDate(f.date.trim()) && f.endDate.trim() < f.date.trim())
+    c.issues.push({ field: 'endDate', code: 'endDateBeforeDate' })
+  if (!multiDay && isTime(f.startTime.trim()) && isTime(f.endTime.trim()) && f.endTime.trim() <= f.startTime.trim())
     c.issues.push({ field: 'endTime', code: 'endBeforeStart' })
+  c.https('onlineUrl', f.onlineUrl)
+  c.max('onlineLabel', f.onlineLabel, LIMITS.title)
+  c.max('onlineInstructions', f.onlineInstructions, 1000)
   c.max('venueName', f.venueName, LIMITS.venueName)
   c.max('address', f.address, LIMITS.address)
   c.url('mapsUrl', f.mapsUrl)
@@ -342,6 +350,8 @@ export function issueMessage(issue: FieldIssue): string {
       return t('errInvalidTime')
     case 'endBeforeStart':
       return t('errEndBeforeStart')
+    case 'endDateBeforeDate':
+      return t('errEndDateBeforeDate')
     case 'invalidUrl':
       return t('errInvalidUrl')
     case 'invalidInstagram':

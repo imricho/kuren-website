@@ -19,8 +19,12 @@ import TextField from '@/components/ui/TextField.vue'
 import { localizedCatalogText, useAppLocale, type AppMessageKey } from '@/composables/useAppLocale'
 import { focusMainHeading } from '@/composables/useRouteA11y'
 import { fieldId } from '@/features/cms/validation'
-import { compatibleTemplates, DEFAULT_TIMEZONE, timezoneOptions } from '@/features/invitation/catalog'
+import { compatibleTemplates, DEFAULT_TIMEZONE } from '@/features/invitation/catalog'
+import TimezoneField from '@/features/invitation/components/TimezoneField.vue'
+import { FAMILIES } from '@/features/themes/core/registry'
+import { previewRoute } from '@/features/themes/picker/routes'
 import { CATEGORIES, isCategoryId, isVariantId, variantOf, variantsOf, type CategoryId, type VariantId } from '@/features/invitation/registry'
+import { CEREMONY_TYPES, extraSessionFor, hasSessionChoices, sessionsFor, type CeremonyType } from '@/features/invitation/sessionChoices'
 import { checkInvitationTitle } from '@/features/invitation/validation'
 import type { WeddingLocale } from '@/features/wedding/types'
 import { useInvitationsStore } from '@/stores/invitations'
@@ -46,12 +50,49 @@ const variant = computed<VariantId | undefined>(() => {
   return isVariantId(v) && category.value && variantOf(v).category === category.value ? v : undefined
 })
 const templates = computed(() => (variant.value ? compatibleTemplates(variant.value) : []))
+// Template discovery: search and a style filter (both in the URL, so Back/reload keep them).
+const templateQuery = computed(() => q('tq') ?? '')
+const templateStyle = computed(() => q('style') ?? 'all')
+const familyName = (id: string) => FAMILIES.find((f) => f.id === id)?.name ?? id
+const styleOptions = computed(() => {
+  const ids = [...new Set(templates.value.map((tpl) => tpl.familyId))]
+  return ids.map((id) => ({ id, name: familyName(id), count: templates.value.filter((tpl) => tpl.familyId === id).length }))
+})
+const shownTemplates = computed(() => {
+  const term = templateQuery.value.trim().toLocaleLowerCase()
+  return templates.value.filter((tpl) => {
+    if (templateStyle.value !== 'all' && tpl.familyId !== templateStyle.value) return false
+    if (!term) return true
+    const text = `${localizedCatalogText(tpl.id, 'name', tpl.name)} ${localizedCatalogText(tpl.id, 'tagline', tpl.tagline)} ${tpl.name} ${familyName(tpl.familyId)}`
+    return text.toLocaleLowerCase().includes(term)
+  })
+})
+/** Full-screen preview in a new tab (the wizard keeps its place in this one). */
+function previewHref(tpl: Parameters<typeof previewRoute>[0]): string {
+  try {
+    return router.resolve(previewRoute(tpl)).href
+  } catch {
+    return ''
+  }
+}
+/** The chosen template stays visible even when filtered out, so the choice is never hidden. */
+const listedTemplates = computed(() => {
+  const chosen = templates.value.find((tpl) => tpl.id === template.value)
+  return chosen && !shownTemplates.value.includes(chosen) ? [chosen, ...shownTemplates.value] : shownTemplates.value
+})
 const requestedTemplate = computed(() => q('template'))
 const template = computed(() => templates.value.find((x) => x.id === requestedTemplate.value)?.id)
 /** A `?template=` that this variant can't use (explained on the template step). */
 const incompatibleRequest = computed(() => !!variant.value && !!requestedTemplate.value && !template.value)
 const locale = computed<WeddingLocale>(() => (q('locale') === 'en' ? 'en' : 'id'))
 const timezone = computed(() => q('timezone') || DEFAULT_TIMEZONE)
+/** Session choices (kept in the URL like every other choice, so reload/back keep them). */
+const showSessions = computed(() => hasSessionChoices(variant.value))
+const ceremonyType = computed<CeremonyType>(() => (CEREMONY_TYPES.some((c) => c.type === q('ceremony')) ? (q('ceremony') as CeremonyType) : 'ceremony'))
+const addExtra = computed(() => q('extra') === '1')
+const extraSession = computed(() => extraSessionFor(variant.value))
+/** The ceremony type matters for a ceremony invitation, and for a reception only with an added ceremony. */
+const showCeremonyType = computed(() => variant.value === 'wedding_ceremony' || (variant.value === 'wedding_reception' && addExtra.value))
 
 /** The furthest step whose prerequisites are met. */
 const reachable = computed<Step>(() => (!category.value ? 'category' : !variant.value ? 'variant' : !template.value ? 'template' : 'name'))
@@ -96,11 +137,6 @@ const localeOptions = computed(() => [
   { value: 'id' as const, label: t('bahasa') },
   { value: 'en' as const, label: t('english') },
 ])
-const zoneOptions = computed(() => timezoneOptions(timezone.value).map((z) => ({ value: z, label: zoneLabel(z) })))
-function zoneLabel(z: string) {
-  const short: Record<string, string> = { 'Asia/Jakarta': 'WIB', 'Asia/Makassar': 'WITA', 'Asia/Jayapura': 'WIT' }
-  return short[z] ? `${z} (${short[z]})` : z
-}
 
 async function create() {
   if (!category.value || !variant.value || !template.value || creating.value || titleError.value) return
@@ -114,6 +150,7 @@ async function create() {
       title: title.value.trim() || undefined,
       locale: locale.value,
       timezone: timezone.value,
+      sessions: sessionsFor(variant.value, { ceremony: ceremonyType.value, extra: addExtra.value }, locale.value),
     })
     await router.replace({ name: 'editor', params: { id: rec.id } })
   } catch (err) {
@@ -204,10 +241,27 @@ const secondary = ['inline-flex min-h-11 items-center rounded-full border border
         {{ t('wizardTemplateIncompatible') }}
       </p>
       <p v-if="templates.length === 0" class="mt-3 text-sm text-ink-700" data-testid="no-templates">{{ t('wizardNoTemplates') }}</p>
-      <fieldset v-else class="mt-4">
+      <div v-if="templates.length > 4" class="mt-4 space-y-3" data-testid="template-tools">
+        <div class="max-w-md">
+          <label for="wz-template-search" class="block text-sm font-medium text-ink-700">{{ t('wizardTemplateSearch') }}</label>
+          <input id="wz-template-search" type="search" :value="templateQuery" autocomplete="off" :placeholder="t('wizardTemplateSearchPlaceholder')"
+            :class="['mt-1 block min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm', FOCUS_RING]"
+            @input="go({ tq: ($event.target as HTMLInputElement).value || undefined }, true)" />
+        </div>
+        <div v-if="styleOptions.length > 1" class="flex flex-wrap gap-2" role="group" :aria-label="t('wizardTemplateStyle')">
+          <button v-for="opt in [{ id: 'all', name: t('wizardTemplateAllStyles'), count: templates.length }, ...styleOptions]" :key="opt.id" type="button"
+            :class="['min-h-11 rounded-full border px-4 text-sm sm:min-h-9', FOCUS_RING, templateStyle === opt.id ? 'border-[var(--tv-plum)] bg-[var(--tv-plum)] text-white' : 'border-line bg-surface text-ink-700 hover:bg-rose-50']"
+            :aria-pressed="templateStyle === opt.id" :data-style="opt.id" @click="go({ style: opt.id === 'all' ? undefined : opt.id }, true)">
+            {{ opt.name }} <span class="opacity-75">{{ opt.count }}</span>
+          </button>
+        </div>
+        <p class="text-sm text-ink-500" role="status" data-testid="template-count">{{ t('wizardTemplateCount', { count: shownTemplates.length, total: templates.length }) }}</p>
+      </div>
+      <p v-if="templates.length && listedTemplates.length === 0" class="mt-3 text-sm text-ink-700" data-testid="no-template-matches">{{ t('wizardTemplateNoMatch') }}</p>
+      <fieldset v-if="templates.length && listedTemplates.length" class="mt-4">
         <legend class="sr-only">{{ t('wizardStepTemplate') }}</legend>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <label v-for="tpl in templates" :key="tpl.id" :class="[...card(template === tpl.id), 'flex-col']">
+          <label v-for="tpl in listedTemplates" :key="tpl.id" :class="[...card(template === tpl.id), 'flex-col']">
             <img :src="tpl.previewImage" alt="" class="aspect-[4/5] w-full rounded-md border border-line object-cover" loading="lazy" />
             <span class="flex items-start gap-2">
               <input type="radio" name="template" class="mt-1 size-4 accent-[var(--tv-plum)]" :value="tpl.id" :checked="template === tpl.id" :data-template="tpl.id" @change="chooseTemplate(tpl.id)" />
@@ -216,6 +270,9 @@ const secondary = ['inline-flex min-h-11 items-center rounded-full border border
                 <span class="block text-xs text-ink-500">{{ localizedCatalogText(tpl.id, 'tagline', tpl.tagline) }}</span>
               </span>
             </span>
+            <a v-if="previewHref(tpl)" :href="previewHref(tpl)" target="_blank" rel="noopener" :class="['inline-flex min-h-11 items-center self-start text-sm font-medium text-[var(--tv-plum)] underline underline-offset-2 sm:min-h-9', FOCUS_RING]" :data-preview="tpl.id" @click.stop>
+              {{ t('wizardTemplatePreview') }}<span class="sr-only"> {{ localizedCatalogText(tpl.id, 'name', tpl.name) }} {{ t('opensInNewTab') }}</span><span aria-hidden="true">&nbsp;↗</span>
+            </a>
           </label>
         </div>
       </fieldset>
@@ -234,15 +291,29 @@ const secondary = ['inline-flex min-h-11 items-center rounded-full border border
           :options="localeOptions"
           @update:model-value="(v: WeddingLocale) => go({ locale: v }, true)"
         />
-        <SelectField
+        <TimezoneField
           :id="fieldId('timezone', 'wz')"
           :model-value="timezone"
           :label="t('timezone')"
           :hint="t('timezoneHint')"
-          :options="zoneOptions"
           @update:model-value="(v: string) => go({ timezone: v }, true)"
         />
       </div>
+      <fieldset v-if="showSessions" class="mt-4 space-y-3 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6" data-testid="wizard-sessions">
+        <legend class="px-1 text-base font-semibold">{{ t('wizardSessionsTitle') }}</legend>
+        <p class="text-sm text-ink-500">{{ t('wizardSessionsHint') }}</p>
+        <label v-if="extraSession" class="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
+          <input type="checkbox" class="mt-1 size-4 accent-[var(--tv-plum)]" :checked="addExtra" data-choice="extra" @change="go({ extra: ($event.target as HTMLInputElement).checked ? '1' : undefined }, true)" />
+          <span>{{ extraSession.label[uiLocale] }}</span>
+        </label>
+        <fieldset v-if="showCeremonyType" class="space-y-1" data-testid="wizard-ceremony-type">
+          <legend class="text-sm font-medium text-ink-900">{{ t('wizardCeremonyType') }}</legend>
+          <label v-for="c in CEREMONY_TYPES" :key="c.type" class="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
+            <input type="radio" name="ceremony" class="mt-1 size-4 accent-[var(--tv-plum)]" :value="c.type" :checked="ceremonyType === c.type" :data-ceremony="c.type" @change="go({ ceremony: c.type }, true)" />
+            <span><span class="block font-medium">{{ c.title[locale] }}</span><span class="block text-xs text-ink-500">{{ c.hint[uiLocale] }}</span></span>
+          </label>
+        </fieldset>
+      </fieldset>
       <p v-if="createError" role="alert" class="mt-3 text-sm text-danger-600" data-testid="create-error">{{ createError }}</p>
     </section>
 

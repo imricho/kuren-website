@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from app.api.deps import AppSettings, CurrentUser, DbSession, OwnedInvitation, WritableInvitation
 from app.core import invitation_registry
 from app.schemas.invitation import (
+    PublishCheckOut,
     SECTION_MODELS,
     SECTION_OUT_MODELS,
     UNIVERSAL_SECTION_MODELS,
@@ -95,6 +96,7 @@ def create_invitation(payload: InvitationCreate, user: CurrentUser, db: DbSessio
     invitation = invitation_service.create_invitation(
         db, user, category=payload.category, variant=payload.variant, theme_id=payload.theme_id,
         title=payload.title, locale=payload.locale, timezone=payload.timezone,
+        sessions=None if payload.sessions is None else [(s.type, s.title) for s in payload.sessions],
     )
     return read_model(db, invitation)
 
@@ -127,6 +129,14 @@ def publish_invitation(invitation: WritableInvitation, db: DbSession, response: 
     invitation_publish_service.publish(db, invitation)
     _tag(response, invitation, db)
     return read_model(db, invitation)
+
+
+@item_router.get("/{invitation_id}/publish-check", response_model=PublishCheckOut)
+def check_publish(invitation: OwnedInvitation, db: DbSession) -> dict[str, Any]:
+    """Dry run of publishing: the blocking issues `POST .../publish` would return now, with
+    the content revision they were computed for. Nothing is changed."""
+    issues = invitation_publish_service.check(db, invitation)
+    return {"revision": invitation.revision, "ready": not issues, "issues": issues}
 
 
 @item_router.post("/{invitation_id}/unpublish", response_model=InvitationRead)

@@ -1,7 +1,7 @@
 /** English UI text for the app shell, dashboard and first run. Keep keys in sync with ../id/shell.ts (type-checked). */
 export const shellEn = {
   // Document titles
-  appTitleDefault: 'Temuvibe · Wedding websites',
+  appTitleDefault: 'Temuvibe · Digital invitations',
   welcomeTitle: 'Get started',
 
   // App shell / account menu

@@ -178,17 +178,10 @@
       ],
       "sessionPresets": [
         {
-          "type": "akad",
+          "type": "ceremony",
           "title": {
-            "en": "Akad Nikah",
-            "id": "Akad Nikah"
-          }
-        },
-        {
-          "type": "reception",
-          "title": {
-            "en": "Wedding Reception",
-            "id": "Resepsi"
+            "en": "Wedding Ceremony",
+            "id": "Upacara Pernikahan"
           }
         }
       ],
@@ -496,17 +489,10 @@
       ],
       "sessionPresets": [
         {
-          "type": "ceremony",
-          "title": {
-            "en": "Khitanan Ceremony",
-            "id": "Prosesi Khitanan"
-          }
-        },
-        {
           "type": "celebration",
           "title": {
-            "en": "Celebration",
-            "id": "Syukuran"
+            "en": "Khitanan Celebration",
+            "id": "Syukuran Khitanan"
           }
         }
       ],
@@ -581,17 +567,10 @@
       ],
       "sessionPresets": [
         {
-          "type": "ceremony",
-          "title": {
-            "en": "Aqiqah Ceremony",
-            "id": "Prosesi Aqiqah"
-          }
-        },
-        {
           "type": "celebration",
           "title": {
-            "en": "Celebration",
-            "id": "Syukuran"
+            "en": "Aqiqah Celebration",
+            "id": "Syukuran Aqiqah"
           }
         }
       ],
@@ -1209,10 +1188,10 @@
       ],
       "sessionPresets": [
         {
-          "type": "session",
+          "type": "celebration",
           "title": {
-            "en": "Main Session",
-            "id": "Sesi Utama"
+            "en": "Company Celebration",
+            "id": "Perayaan Perusahaan"
           }
         }
       ],

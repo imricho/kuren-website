@@ -12,7 +12,8 @@ import TextField from '@/components/ui/TextField.vue'
 import { localizedCatalogText, useAppLocale } from '@/composables/useAppLocale'
 import { useToast } from '@/composables/useToast'
 import { fieldId } from '@/features/cms/validation'
-import { compatibleTemplates, timezoneOptions } from '@/features/invitation/catalog'
+import { compatibleTemplates } from '@/features/invitation/catalog'
+import TimezoneField from '@/features/invitation/components/TimezoneField.vue'
 import { variantOf, DEFAULT_TIMEZONE } from '@/features/invitation/registry'
 import { checkInvitationTitle } from '@/features/invitation/validation'
 import type { WeddingLocale } from '@/features/wedding/types'
@@ -48,7 +49,6 @@ const localeOptions = computed(() => [
   { value: 'en' as const, label: t('english') },
 ])
 const timezone = computed(() => store.timezone ?? DEFAULT_TIMEZONE)
-const zoneOptions = computed(() => timezoneOptions(timezone.value).map((z) => ({ value: z, label: z })))
 const templates = computed(() => (store.variant ? compatibleTemplates(store.variant) : []))
 const templateOptions = computed(() => {
   const opts = templates.value.map((tpl) => ({ value: tpl.id, label: localizedCatalogText(tpl.id, 'name', tpl.name) }))
@@ -80,14 +80,14 @@ const variantLabel = computed(() => (store.variant ? variantOf(store.variant).la
         :options="localeOptions"
         @update:model-value="(v: WeddingLocale) => run('locale', () => store.setLocale(v))"
       />
-      <SelectField
+      <TimezoneField
         :id="fieldId('timezone', 'st')"
         :model-value="timezone"
         :label="t('timezone')"
         :hint="t('timezoneHint')"
-        :options="zoneOptions"
         @update:model-value="(v: string) => run('timezone', () => store.updateSettings({ timezone: v }))"
       />
+      <p v-if="store.isPublished" class="-mt-2 text-xs text-ink-500" data-testid="timezone-published-note">{{ t('timezonePublishedNote') }}</p>
       <SelectField
         v-if="templateOptions.length"
         :id="fieldId('themeId', 'st')"

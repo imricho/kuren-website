@@ -174,6 +174,7 @@ export function installFakeInvitationApi(options: FakeApiOptions = {}) {
   let hold: Promise<void> | null = null
   /** Next publish answers 422 publish_blocked with these details (once). */
   let blockNextPublish: { section: string; field: string; code: string; message: string }[] | null = null
+  let nextCheckIssues: { section: string; field: string; code: string; message: string }[] | null = null
   let publishSeq = 0
 
   const lists = {
@@ -248,6 +249,11 @@ export function installFakeInvitationApi(options: FakeApiOptions = {}) {
   }
 
   function handlePublishing(inv: FakeInvitation, rest: string, method: string, ifMatch: string | undefined): Response | null {
+    // Dry run: reports `nextCheckIssues` (set by a test) for the current revision, else ready.
+    if (rest === 'publish-check' && method === 'GET') {
+      const issues = nextCheckIssues ?? []
+      return json(200, { revision: inv.revision, ready: issues.length === 0, issues })
+    }
     if ((rest !== 'publish' && rest !== 'unpublish') || method !== 'POST') return null
     if (rest === 'unpublish') {
       inv.publication = null
@@ -475,6 +481,10 @@ export function installFakeInvitationApi(options: FakeApiOptions = {}) {
       bump(inv)
     },
     /** Make the next publish fail with 422 publish_blocked. */
+    /** What `GET …/publish-check` reports from now on (null = ready). */
+    setCheckIssues(details: { section: string; field: string; code: string; message: string }[] | null) {
+      nextCheckIssues = details
+    },
     blockNextPublish(details: { section: string; field: string; code: string; message: string }[]) {
       blockNextPublish = details
     },

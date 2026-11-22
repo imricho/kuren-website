@@ -126,6 +126,11 @@ const linkBtn = ['inline-flex min-h-11 items-center rounded-full border border-i
         </div>
       </dl>
 
+      <p v-if="(s.possibleDuplicates ?? 0) > 0" class="rounded-[var(--radius-card)] border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950" data-testid="responses-duplicates">
+        {{ t('duplicatesNotice', { count: s.possibleDuplicates ?? 0 }) }}
+      </p>
+      <p class="text-xs text-ink-500" data-testid="responses-how-changes-work">{{ t('responsesChangesNote') }}</p>
+
       <p v-if="page.items.length === 0" class="rounded-[var(--radius-card)] border border-line bg-surface p-6 text-sm text-ink-700" data-testid="responses-empty">
         {{ t('responsesEmpty') }}
       </p>
@@ -149,7 +154,7 @@ const linkBtn = ['inline-flex min-h-11 items-center rounded-full border border-i
             </thead>
             <tbody>
               <tr v-for="r in page.items" :key="r.id" class="border-t border-line align-top" :data-response="r.id">
-                <th scope="row" class="px-3 py-2 font-medium">{{ r.name }}<span v-if="r.guestLabel" class="block text-xs font-normal text-ink-500">{{ r.guestLabel }}</span></th>
+                <th scope="row" class="px-3 py-2 font-medium">{{ r.name }}<span v-if="r.possibleDuplicate" class="ml-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900" data-badge="duplicate">{{ t('badgePossibleDuplicate') }}</span><span v-if="r.updatedAt" class="ml-1 inline-block rounded-full bg-canvas px-2 py-0.5 text-xs font-medium text-ink-700" :title="when(r.updatedAt)" data-badge="updated">{{ t('badgeUpdated') }}</span><span v-if="r.guestLabel" class="block text-xs font-normal text-ink-500">{{ r.guestLabel }}</span></th>
                 <td class="px-3 py-2">{{ attendanceLabel(r) }}</td>
                 <td class="px-3 py-2">{{ r.partySize }}</td>
                 <td class="px-3 py-2 break-all">{{ contact(r) }}</td>
@@ -170,7 +175,7 @@ const linkBtn = ['inline-flex min-h-11 items-center rounded-full border border-i
         <ul class="space-y-3 md:hidden" data-testid="responses-cards">
           <li v-for="r in page.items" :key="r.id" class="rounded-xl border border-line bg-surface p-4 text-sm">
             <div class="flex items-start justify-between gap-2">
-              <h2 class="font-semibold">{{ r.name }}</h2>
+              <h2 class="font-semibold">{{ r.name }}<span v-if="r.possibleDuplicate" class="ml-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900" data-badge="duplicate">{{ t('badgePossibleDuplicate') }}</span><span v-if="r.updatedAt" class="ml-1 inline-block rounded-full bg-canvas px-2 py-0.5 text-xs font-medium text-ink-700" :title="when(r.updatedAt)" data-badge="updated">{{ t('badgeUpdated') }}</span></h2>
               <span class="text-xs text-ink-500">{{ when(r.createdAt) }}</span>
             </div>
             <dl class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">

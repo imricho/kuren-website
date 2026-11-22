@@ -56,6 +56,9 @@ class Settings(BaseSettings):
     # FORWARDED_ALLOW_IPS). Comma-separated IPs/CIDRs; "*" is refused: anyone could then
     # spoof their address and dodge the per-IP rate limits.
     forwarded_allow_ips: str = "127.0.0.1"
+    # Where rate-limit counters live: "memory" is per process (fine for one worker in
+    # development); "database" is shared by every worker/replica and is required in production.
+    rate_limit_backend: Literal["memory", "database"] = "memory"
     # Public RSVP submissions: body cap (the rest of the API keeps max_request_body_bytes).
     max_rsvp_body_bytes: int = Field(default=16 * 1024, ge=1024)
 
@@ -71,6 +74,8 @@ class Settings(BaseSettings):
         # Production is served over HTTPS; a session cookie without Secure could leak over HTTP.
         if self.environment == "production" and not self.session_cookie_secure:
             raise ValueError("SESSION_COOKIE_SECURE must be true when ENVIRONMENT=production")
+        if self.environment == "production" and self.rate_limit_backend != "database":
+            raise ValueError("RATE_LIMIT_BACKEND must be 'database' when ENVIRONMENT=production")
         return self
 
     @field_validator("cors_origins", mode="before")

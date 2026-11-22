@@ -156,6 +156,7 @@ def create_invitation(
     locale: str,
     timezone: str | None,
     seed_sessions: bool = True,
+    sessions: list[tuple[str, str | None]] | None = None,
 ) -> Invitation:
     """Create and seed an invitation. `seed_sessions=False` keeps the legacy
     `POST /weddings` behaviour (an empty session list)."""
@@ -175,10 +176,14 @@ def create_invitation(
     db.add(invitation)
     db.flush()
     if seed_sessions:
-        for position, preset in enumerate(config.session_presets):
+        seeds = (
+            sessions if sessions is not None
+            else [(preset.type, _localized(preset.title, locale)) for preset in config.session_presets]
+        )
+        for position, (session_type, session_title) in enumerate(seeds):
             db.add(InvitationSession(
                 invitation_id=invitation.id, public_id=f"session-{position + 1}", position=position,
-                type=preset.type, title=_localized(preset.title, locale),
+                type=session_type, title=session_title,
             ))
     db.commit()
     db.refresh(invitation)

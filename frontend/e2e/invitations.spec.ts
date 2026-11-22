@@ -781,7 +781,7 @@ test.describe('RSVP', () => {
     expect(file.suggestedFilename()).toBe(`rsvp-${pub.slug}.csv`)
     const csv = (await (await page.request.get(`${API}/invitations/${pub.id}/rsvp-responses.csv`)).text()).replace(/^﻿/, '')
     const lines = csv.trim().split(/\r?\n/)
-    expect(lines[0]).toBe('Submitted at,Name,Attendance,Party size,Email,Phone,Sessions,Guest label,Message')
+    expect(lines[0]).toBe('Submitted at,Updated at,Possible duplicate,Name,Attendance,Party size,Email,Phone,Sessions,Guest label,Message')
     expect(csv).toContain("'=1+1 we will bring snacks")
     expect(csv).not.toMatch(/,=1\+1/)
     expect(csv).toContain("'+62 812-3456-7890")
@@ -800,7 +800,7 @@ test.describe('RSVP', () => {
     expect((await postRsvp(pub.slug!, { name: '=1+1', attendance: 'attending', partySize: 1, message: '@SUM(A1)' })).status).toBe(201)
     const csv = await (await page.request.get(`${API}/invitations/${pub.id}/rsvp-responses.csv`)).text()
     const row = csv.split(/\r?\n/).find((l) => l.includes('1+1'))!
-    expect(row.split(',')[1]).toBe("'=1+1")
+    expect(row.split(',')[3]).toBe("'=1+1") // after Submitted at, Updated at, Possible duplicate
     expect(row).toContain("'@SUM(A1)")
   })
 

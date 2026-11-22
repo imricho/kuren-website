@@ -146,7 +146,17 @@ export interface WeddingEvent {
    * Stored as `events[].optional` (the backend's field; the contract text says `extras.optional`).
    */
   optional?: boolean
+  /** in_person when absent (every session saved before formats existed). */
+  format?: SessionFormat
+  /** Joining link / label / instructions (online and hybrid sessions only). */
+  onlineUrl?: string
+  onlineLabel?: string
+  onlineInstructions?: string
+  /** Last day (inclusive) of a multi-day session. */
+  endDate?: ISODate
 }
+
+export type SessionFormat = 'in_person' | 'online' | 'hybrid'
 
 export interface GalleryImage extends ImageAsset {
   id: string

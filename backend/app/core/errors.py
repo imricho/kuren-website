@@ -117,6 +117,14 @@ class RsvpClosedError(AppError):
     message = "RSVP is closed for this invitation."
 
 
+class RsvpLinkInvalidError(AppError):
+    """Unknown, malformed or revoked RSVP edit link (also for replies made before edit links)."""
+
+    status_code = status.HTTP_404_NOT_FOUND
+    code = "rsvp_link_invalid"
+    message = "This RSVP link is not valid. Ask the host, or send a new reply."
+
+
 class CapacityReachedError(ConflictError):
     code = "capacity_reached"
     message = "Sorry, this event is fully booked."

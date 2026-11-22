@@ -65,6 +65,11 @@ const { form, errors } = draft
 // Wedding variants keep the original six types; other variants offer the generic ones too.
 const typeOptions = computed(() => sessionTypesFor(store.variant).map((type) => ({ value: type, label: eventTypeLabel(type, locale.value) })))
 const needed = t('neededBeforePublishing')
+const formatOptions = computed(() => [
+  { value: 'in_person' as const, label: t('formatInPerson') },
+  { value: 'online' as const, label: t('formatOnline') },
+  { value: 'hybrid' as const, label: t('formatHybrid') },
+])
 const id = (field: string) => fieldId(field, scope)
 
 /** A new event needs at least one detail before it can be added. */
@@ -142,20 +147,49 @@ function cancel() {
       <SelectField :id="id('type')" v-model="form.type" :label="vt('eventType')" :options="typeOptions" :error="errors.type" />
     </div>
     <div class="grid gap-4 sm:grid-cols-2">
-      <DateField :id="id('date')" v-model="form.date" class="sm:col-span-2" :label="t('date')" :error="errors.date" :needed-hint="needed" />
+      <DateField :id="id('date')" v-model="form.date" :label="t('date')" :error="errors.date" :needed-hint="needed" />
+      <DateField :id="id('endDate')" v-model="form.endDate" :label="t('endDate')" :hint="t('endDateHint')" :error="errors.endDate" />
       <TextField :id="id('startTime')" v-model="form.startTime" type="time" :label="t('startTime')" :error="errors.startTime" :needed-hint="needed" />
-      <TextField :id="id('endTime')" v-model="form.endTime" type="time" :label="t('endTime')" :hint="t('optional')" :error="errors.endTime" />
+      <TextField :id="id('endTime')" v-model="form.endTime" type="time" :label="t('endTime')" :hint="t('endTimeCalendarHint')" :error="errors.endTime" />
     </div>
-    <TextField :id="id('venueName')" v-model="form.venueName" :label="t('venueName')" :error="errors.venueName" :needed-hint="needed" />
-    <TextAreaField :id="id('address')" v-model="form.address" :label="t('address')" :rows="2" :error="errors.address" :needed-hint="needed" />
-    <TextField
-      :id="id('mapsUrl')"
-      v-model="form.mapsUrl"
-      :label="t('mapsUrl')"
-      :hint="t('mapsUrlHint')"
-      :error="errors.mapsUrl"
-      inputmode="url"
-    />
+    <fieldset class="min-w-0 space-y-2" data-testid="event-format">
+      <legend class="text-sm font-medium text-ink-900">{{ t('sessionFormat') }}</legend>
+      <div class="flex flex-wrap gap-x-5 gap-y-1">
+        <label v-for="option in formatOptions" :key="option.value" class="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm sm:min-h-9">
+          <input :id="id(`format-${option.value}`)" v-model="form.format" type="radio" :name="id('format')" :value="option.value" :class="['h-4 w-4 accent-[var(--tv-plum)]', FOCUS_RING]" :data-format="option.value" />
+          {{ option.label }}
+        </label>
+      </div>
+      <p class="text-xs text-ink-500">{{ t('formatHint') }}</p>
+    </fieldset>
+    <template v-if="form.format !== 'online'">
+      <TextField :id="id('venueName')" v-model="form.venueName" :label="t('venueName')" :error="errors.venueName" :needed-hint="needed" />
+      <TextAreaField :id="id('address')" v-model="form.address" :label="t('address')" :rows="2" :error="errors.address" :needed-hint="needed" />
+      <TextField
+        :id="id('mapsUrl')"
+        v-model="form.mapsUrl"
+        :label="t('mapsUrl')"
+        :hint="t('mapsUrlHint')"
+        :error="errors.mapsUrl"
+        inputmode="url"
+      />
+    </template>
+    <p v-else-if="form.venueName.trim() || form.address.trim()" class="text-xs text-ink-500" data-testid="venue-kept">{{ t('venueKeptOnline') }}</p>
+    <div v-if="form.format !== 'in_person'" class="space-y-3 rounded-lg border border-line p-4" data-testid="event-online">
+      <TextField
+        :id="id('onlineUrl')"
+        v-model="form.onlineUrl"
+        type="url"
+        inputmode="url"
+        autocomplete="off"
+        :label="t('onlineUrl')"
+        :hint="t('onlineUrlHint')"
+        :error="errors.onlineUrl"
+        :needed-hint="form.onlineInstructions.trim() ? undefined : needed"
+      />
+      <TextField :id="id('onlineLabel')" v-model="form.onlineLabel" :label="t('onlineLabel')" :hint="t('optional')" :error="errors.onlineLabel" />
+      <TextAreaField :id="id('onlineInstructions')" v-model="form.onlineInstructions" :label="t('onlineInstructions')" :hint="t('onlineInstructionsHint')" :rows="2" :error="errors.onlineInstructions" />
+    </div>
     <TextAreaField :id="id('description')" v-model="form.description" :label="t('additionalInfo')" :hint="t('additionalInfoHint')" :rows="3" :error="errors.description" />
     <div v-if="canBeOptional || form.optional" class="space-y-3 rounded-lg border border-line p-4" data-testid="event-optional">
       <SwitchField :id="id('optional')" v-model="form.optional" :label="t('sessionOptional')" :hint="t('sessionOptionalHint')" />

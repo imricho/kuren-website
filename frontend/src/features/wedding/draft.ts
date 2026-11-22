@@ -27,6 +27,7 @@ import {
   WEDDING_SCHEMA_VERSION,
   type EventType,
   type ImageAsset,
+  type SessionFormat,
   type WeddingContent,
   type WeddingEvent,
   type WeddingLocale,
@@ -103,6 +104,13 @@ export interface EventDraft {
   livestream?: { enabled: boolean; url?: string; label?: string }
   /** v2.0: a session guests may pick (corporate). */
   optional?: boolean
+  /** in_person when absent; online sessions need no venue, online/hybrid need access. */
+  format?: SessionFormat
+  onlineUrl?: string
+  onlineLabel?: string
+  onlineInstructions?: string
+  /** Last day (inclusive) of a multi-day session. */
+  endDate?: string
 }
 
 export interface GalleryItemDraft {
@@ -545,7 +553,12 @@ export function toPreviewContent(
 
   // Events (draft: at least one, gaps filled; public: complete events only)
   const events: WeddingEvent[] = (draft.events ?? []).flatMap((e, i) => {
-    if (isPublic && !(isIsoDate(e.date) && isTime(e.startTime) && text(e.venueName) && text(e.address))) {
+    const format = e.format === 'online' || e.format === 'hybrid' ? e.format : 'in_person'
+    const onlineUrl = format !== 'in_person' && isHttpsUrl(text(e.onlineUrl)) ? text(e.onlineUrl) : undefined
+    const onlineInstructions = format !== 'in_person' ? text(e.onlineInstructions) : undefined
+    const venueOk = format === 'online' || (!!text(e.venueName) && !!text(e.address))
+    const accessOk = format === 'in_person' || !!onlineUrl || !!onlineInstructions
+    if (isPublic && !(isIsoDate(e.date) && isTime(e.startTime) && venueOk && accessOk)) {
       missing.push({ section: 'events', field: `${i}` })
       return []
     }
@@ -557,7 +570,8 @@ export function toPreviewContent(
       return value
     }
     const startTime = need(isTime(e.startTime) ? e.startTime : undefined, 'startTime', '10:00')
-    const endTime = isTime(e.endTime) && e.endTime > startTime ? e.endTime : undefined
+    const multiDay = isIsoDate(e.endDate) && isIsoDate(e.date) && e.endDate > e.date
+    const endTime = isTime(e.endTime) && (multiDay || e.endTime > startTime) ? e.endTime : undefined
     return [
       compact({
         id: e.id || `event-${i}`,
@@ -566,10 +580,13 @@ export function toPreviewContent(
         date: need(isIsoDate(e.date) ? e.date : undefined, 'date', weddingDate!),
         startTime,
         endTime,
-        venueName: need(text(e.venueName), 'venueName', ph('venue')),
-        address: need(text(e.address), 'address', ph('address')),
-        mapsUrl: text(e.mapsUrl),
+        // An online session has no venue: empty (themes then show no venue or map).
+        venueName: format === 'online' ? (text(e.venueName) ?? '') : need(text(e.venueName), 'venueName', ph('venue')),
+        address: format === 'online' ? (text(e.address) ?? '') : need(text(e.address), 'address', ph('address')),
+        mapsUrl: format === 'online' ? undefined : text(e.mapsUrl),
         description: text(e.description),
+        endDate: isIsoDate(e.endDate) && isIsoDate(e.date) && e.endDate > e.date ? e.endDate : undefined,
+        ...(format !== 'in_person' ? { format, onlineUrl, onlineLabel: text(e.onlineLabel), onlineInstructions } : {}),
         ...eventExtras(e, isPublic),
         ...sessionOptionalPreview(e.optional),
       }) as WeddingEvent,

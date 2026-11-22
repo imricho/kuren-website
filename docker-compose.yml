@@ -37,6 +37,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-168}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      RATE_LIMIT_BACKEND: ${RATE_LIMIT_BACKEND:-memory}
       MEDIA_ROOT: /app/media
       # Proxies whose X-Forwarded-For is trusted (never "*"). The Vite dev proxy does not send
       # X-Forwarded-For, so locally every request is keyed by the frontend container's address.

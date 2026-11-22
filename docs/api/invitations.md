@@ -107,7 +107,7 @@ interface InvitationSummary {
 | Method | Path | Body | Response |
 |---|---|---|---|
 | GET | `/invitations` | – | 200 `{ items: InvitationSummary[] }`, most recently updated first |
-| POST | `/invitations` | `{ category, variant, themeId?, title?, locale?, timezone? }` | 201 `InvitationRead`; 422 `validation_error` (bad pair/zone/…), 422 `template_incompatible`, 409 `limit_reached` (50 per user) |
+| POST | `/invitations` | `{ category, variant, themeId?, title?, locale?, timezone?, sessions? }` — `sessions: [{type, title?}]` (≤6) replaces the variant's session presets (the wizard's ceremony/reception choices); omit for the presets, `[]` for none | 201 `InvitationRead`; 422 `validation_error` (bad pair/zone/…), 422 `template_incompatible`, 409 `limit_reached` (50 per user) |
 | GET | `/invitations/{id}` | – | 200 `InvitationRead` |
 | PATCH | `/invitations/{id}` | `{ title?, themeId?, locale?, timezone? }` | 200 `InvitationRead`; `category`/`variant` are immutable (422); 422 `template_incompatible` |
 | DELETE | `/invitations/{id}` | – | 204; cascades content, publications, uploads, RSVP replies; media files removed best-effort |
@@ -264,14 +264,27 @@ are **shown**) → 422 `publish_blocked` with `details = [{section, field, code,
 | `theme` | `themeId` | `required` / `invalid` / `incompatible` | no theme / no longer selectable / not for this variant |
 | `opening` | `opening.weddingDate` | `required` | the (main) event date |
 | `couple` | `couple.groom.name`, `couple.bride.name` | `required` | couple offered and shown |
-| `profiles` | `profiles.people` | `incomplete` | enabled, no people |
+| `profiles` | `profiles.people` | `incomplete` | enabled, no person with a name |
 | `organization` | `organization.name` | `required` | enabled, no name |
 | `milestone` | `milestone` | `incomplete` | enabled, none of the variant's fields nor `description` set |
-| `events` | `events` / `events.<i>.title\|date\|startTime\|venueName\|address` / `events.<i>.livestream.url` | `required` | as before |
+| `events` | `events` / `events.<i>.title\|date\|startTime` / `events.<i>.venueName\|address` (in person and hybrid) / `events.<i>.onlineUrl` (online and hybrid: a link **or** `onlineInstructions`) / `events.<i>.livestream.url` | `required` | |
 | `closing` | `closing.message` | `required` | |
-| `agenda` | `agenda.items` | `incomplete` | enabled, no items |
-| `speakers` | `speakers.people` | `incomplete` | enabled, no speakers |
+| `agenda` | `agenda.items` | `incomplete` | enabled, no item with a title |
+| `speakers` | `speakers.people` | `incomplete` | enabled, no speaker with a name |
 | `story`, `gallery`, `holyRecite1\|2`, `greeting`, `amplopDigital` | as before | | only when offered |
+
+**Rule for optional sections:** a section that is switched ON but empty BLOCKS publishing
+(add content or hide it). It is never silently dropped. The editor shows the same rules and
+asks the server before claiming "all clear":
+
+`GET /invitations/{id}/publish-check` (owner, read-only) → 200 `{ revision, ready, issues }` where
+`issues` are exactly the `details` `POST …/publish` would return for the saved draft. Clients
+must re-word issues from the stable `section`/`field`/`code` (the `message` is English).
+
+**Sessions** (`events[]`) also carry `format?: 'in_person' | 'online' | 'hybrid'` (absent = in
+person), `onlineUrl?` (https), `onlineLabel?`, `onlineInstructions?` (≤1000) and `endDate?`
+(multi-day, ≥ `date`; then `endTime` may be earlier in the day than `startTime`). Online details
+are published only for online/hybrid sessions.
 
 **Snapshot** (allow-listed, built field by field, never wholesale): only offered sections. `couple`
 for couple variants (`{enabled: false}` when an optional couple is hidden); `story`/`gallery`/`rsvp`
@@ -296,11 +309,14 @@ first names/nicknames; else the organization name; else `undangan`; then `-` + 6
   "publishedAt": "2026-11-22T10:00:00+00:00" }
 ```
 
-`rsvp.full` is added (true/false) only when the snapshot has a `capacity`. Headers as before:
-`X-Robots-Tag: noindex, nofollow`, `Cache-Control: no-cache`, `ETag: "<publication id>"` (`"<id>-full"`
-once full, so revalidation picks it up; `If-None-Match` → 304), `Referrer-Policy: no-referrer`,
+`rsvp.full` is added (true/false) only when the snapshot has a `capacity`. Headers:
+`X-Robots-Tag: noindex, nofollow`, `Cache-Control: no-cache`, `ETag` = a digest of the exact
+response body (so ANY change guests would see — republish, RSVP filling up or freeing again —
+gives a new tag; `If-None-Match` → 304), `Referrer-Policy: no-referrer`,
 `X-Content-Type-Options: nosniff`. 120 requests/min per IP. Unknown/unpublished → 404 `not_found`.
-`timezone` is the invitation's current zone.
+`timezone` is the zone **as published** (migration 0009): changing the draft's time zone
+marks the invitation as having unpublished changes and reaches guests (dates, calendar links,
+RSVP deadline) only after the next publish.
 
 ### RSVP submission
 
@@ -315,11 +331,11 @@ once full, so revalidation picks it up; `If-None-Match` → 304), `Referrer-Poli
 
 Validated against the **published** snapshot's RSVP config, in this order:
 
-1. Rate limits (in-memory, per process): 10/min per client IP (own bucket), then 60/min per
+1. Rate limits (`RATE_LIMIT_BACKEND`: per process in development, shared in production): 10/min per client IP (own bucket), then 60/min per
    invitation slug → 429. Body > 16 KiB → 413. Behind a reverse proxy the client IP comes from
    `X-Forwarded-For` only when the proxy is listed in `FORWARDED_ALLOW_IPS` (see `infrastructure/nginx/README.md`).
 2. Unknown/unpublished slug → 404.
-3. RSVP not in the snapshot or disabled → 422 `rsvp_closed`; today **in the invitation's time zone**
+3. RSVP not in the snapshot or disabled → 422 `rsvp_closed`; today **in the published time zone**
    after `deadline` → 422 `rsvp_closed` (the deadline day itself is open; an unreadable stored deadline
    also closes the RSVP).
 4. Attending: `partySize` 1..`maxGuestsPerResponse` (default 20) → else 422 field `partySize`.
@@ -339,7 +355,30 @@ Validated against the **published** snapshot's RSVP config, in this order:
 9. `website` non-empty (honeypot): every check above still applies (same errors as a real reply),
    then **201 with a decoy body and nothing stored**.
 
-→ 201 `{ id, attendance, partySize, confirmationMessage }` (`confirmationMessage` from the snapshot or null).
+→ 201 `{ id, attendance, partySize, confirmationMessage, editToken, updatedAt: null }`.
+`editToken` (43 URL-safe characters) is shown once; only its SHA-256 is stored. It lets THIS
+guest read and replace THIS reply; replies are never matched by name or email.
+
+### A guest's own reply
+
+`GET /public/invitations/{slug}/rsvp/mine` and `PUT /public/invitations/{slug}/rsvp/mine`, with
+header `X-RSVP-Token: <editToken>` (never in the URL). Same rate limits and body cap as a new
+reply; `Cache-Control: no-store`.
+
+- Unknown, malformed or foreign token (or a reply made before 0009) → 404 `rsvp_link_invalid`;
+  unpublished invitation → 404 `not_found`.
+- GET → 200 `{ id, name, attendance, partySize, email?, phone?, sessionIds, answers, message?, createdAt, updatedAt }`.
+- PUT body = the submission above. It is validated exactly like a new reply against the
+  CURRENT publication (deadline → 422 `rsvp_closed`, party size, contact, answers, sessions)
+  and **replaces** the reply in place: totals and capacity count only the latest answer (the
+  reply's own previous party is excluded from the capacity check, under the invitation row
+  lock, so concurrent changes and new replies cannot overshoot). → 200 `{ id, attendance,
+  partySize, confirmationMessage, updatedAt }`. 50 changes per reply → 409 `limit_reached`.
+  A filled honeypot changes nothing and gets a decoy 200.
+
+The guest page keeps the token on the device and offers a personal link `/i/<slug>#rsvp=<token>`
+(fragment: never sent to the server). Sending a NEW reply (e.g. for someone else) is separate
+and never changes the guest's own reply.
 
 ## RSVP replies (owner)
 
@@ -351,12 +390,18 @@ Validated against the **published** snapshot's RSVP config, in this order:
 
 ```ts
 interface RsvpResponse { id; name; attendance; partySize; email?; phone?; sessionIds: string[]
-                         answers: Record<string, string | boolean>; message?; guestLabel?; createdAt }
-summary: { responses; attending; notAttending; attendingPeople; capacity: number | null } // live capacity while published, else draft
+                         answers: Record<string, string | boolean>; message?; guestLabel?; createdAt
+                         updatedAt: string | null; editCount: number; possibleDuplicate: boolean }
+summary: { responses; attending; notAttending; attendingPeople; capacity: number | null // live capacity while published, else draft
+           possibleDuplicates: number }
 ```
 
 Items are newest first. All three send `Cache-Control: no-store`. The CSV starts with a UTF-8 BOM;
-columns: Submitted at, Name, Attendance, Party size, Email, Phone, Sessions, Guest label, Message,
+`possibleDuplicate` flags replies that share a name (case/space-insensitive), an email or a
+phone with another reply of the same invitation. They are flagged for the organizer and still
+counted in every total; nothing is merged or deleted automatically.
+
+columns: Submitted at, Updated at, Possible duplicate, Name, Attendance, Party size, Email, Phone, Sessions, Guest label, Message,
 then one column per registration field (label) and any other answer keys. **Formula-injection safe:**
 every cell starting with `= + - @ \t \r` is prefixed with `'`. Guest data is never logged.
 

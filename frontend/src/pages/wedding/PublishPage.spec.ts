@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useToast } from '@/composables/useToast'
 import { installFakeInvitationApi } from '@/test/fakeInvitationApi'
 import { mountApp } from '@/test/mountApp'
+import { useInvitationStore } from '@/stores/invitation'
 import { publishableDraft, QRIS_SRC } from '@/test/publishFixture'
 
 enableAutoUnmount(afterEach)
@@ -71,6 +72,21 @@ describe('Preview & Publish page', () => {
     expect(page().get('[data-testid="copy-status"]').text()).toBe('Link copied')
   })
 
+  it('says "all clear" only once the server dry run agrees, and lists server-only blockers in the UI language', async () => {
+    const { api, page } = await open(publishableDraft())
+    await flushPromises()
+    expect(page().find('[data-testid="publish-all-clear"]').exists()).toBe(true)
+    expect(api.callsTo('GET', '/invitations/w1/publish-check').length).toBeGreaterThan(0)
+
+    // The server knows something the client does not: it is listed and Publish is disabled.
+    api.setCheckIssues([{ section: 'theme', field: 'themeId', code: 'incompatible', message: 'English text' }])
+    await useInvitationStore().refreshServerCheck()
+    await flushPromises()
+    expect(page().find('[data-testid="publish-all-clear"]').exists()).toBe(false)
+    expect(page().get('[data-testid="publish-errors"]').text()).toContain('This template doesn’t support this type of invitation.')
+    expect(page().get('[data-action="publish"]').attributes('aria-disabled')).toBe('true')
+  })
+
   it('lists blocking errors with links to the field, and disables Publish with a reason', async () => {
     const draft = publishableDraft()
     draft.closing = {}
@@ -100,7 +116,7 @@ describe('Preview & Publish page', () => {
     api.blockNextPublish([{ section: 'events', field: 'events.0.venueName', code: 'required', message: 'Event venue is required' }])
     await page().get('[data-action="publish"]').trigger('click')
     await flushPromises()
-    expect(page().get('[data-issue="events.0.venueName"]').text()).toContain('Event venue is required')
+    expect(page().get('[data-issue="events.0.venueName"]').text()).toContain('Ceremony: add the venue.') // re-worded from the stable code, never the English server message
     expect(wrapper.get('[data-testid="publish-live"]').text()).toBe('Couldn’t publish yet: 1 items need attention.')
 
     // Server issues drop once a write lands; then a 500.

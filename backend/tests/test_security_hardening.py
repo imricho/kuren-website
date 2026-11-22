@@ -160,7 +160,14 @@ def test_wildcard_forwarded_allow_ips_is_refused() -> None:
 def test_production_requires_secure_session_cookies() -> None:
     with pytest.raises(ValidationError, match="SESSION_COOKIE_SECURE"):
         Settings(environment="production", session_cookie_secure=False)  # type: ignore[call-arg]
-    assert Settings(environment="production", session_cookie_secure=True).session_cookie_secure  # type: ignore[call-arg]
+    assert Settings(  # type: ignore[call-arg]
+        environment="production", session_cookie_secure=True, rate_limit_backend="database"
+    ).session_cookie_secure
+
+
+def test_production_requires_the_shared_rate_limit_store() -> None:
+    with pytest.raises(ValidationError, match="RATE_LIMIT_BACKEND"):
+        Settings(environment="production", session_cookie_secure=True)  # type: ignore[call-arg]
     assert not Settings(environment="development", session_cookie_secure=False).session_cookie_secure  # type: ignore[call-arg]
 
 

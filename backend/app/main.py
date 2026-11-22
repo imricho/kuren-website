@@ -31,7 +31,7 @@ def create_app() -> FastAPI:
             allow_origins=settings.cors_origins,
             allow_credentials=True,
             allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE"],
-            allow_headers=["Content-Type", "If-Match"],
+            allow_headers=["Content-Type", "If-Match", "X-RSVP-Token"],
             expose_headers=["ETag"],
         )
 
@@ -41,12 +41,14 @@ def create_app() -> FastAPI:
     prefix = re.escape(settings.api_v1_prefix)
     upload_path = re.compile(prefix + r"/(?:invitations|weddings)/[^/]+/assets")
     rsvp_path = re.compile(prefix + r"/public/invitations/[^/]+/rsvp")
+    rsvp_mine_path = re.compile(prefix + r"/public/invitations/[^/]+/rsvp/mine")
     app.add_middleware(
         BodySizeLimitMiddleware,
         max_body_bytes=settings.max_request_body_bytes,
         overrides=[
             ("POST", upload_path, settings.max_upload_bytes + 64 * 1024),
             ("POST", rsvp_path, settings.max_rsvp_body_bytes),
+            ("PUT", rsvp_mine_path, settings.max_rsvp_body_bytes),
         ],
     )
 

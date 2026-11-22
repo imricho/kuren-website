@@ -107,7 +107,7 @@ export const sectionsId = {
   giftNote: 'Catatan atau petunjuk',
 
   guestGreeting: 'Sapaan tamu',
-  guestGreetingHint: 'Menampilkan baris seperti “Kepada Yth.” diikuti nama tamu. Nama diambil dari parameter ?to= pada tautan undangan Anda.',
+  guestGreetingHint: 'Menampilkan baris seperti “Kepada Yth.” diikuti nama tamu. Buat tautan pribadi untuk setiap tamu di Pratinjau & Terbitkan.',
   guestGreetingLabel: 'Teks sapaan',
   familyAcknowledgments: 'Turut mengundang',
   familyAcknowledgmentsHint: 'Nama keluarga yang turut mengundang. Baris baru disimpan.',

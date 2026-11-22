@@ -7,6 +7,8 @@ can never reach a guest. Both the checks and the snapshot are variant-aware: sec
 variant does not offer are neither checked nor published.
 """
 
+import hashlib
+import json
 import re
 import secrets
 import unicodedata
@@ -40,6 +42,12 @@ _SLUG_ATTEMPTS = 8
 
 
 # --- Small helpers ------------------------------------------------------------------------
+
+
+def event_format(event: dict[str, Any]) -> str:
+    """in_person unless the session says online/hybrid (sessions saved before formats existed)."""
+    value = event.get("format")
+    return value if value in ("online", "hybrid") else "in_person"
 
 
 def _obj(value: Any) -> dict[str, Any]:
@@ -92,6 +100,11 @@ def _with_image(out: dict[str, Any], key: str, raw: Any) -> dict[str, Any]:
 
 
 # --- Publish checks -----------------------------------------------------------------------
+
+
+def _named(items: Any, key: str) -> bool:
+    """At least one row with a non-empty `key` (a person's name, an agenda item's title)."""
+    return any(_text(_obj(item).get(key)) for item in _list(items))
 
 
 def _issue(section: str, field: str, code: str, message: str) -> Issue:
@@ -154,7 +167,7 @@ def validate_for_publish(db: Session, invitation: Invitation, draft: dict[str, A
             if _text(_obj(couple.get(person)).get("name")) is None:
                 add(_issue("couple", f"couple.{person}.name", "required", f"Add the {label} name."))
 
-    if _shown(variant, draft, "profiles", False) and not _list(_obj(draft.get("profiles")).get("people")):
+    if _shown(variant, draft, "profiles", False) and not _named(_obj(draft.get("profiles")).get("people"), "name"):
         add(_issue("profiles", "profiles.people", "incomplete", "Add at least one person, or hide this section."))
 
     if _shown(variant, draft, "organization", False) and _text(_obj(draft.get("organization")).get("name")) is None:
@@ -171,15 +184,22 @@ def validate_for_publish(db: Session, invitation: Invitation, draft: dict[str, A
     events = _list(draft.get("events"))
     if not events:
         add(_issue("events", "events", "required", "Add at least one event."))
-    required_event_fields = (
-        ("title", "a title"), ("date", "a date"), ("startTime", "a start time"),
-        ("venueName", "a venue name"), ("address", "an address"),
-    )
+    required_event_fields = (("title", "a title"), ("date", "a date"), ("startTime", "a start time"))
+    venue_fields = (("venueName", "a venue name"), ("address", "an address"))
     for index, raw_event in enumerate(events):
         event = _obj(raw_event)
-        for key, what in required_event_fields:
+        session_format = event_format(event)
+        fields = required_event_fields + (venue_fields if session_format != "online" else ())
+        for key, what in fields:
             if _text(event.get(key)) is None:
                 add(_issue("events", f"events.{index}.{key}", "required", f"Event {index + 1} needs {what}."))
+        if session_format != "in_person" and not (
+            _text(event.get("onlineUrl")) or _text(event.get("onlineInstructions"))
+        ):
+            add(_issue(
+                "events", f"events.{index}.onlineUrl", "required",
+                f"Event {index + 1} is online: add a joining link or joining instructions.",
+            ))
         livestream = _obj(event.get("livestream"))
         if _flag(livestream.get("enabled")) and _text(livestream.get("url")) is None:
             add(_issue(
@@ -191,10 +211,10 @@ def validate_for_publish(db: Session, invitation: Invitation, draft: dict[str, A
         add(_issue("closing", "closing.message", "required", "Add a closing message."))
 
     # Optional sections: only checked while offered and shown on the website.
-    if _shown(variant, draft, "agenda", False) and not _list(_obj(draft.get("agenda")).get("items")):
+    if _shown(variant, draft, "agenda", False) and not _named(_obj(draft.get("agenda")).get("items"), "title"):
         add(_issue("agenda", "agenda.items", "incomplete", "Add at least one agenda item, or hide the agenda."))
 
-    if _shown(variant, draft, "speakers", False) and not _list(_obj(draft.get("speakers")).get("people")):
+    if _shown(variant, draft, "speakers", False) and not _named(_obj(draft.get("speakers")).get("people"), "name"):
         add(_issue("speakers", "speakers.people", "incomplete", "Add at least one speaker, or hide this section."))
 
     story = _obj(draft.get("story"))
@@ -256,7 +276,8 @@ def validate_for_publish(db: Session, invitation: Invitation, draft: dict[str, A
 
 # --- Snapshot -----------------------------------------------------------------------------
 
-_EVENT_TEXT = ("title", "date", "startTime", "endTime", "venueName", "address", "mapsUrl", "description")
+_EVENT_TEXT = ("title", "date", "endDate", "startTime", "endTime", "venueName", "address", "mapsUrl", "description")
+_ONLINE_TEXT = ("onlineUrl", "onlineLabel", "onlineInstructions")
 
 
 def _int(value: Any) -> int | None:
@@ -285,6 +306,10 @@ def _event(raw: Any) -> dict[str, Any]:
     raw = _obj(raw)
     out: dict[str, Any] = {"id": raw["id"], "type": raw.get("type") or "other"}
     out.update(_pick_text(raw, _EVENT_TEXT))
+    session_format = event_format(raw)
+    if session_format != "in_person":
+        out["format"] = session_format
+        out.update(_pick_text(raw, _ONLINE_TEXT))
     dress = _obj(raw.get("dressCode"))
     if _flag(dress.get("enabled")) and _text(dress.get("text")):
         out["dressCode"] = {"enabled": True, **_pick_text(dress, ("text",))}
@@ -603,6 +628,13 @@ def _assign_slug(db: Session, invitation: Invitation, draft: dict[str, Any], var
 # --- Publish / unpublish ------------------------------------------------------------------
 
 
+def check(db: Session, invitation: Invitation) -> list[Issue]:
+    """The blocking issues publishing would report right now (read-only dry run), so the
+    editor states the real outcome before the owner clicks Publish."""
+    draft = invitation_content_service.assemble_draft(db, invitation)
+    return validate_for_publish(db, invitation, draft)
+
+
 def publish(db: Session, invitation: Invitation) -> Invitation:
     """Validate, snapshot and go live in ONE transaction (the caller holds the row lock).
 
@@ -629,6 +661,7 @@ def publish(db: Session, invitation: Invitation) -> Invitation:
             category=invitation.category,
             variant=invitation.variant,
             content=snapshot,
+            timezone=invitation.timezone,
             published_at=now,
         )
         db.add(publication)
@@ -677,35 +710,40 @@ def get_live(db: Session, slug: str, *, lock: bool = False) -> tuple[Invitation,
     return invitation, publication
 
 
-def attending_people(db: Session, invitation_id: uuid.UUID) -> int:
-    return int(db.scalar(
-        select(func.coalesce(func.sum(InvitationRsvpResponse.party_size), 0)).where(
-            InvitationRsvpResponse.invitation_id == invitation_id,
-            InvitationRsvpResponse.attendance == "attending",
-        )
-    ) or 0)
+def attending_people(db: Session, invitation_id: uuid.UUID, *, exclude: uuid.UUID | None = None) -> int:
+    """People in attending replies; `exclude` leaves out one reply (the one being replaced)."""
+    query = select(func.coalesce(func.sum(InvitationRsvpResponse.party_size), 0)).where(
+        InvitationRsvpResponse.invitation_id == invitation_id,
+        InvitationRsvpResponse.attendance == "attending",
+    )
+    if exclude is not None:
+        query = query.where(InvitationRsvpResponse.id != exclude)
+    return int(db.scalar(query) or 0)
 
 
 def public_payload(db: Session, invitation: Invitation, publication: InvitationPublication) -> tuple[dict[str, Any], str]:
     """The guest payload and its ETag. Never includes replies or counts; only `rsvp.full`
     when a capacity is set (it changes without a republish, so it is part of the ETag)."""
     content = publication.content
-    etag = f'"{publication.id}"'
     rsvp = _obj(content.get("rsvp"))
     capacity = _int(rsvp.get("capacity"))
     if capacity is not None:
         full = attending_people(db, invitation.id) >= capacity
         content = {**content, "rsvp": {**rsvp, "full": full}}
-        if full:
-            etag = f'"{publication.id}-full"'
     published_at: datetime = publication.published_at
     payload = {
         "category": publication.category,
         "variant": publication.variant,
         "themeId": publication.theme_id,
         "locale": publication.locale,
-        "timezone": invitation.timezone,
+        # The PUBLISHED time zone: editing the draft's time zone changes nothing for guests
+        # until the next publish (dates, calendar links and the RSVP deadline all use this).
+        "timezone": publication.timezone,
         "content": content,
         "publishedAt": published_at.isoformat(),
     }
-    return payload, etag
+    # The ETag is derived from the exact representation, so ANY change guests would see
+    # (republish, capacity becoming full or free again, ...) produces a new one.
+    digest = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return payload, f'"{digest[:32]}"'
+

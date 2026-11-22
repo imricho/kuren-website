@@ -8,7 +8,7 @@
  * The checklist is computed on the SAVED draft (store.publishChecklist); the server's
  * 422 publish_blocked details (store.publishIssues) are merged in after an attempt.
  */
-import { computed, ref, nextTick } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -17,6 +17,7 @@ import { INVITATION_PREVIEW_ROUTE_NAME } from '@/features/cms/editorRoutes'
 import { sectionByKey } from '@/features/cms/sections'
 import type { SectionKey } from '@/features/wedding/completeness'
 import { blockingIssues, publicDisclosure, warningIssues, type PublishIssue } from '@/features/wedding/publishChecks'
+import PersonalLinkGenerator from '@/features/cms/components/PersonalLinkGenerator.vue'
 import { useInvitationStore } from '@/stores/invitation'
 
 const store = useInvitationStore()
@@ -34,6 +35,17 @@ const issues = computed<PublishIssue[]>(() => {
 })
 const errors = computed(() => blockingIssues(issues.value))
 const warnings = computed(() => warningIssues(issues.value))
+
+// Ask the server what publishing would say about the SAVED draft, whenever it changes
+// (revision or template), so "all clear" is only claimed once the server agrees.
+watch(
+  () => [store.record?.id, store.revision, store.themeId, store.saveState] as const,
+  ([id, , , save]) => {
+    if (id && save === 'saved' && !store.serverCheckCurrent) void store.refreshServerCheck()
+  },
+  { immediate: true },
+)
+const serverPending = computed(() => !store.serverCheckCurrent && store.serverCheckState !== 'failed')
 
 const state = computed(() => store.publishState)
 const publishedTime = computed(() => {
@@ -209,6 +221,8 @@ async function unpublishAndRefocus() {
       <p v-else class="text-sm text-ink-500" data-testid="public-url-pending">{{ t('publicLinkPending') }}</p>
     </section>
 
+    <PersonalLinkGenerator :public-url="store.isPublished ? store.publicUrl : null" />
+
     <!-- Privacy -->
     <section class="space-y-2 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6" data-testid="publish-privacy">
       <h2 class="text-lg font-semibold">{{ t('publishPrivacyTitle') }}</h2>
@@ -239,7 +253,9 @@ async function unpublishAndRefocus() {
         </li>
       </ul>
     </section>
-    <p v-else class="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800" data-testid="publish-all-clear">{{ t('publishAllClear') }}</p>
+    <p v-else-if="store.serverCheckCurrent" class="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800" data-testid="publish-all-clear">{{ t('publishAllClear') }}</p>
+    <p v-else-if="serverPending" class="rounded-lg bg-canvas px-3 py-2 text-sm text-ink-700" role="status" data-testid="publish-server-pending">{{ t('serverCheckPending') }}</p>
+    <p v-else class="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900" role="status" data-testid="publish-server-failed">{{ t('serverCheckFailed') }}</p>
 
     <section v-if="warnings.length" class="space-y-3" aria-labelledby="publish-warnings-title" data-testid="publish-warnings">
       <h2 id="publish-warnings-title" class="text-lg font-semibold">{{ t('publishWarningsTitle') }} ({{ warnings.length }})</h2>

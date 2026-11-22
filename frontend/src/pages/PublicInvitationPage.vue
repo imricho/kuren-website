@@ -17,6 +17,7 @@ import { publishingApi, type PublicInvitation } from '@/api/publishing'
 import { useAppLocale } from '@/composables/useAppLocale'
 import ThemeRenderer from '@/features/themes/core/ThemeRenderer.vue'
 import { sanitizeGuestName } from '@/features/themes/core/composables/useRenderMode'
+import { fragmentParams } from '@/features/public/rsvpFormLogic'
 import { isSectionOffered, isVariantId, variantLabel, type VariantId } from '@/features/invitation/registry'
 import { normalizeDraft, toPreviewContent } from '@/features/wedding/draft'
 import { formatDate } from '@/features/wedding/format'
@@ -58,7 +59,14 @@ const pageDescription = computed(() => {
     .replace('{kind}', variantLabel(variant.value, c.locale === 'id' ? 'id' : 'en'))
     .replace('{date}', formatDate(c.opening.weddingDate, c.locale, 'long'))
 })
-const guestName = computed(() => sanitizeGuestName(route.query.to))
+// `#to=` (preferred: the fragment never reaches the server, so guest names stay out of
+// access logs) or the older `?to=`.
+// Read the RAW fragment: vue-router decodes `route.hash`, which would split a name like
+// "Bapak Budi & Keluarga" at the "&". `route.hash` is still read so the value stays reactive.
+const guestName = computed(() => {
+  const hash = route.hash && typeof location !== 'undefined' ? location.hash : route.hash
+  return sanitizeGuestName(route.query.to ?? (fragmentParams(hash).get('to') || undefined))
+})
 
 let loadSeq = 0
 async function load() {

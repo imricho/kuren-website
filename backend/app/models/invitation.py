@@ -118,7 +118,12 @@ class Invitation(TimestampMixin, Base):
         pub = self.publication
         if pub is None:
             return False
-        return self.revision != pub.revision or self.theme_id != pub.theme_id
+        return (
+            self.revision != pub.revision
+            or self.theme_id != pub.theme_id
+            or self.timezone != pub.timezone
+            or self.locale != pub.locale
+        )
 
     def __repr__(self) -> str:
         return f"<Invitation id={self.id} variant={self.variant}>"
@@ -148,6 +153,8 @@ class InvitationPublication(Base):
     category: Mapped[str] = mapped_column(String(20), nullable=False)
     variant: Mapped[str] = mapped_column(String(40), nullable=False)
     content: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    #: The time zone guests see (dates, calendar links, RSVP deadline) until the next publish.
+    timezone: Mapped[str] = mapped_column(String(64), nullable=False)
     published_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -217,7 +224,8 @@ class InvitationSession(_InvitationItem, Base):
         CheckConstraint("position >= 0", name="position_non_negative"),
         CheckConstraint(_in_list("type", EVENT_TYPES), name="type"),
         CheckConstraint(
-            "end_time IS NULL OR start_time IS NULL OR end_time > start_time", name="time_order"
+            "end_time IS NULL OR start_time IS NULL OR end_time > start_time OR (extras ? 'endDate')",
+            name="time_order",
         ),
     )
 
@@ -265,6 +273,7 @@ class InvitationRsvpResponse(Base):
         Index(
             "ix_invitation_rsvp_responses_invitation_id_created_at", "invitation_id", text("created_at DESC")
         ),
+        Index("ix_invitation_rsvp_responses_edit_token_hash", "edit_token_hash", unique=True),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -294,3 +303,8 @@ class InvitationRsvpResponse(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    #: sha256 hex of the guest's private edit token (the token itself is never stored).
+    #: NULL for replies created before edit links existed: those cannot be edited by guests.
+    edit_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    edit_count: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0, server_default="0")

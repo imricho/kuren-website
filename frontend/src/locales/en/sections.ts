@@ -114,7 +114,7 @@ export const sectionsEn = {
 
   // Opening / Closing / Events additions
   guestGreeting: 'Guest greeting',
-  guestGreetingHint: 'Shows a line such as “Kepada Yth.” followed by the guest’s name. The name comes from your invitation link’s ?to= parameter.',
+  guestGreetingHint: 'Shows a line such as “Kepada Yth.” followed by the guest’s name. Create a personal link for each guest on Preview & Publish.',
   guestGreetingLabel: 'Greeting text',
   familyAcknowledgments: 'Family acknowledgments (Turut mengundang)',
   familyAcknowledgmentsHint: 'Names of family members who also invite your guests. Line breaks are kept.',

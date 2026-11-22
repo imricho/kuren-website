@@ -45,6 +45,32 @@ export interface PublicRsvpReceipt {
   attendance: RsvpAttendance
   partySize: number
   confirmationMessage: string | null
+  /** Private token that lets this guest change THIS reply later (new replies only). */
+  editToken?: string | null
+  /** Set when an existing reply was changed. */
+  updatedAt?: string | null
+}
+
+/** The guest's own reply, read with their private edit token. */
+export interface PublicOwnReply {
+  id: string
+  name: string
+  attendance: RsvpAttendance
+  partySize: number
+  email?: string
+  phone?: string
+  sessionIds: string[]
+  answers: Record<string, string | boolean>
+  message?: string
+  createdAt: string
+  updatedAt: string | null
+}
+
+/** Server publish dry run: exactly what `POST .../publish` would block on right now. */
+export interface PublishCheck {
+  revision: number
+  ready: boolean
+  issues: { section: string; field: string; code: string; message: string }[]
 }
 
 const publicPath = (slug: string) => `${API_BASE}/public/invitations/${encodeURIComponent(slug)}`
@@ -69,6 +95,8 @@ export const publishingApi = {
     return { data: res.data, revision: parseRevisionEtag(res.headers.get('ETag')) }
   },
   unpublish: (id: string) => request<InvitationRead>(`${invitationPath(id)}/unpublish`, { method: 'POST' }),
+  /** Read-only: the blocking issues publishing would report for the saved draft. */
+  check: (id: string) => request<PublishCheck>(`${invitationPath(id)}/publish-check`),
   getPublic: (slug: string) => guestFetch<PublicInvitation>(publicPath(slug)),
   /**
    * Guest RSVP. Errors: 422 `rsvp_closed` / validation, 409 `capacity_reached`, 429 rate limited.
@@ -77,6 +105,16 @@ export const publishingApi = {
     guestFetch<PublicRsvpReceipt>(`${publicPath(slug)}/rsvp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+  /** The guest's own reply. 404 `rsvp_link_invalid` when the token is unknown. The token goes in a header, never the URL. */
+  getOwnRsvp: (slug: string, token: string) =>
+    guestFetch<PublicOwnReply>(`${publicPath(slug)}/rsvp/mine`, { headers: { 'X-RSVP-Token': token } }),
+  /** Replace the guest's own reply (same validation as a new one). */
+  updateOwnRsvp: (slug: string, token: string, body: PublicRsvpSubmission) =>
+    guestFetch<PublicRsvpReceipt>(`${publicPath(slug)}/rsvp/mine`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-RSVP-Token': token },
       body: JSON.stringify(body),
     }),
 }

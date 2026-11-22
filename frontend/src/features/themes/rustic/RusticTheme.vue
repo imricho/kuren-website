@@ -85,7 +85,7 @@ const view = useWeddingView(props)
             <p class="rn-event__venue">{{ event.venueName }}</p>
             <p class="rn-body">{{ event.address }}</p>
             <p v-if="event.description" class="rn-body">{{ event.description }}</p><EventExtras :event="event" :locale="view.locale" />
-            <a class="rn-link" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} <span aria-hidden="true">↗</span></a>
+            <a class="rn-link" v-if="event.mapHref" :href="event.mapHref" target="_blank" rel="noopener noreferrer">{{ view.t.viewMap }} <span aria-hidden="true">↗</span></a>
           </div>
           <span class="rn-event__index" aria-hidden="true">0{{ i + 1 }}</span>
         </article>

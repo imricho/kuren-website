@@ -64,6 +64,26 @@ class RsvpSubmitted(ResponseModel):
     attendance: Attendance
     party_size: int
     confirmation_message: str | None = None
+    #: Private token that lets this guest change THIS reply later (sent once; only its hash
+    #: is stored). The page keeps it on the device and offers it as a personal edit link.
+    edit_token: str | None = None
+    updated_at: datetime | None = None
+
+
+class RsvpOwnReply(ResponseModel):
+    """What a guest holding the edit token sees of their own reply."""
+
+    id: uuid.UUID
+    name: str
+    attendance: Attendance
+    party_size: int
+    email: str | None = None
+    phone: str | None = None
+    session_ids: list[str] = Field(default_factory=list)
+    answers: dict[str, Any] = Field(default_factory=dict)
+    message: str | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
 
 
 class RsvpResponseOut(ResponseModel):
@@ -78,6 +98,11 @@ class RsvpResponseOut(ResponseModel):
     message: str | None = None
     guest_label: str | None = None
     created_at: datetime
+    #: Set when the guest changed this reply through their edit link.
+    updated_at: datetime | None = None
+    edit_count: int = 0
+    #: Another reply has the same name, email or phone. Shown, never merged or removed.
+    possible_duplicate: bool = False
 
 
 class RsvpSummary(ResponseModel):
@@ -86,6 +111,8 @@ class RsvpSummary(ResponseModel):
     not_attending: int
     attending_people: int
     capacity: int | None = None
+    #: Replies flagged `possibleDuplicate` (they are still counted in every total).
+    possible_duplicates: int = 0
 
 
 class RsvpResponseList(ResponseModel):

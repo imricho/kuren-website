@@ -29,7 +29,8 @@ import { useConfirm } from '@/features/cms/composables/useConfirm'
 import { DEFAULT_VARIANT, isTemplateCompatible, isVariantId, sectionsFor, type VariantId } from '@/features/invitation/registry'
 import { getTheme } from '@/features/themes/core/registry'
 import { isSelectable } from '@/features/themes/core/types'
-import { computeCompleteness } from '@/features/wedding/completeness'
+import { sectionByKey } from '@/features/cms/sections'
+import { computeCompleteness, type SectionKey } from '@/features/wedding/completeness'
 import {
   normalizeDraft,
   toPreviewContent,
@@ -495,8 +496,48 @@ export const useInvitationStore = defineStore('invitation', () => {
   // --- Publishing (docs/api/weddings.md "Publishing") ------------------------------
   const publishing = ref(false)
   const publishFailed = ref(false)
-  /** Blocking issues the server reported on the last publish attempt (422 publish_blocked). */
-  const publishIssues = ref<PublishIssue[]>([])
+  /** Raw blocking details the server reported on the last publish attempt (422 publish_blocked). */
+  const publishBlockedDetails = ref<ServerPublishDetail[]>([])
+  /**
+   * The server's publish dry run for the saved draft (`GET …/publish-check`), so the page
+   * states the REAL outcome before Publish is clicked. Only trusted for the revision and
+   * template it was computed for.
+   */
+  const serverCheck = ref<{ revision: number; themeId: string | null; details: ServerPublishDetail[] } | null>(null)
+  const serverCheckState = ref<'idle' | 'pending' | 'failed'>('idle')
+  const serverCheckCurrent = computed(
+    () => !!serverCheck.value && serverCheck.value.revision === revision.value && serverCheck.value.themeId === (themeId.value ?? null),
+  )
+  let serverCheckSeq = 0
+  async function refreshServerCheck(): Promise<void> {
+    const rec = record.value
+    if (!rec) return
+    const seq = ++serverCheckSeq
+    const forTheme = themeId.value ?? null
+    serverCheckState.value = 'pending'
+    try {
+      const result = await publishingApi.check(rec.id)
+      if (seq !== serverCheckSeq) return
+      serverCheck.value = { revision: result.revision, themeId: forTheme, details: result.issues }
+      serverCheckState.value = 'idle'
+    } catch {
+      if (seq === serverCheckSeq) serverCheckState.value = 'failed'
+    }
+  }
+  /** Server issues, re-worded in the editor's language from their stable codes. */
+  const publishIssues = computed<PublishIssue[]>(() => {
+    const sectionName = (section: string) => {
+      if (section === 'theme') return t('sectionTheme')
+      try {
+        return t(sectionByKey(section as SectionKey, variant.value).label)
+      } catch {
+        return section
+      }
+    }
+    const ctx = { locale: uiLocale.value, variant: variant.value, draft: content.value, sectionName }
+    const details = [...publishBlockedDetails.value, ...(serverCheckCurrent.value ? serverCheck.value!.details : [])]
+    return details.map((d) => issueFromServer(d, ctx))
+  })
   const publishAnnouncement = ref<PublishAnnouncement | null>(null)
   let publishSeq = 0
   function announcePublish(kind: PublishAnnouncement['kind'], count?: number) {
@@ -510,6 +551,9 @@ export const useInvitationStore = defineStore('invitation', () => {
     if (!pub || !record.value) return false
     if (revision.value !== null && revision.value !== pub.revision) return true
     if ((record.value.themeId ?? null) !== (pub.themeId ?? null)) return true
+    // Time zone / language are published too: changing them needs a republish.
+    if (pub.timezone && record.value.timezone && pub.timezone !== record.value.timezone) return true
+    if (pub.locale && record.value.locale && pub.locale !== record.value.locale) return true
     return revision.value === null ? record.value.hasUnpublishedChanges === true : false
   })
   const publishState = computed<PublishState>(() => {
@@ -529,7 +573,7 @@ export const useInvitationStore = defineStore('invitation', () => {
     content.value ? publishChecks(content.value, { themeId: themeId.value, locale: uiLocale.value, variant: variant.value }) : [],
   )
   // Server issues describe an older revision; drop them once content changes.
-  watch(revision, () => (publishIssues.value = []))
+  watch(revision, () => (publishBlockedDetails.value = []))
 
   /**
    * Publish (or publish an update): save everything first, refuse unless Saved,
@@ -549,7 +593,7 @@ export const useInvitationStore = defineStore('invitation', () => {
         (rec, ifMatch) => publishingApi.publish(rec.id, ifMatch),
         (updated) => (record.value = updated),
       )
-      publishIssues.value = []
+      publishBlockedDetails.value = []
       announcePublish(wasPublished ? 'updated' : 'published')
       return 'published'
     } catch (err) {
@@ -557,8 +601,8 @@ export const useInvitationStore = defineStore('invitation', () => {
       if (err instanceof ApiError && err.status === 409 && err.code === 'edit_conflict') return 'conflict'
       if (err instanceof ApiError && err.status === 422 && err.code === 'publish_blocked') {
         const details = Array.isArray(err.details) ? (err.details as ServerPublishDetail[]) : []
-        publishIssues.value = details.map(issueFromServer)
-        announcePublish('blocked', publishIssues.value.length)
+        publishBlockedDetails.value = details
+        announcePublish('blocked', details.length)
         return 'blocked'
       }
       publishFailed.value = true
@@ -733,7 +777,8 @@ export const useInvitationStore = defineStore('invitation', () => {
     announcement.value = null
     publishing.value = false
     publishFailed.value = false
-    publishIssues.value = []
+    publishBlockedDetails.value = []
+    serverCheck.value = null
     publishAnnouncement.value = null
   }
 
@@ -772,6 +817,10 @@ export const useInvitationStore = defineStore('invitation', () => {
     unpublish,
     publishState,
     publishIssues,
+    serverCheck,
+    serverCheckState,
+    serverCheckCurrent,
+    refreshServerCheck,
     publishChecklist,
     publishAnnouncement,
     publicUrl,

@@ -419,12 +419,12 @@ def test_public_endpoint_works_without_auth_and_sets_no_cookies(
     assert body["themeId"] == "afterglow" and body["locale"] == "en"
     assert (body["category"], body["variant"], body["timezone"]) == ("wedding", "wedding_ceremony", "Asia/Jakarta")
     assert body["content"]["couple"]["groom"]["name"] == "Alex Wijaya"
-    publication_id = response.headers["etag"].strip('"')
+    etag = response.headers["etag"].strip('"')
     assert response.headers["x-robots-tag"] == "noindex, nofollow"
     assert response.headers["cache-control"] == "no-cache"
     assert response.headers["referrer-policy"] == "no-referrer"
     assert response.headers["x-content-type-options"] == "nosniff"
-    assert re.fullmatch(r"[0-9a-f-]{36}", publication_id)
+    assert re.fullmatch(r"[0-9a-f]{32}", etag)  # a digest of the exact public representation
 
 
 def test_public_etag_304(auth_client: TestClient, ready: str) -> None:

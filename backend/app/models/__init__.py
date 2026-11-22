@@ -9,6 +9,7 @@ from app.models.invitation import (
     InvitationSession,
     InvitationStoryEntry,
 )
+from app.models.rate_limit import RateLimitHit
 from app.models.user import User
 from app.models.user_session import UserSession
 
@@ -20,6 +21,7 @@ __all__ = [
     "InvitationRsvpResponse",
     "InvitationSession",
     "InvitationStoryEntry",
+    "RateLimitHit",
     "User",
     "UserSession",
 ]

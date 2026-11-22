@@ -128,7 +128,7 @@ const deadlineAfterWedding = computed(
 
     <fieldset v-show="form.enabled" class="min-w-0 space-y-5 rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-6">
       <legend class="px-1 font-display text-xl font-semibold">{{ t('sectionRsvp') }}</legend>
-      <TextField :id="fieldId('title')" v-model="form.title" :label="t('heading')" :hint="t('rsvpHeadingHint')" :error="errors.title" :needed-hint="t('neededBeforePublishing')" />
+      <TextField :id="fieldId('title')" v-model="form.title" :label="t('heading')" :hint="t('rsvpHeadingHint')" :error="errors.title" />
       <TextAreaField :id="fieldId('introduction')" v-model="form.introduction" :label="t('introduction')" :rows="3" :error="errors.introduction" />
       <TextAreaField
         :id="fieldId('confirmationMessage')"

@@ -470,7 +470,7 @@ describe('existing pages: v2 additions', () => {
     fakeTimers()
     const api = installFakeInvitationApi({ content: { opening: { weddingTitle: 'T' } } })
     const { wrapper } = await mountApp('/wedding/opening')
-    expect(wrapper.get('[data-testid="guest-greeting"]').text()).toContain('?to=')
+    expect(wrapper.get('[data-testid="guest-greeting"]').text()).toContain('personal link')
     await wrapper.get('#f-guestGreeting-enabled').setValue(true)
     await wrapper.get('#f-guestGreeting-label').setValue('Kepada Yth.')
     await autosave()

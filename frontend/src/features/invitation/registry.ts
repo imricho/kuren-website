@@ -175,7 +175,6 @@ const v = (
 ): VariantDef => ({ id, category, label, sections, sessionPresets, rsvpDefaults })
 
 const RECEPTION = preset('reception', 'Wedding Reception', 'Resepsi')
-const SYUKURAN = preset('celebration', 'Celebration', 'Syukuran')
 const MAIN_SESSION = preset('session', 'Main Session', 'Sesi Utama')
 const GATHERING_RSVP: RsvpDefaults = { maxGuestsPerResponse: 10 }
 const SEMINAR_RSVP: RsvpDefaults = {
@@ -184,15 +183,15 @@ const SEMINAR_RSVP: RsvpDefaults = {
 }
 
 export const VARIANTS: readonly VariantDef[] = [
-  v('wedding_ceremony', 'wedding', { en: 'Wedding Ceremony', id: 'Akad / Pemberkatan' }, WEDDING_SECTIONS, [preset('akad', 'Akad Nikah', 'Akad Nikah'), RECEPTION]),
+  v('wedding_ceremony', 'wedding', { en: 'Wedding Ceremony', id: 'Akad / Pemberkatan' }, WEDDING_SECTIONS, [preset('ceremony', 'Wedding Ceremony', 'Upacara Pernikahan')]),
   v('wedding_reception', 'wedding', { en: 'Wedding Reception', id: 'Resepsi Pernikahan' }, WEDDING_SECTIONS, [RECEPTION]),
   v('birthday', 'celebration', { en: 'Birthday', id: 'Ulang Tahun' }, birthdaySections(), [preset('party', 'Birthday Party', 'Pesta Ulang Tahun')]),
   v('sweet_17', 'celebration', { en: 'Sweet 17', id: 'Sweet Seventeen' }, birthdaySections({ age: 17 }), [preset('party', 'Sweet Seventeen Party', 'Pesta Sweet Seventeen')]),
   v('khitanan', 'celebration', { en: 'Khitanan', id: 'Khitanan' }, childSections(['nickname', 'image', 'description', 'parents']), [
-    preset('ceremony', 'Khitanan Ceremony', 'Prosesi Khitanan'), SYUKURAN,
+    preset('celebration', 'Khitanan Celebration', 'Syukuran Khitanan'),
   ]),
   v('aqiqah', 'celebration', { en: 'Aqiqah', id: 'Aqiqah' }, childSections(['nickname', 'image', 'description', 'parents', 'birthDate']), [
-    preset('ceremony', 'Aqiqah Ceremony', 'Prosesi Aqiqah'), SYUKURAN,
+    preset('celebration', 'Aqiqah Celebration', 'Syukuran Aqiqah'),
   ]),
   v('engagement', 'celebration', { en: 'Engagement', id: 'Lamaran / Tunangan' }, [
     req('opening'), off('greeting'), req('couple'), req('countdown'), req('events'), off('story'), off('gallery'), on('rsvp'), off('wishes'), req('closing'),
@@ -213,7 +212,7 @@ export const VARIANTS: readonly VariantDef[] = [
   v('family_gathering', 'gathering', { en: 'Family Gathering', id: 'Kumpul Keluarga' }, GATHERING_SECTIONS, [preset('gathering', 'Family Gathering', 'Kumpul Keluarga')], GATHERING_RSVP),
   v('community_gathering', 'gathering', { en: 'Community Gathering', id: 'Acara Komunitas' }, GATHERING_SECTIONS, [preset('gathering', 'Community Gathering', 'Acara Komunitas')], GATHERING_RSVP),
   v('corporate_event', 'corporate', { en: 'Corporate Event', id: 'Acara Perusahaan' }, CORPORATE_SECTIONS, [MAIN_SESSION]),
-  v('company_celebration', 'corporate', { en: 'Company Celebration', id: 'Perayaan Perusahaan' }, CORPORATE_SECTIONS, [MAIN_SESSION]),
+  v('company_celebration', 'corporate', { en: 'Company Celebration', id: 'Perayaan Perusahaan' }, CORPORATE_SECTIONS, [preset('celebration', 'Company Celebration', 'Perayaan Perusahaan')]),
   v('seminar', 'corporate', { en: 'Seminar', id: 'Seminar' }, SEMINAR_SECTIONS, [MAIN_SESSION], SEMINAR_RSVP),
   v('workshop', 'corporate', { en: 'Workshop', id: 'Workshop' }, SEMINAR_SECTIONS, [preset('session', 'Workshop Session', 'Sesi Workshop')], SEMINAR_RSVP),
 ]

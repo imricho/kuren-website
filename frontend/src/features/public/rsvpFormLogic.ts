@@ -169,6 +169,7 @@ export type SubmitOutcome =
   | { kind: 'fields'; errors: FieldErrors; unmapped: string[] }
   | { kind: 'rateLimited' }
   | { kind: 'network' }
+  | { kind: 'linkInvalid' }
   | { kind: 'failed' }
 
 const KNOWN_FIELDS = new Set(['name', 'attendance', 'partySize', 'email', 'phone', 'message', 'sessionIds'])
@@ -178,6 +179,7 @@ export function outcomeOf(error: unknown, config: RsvpFormConfig): SubmitOutcome
   if (!(error instanceof ApiError)) return { kind: 'failed' }
   if (error.isNetworkError) return { kind: 'network' }
   if (error.status === 429) return { kind: 'rateLimited' }
+  if (error.status === 404 && error.code === 'rsvp_link_invalid') return { kind: 'linkInvalid' }
   if (error.status === 409 && error.code === 'capacity_reached') return { kind: 'capacity' }
   if (error.status === 409 && error.code === 'limit_reached') return { kind: 'limit' }
   if (error.status === 422 && error.code === 'rsvp_closed') return { kind: 'closed' }
@@ -212,7 +214,10 @@ export function isPastDeadline(deadline: string | undefined, timezone: string | 
   return !!deadline && todayIn(timezone, now) > deadline
 }
 
-// --- "You already replied" flag (the ONLY thing kept on the device; no guest data) ---
+// --- Device storage: a "you already replied" flag and the private edit token --------
+// Nothing the guest typed is stored. The token is the guest's own key to THEIR reply:
+// it is sent in a request header (never a URL) and offered as a personal link whose
+// token sits in the URL fragment (`#rsvp=…`), which browsers never send to servers.
 
 const repliedKey = (slug: string) => `temuvibe.rsvp.replied.${slug}`
 
@@ -229,5 +234,81 @@ export function markReplied(slug: string): void {
     localStorage.setItem(repliedKey(slug), '1')
   } catch {
     // Storage unavailable (private mode): the flag is a convenience only.
+  }
+}
+
+const tokenKey = (slug: string) => `temuvibe.rsvp.token.${slug}`
+const TOKEN_RE = /^[A-Za-z0-9_-]{32,100}$/
+
+export function storedEditToken(slug: string): string | null {
+  try {
+    const token = localStorage.getItem(tokenKey(slug))
+    return token && TOKEN_RE.test(token) ? token : null
+  } catch {
+    return null
+  }
+}
+
+export function storeEditToken(slug: string, token: string | null): void {
+  try {
+    if (token && TOKEN_RE.test(token)) localStorage.setItem(tokenKey(slug), token)
+    else localStorage.removeItem(tokenKey(slug))
+  } catch {
+    // Storage unavailable: the guest still has the personal link.
+  }
+}
+
+/** Parameters in the URL fragment (`#to=Budi&rsvp=…`). */
+export function fragmentParams(hash: string = typeof location === 'undefined' ? '' : location.hash): URLSearchParams {
+  return new URLSearchParams(hash.replace(/^#/, ''))
+}
+
+/**
+ * Take an edit token from the URL fragment (a personal link), keep it on the device and
+ * remove it from the address bar (so it is not shared by copying the URL or kept in history).
+ */
+export function takeTokenFromFragment(slug: string): string | null {
+  if (typeof location === 'undefined') return null
+  const params = fragmentParams()
+  const token = params.get('rsvp')
+  if (!token) return null
+  params.delete('rsvp')
+  const rest = params.toString()
+  try {
+    history.replaceState(history.state, '', `${location.pathname}${location.search}${rest ? `#${rest}` : ''}`)
+  } catch {
+    // Non-browser environments.
+  }
+  if (!TOKEN_RE.test(token)) return null
+  storeEditToken(slug, token)
+  return token
+}
+
+/** The guest's personal link for changing their reply (token in the fragment). */
+export function editLink(slug: string, token: string, origin: string = typeof location === 'undefined' ? '' : location.origin): string {
+  return `${origin}/i/${encodeURIComponent(slug)}#rsvp=${token}`
+}
+
+/** Form values from the guest's saved reply (for "Change my reply"). */
+export function valuesFromReply(config: RsvpFormConfig, reply: {
+  name: string; attendance: 'attending' | 'not_attending'; partySize: number; email?: string; phone?: string;
+  sessionIds?: string[]; answers?: Record<string, string | boolean>; message?: string
+}): RsvpFormValues {
+  const base = initialValues(config)
+  const answers: Record<string, string | boolean> = { ...base.answers }
+  for (const f of config.fields) {
+    const v = reply.answers?.[f.id]
+    if (v !== undefined) answers[f.id] = f.type === 'checkbox' ? v === true : typeof v === 'string' ? v : ''
+  }
+  return {
+    ...base,
+    name: reply.name,
+    attendance: reply.attendance,
+    partySize: reply.attendance === 'attending' ? Math.min(Math.max(reply.partySize, 1), config.partyLimit) : 1,
+    email: reply.email ?? '',
+    phone: reply.phone ?? '',
+    sessionIds: (reply.sessionIds ?? []).filter((id) => config.optionalSessions.some((s) => s.id === id)),
+    answers,
+    message: reply.message ?? '',
   }
 }
